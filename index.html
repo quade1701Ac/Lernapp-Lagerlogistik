@@ -427,5 +427,68 @@ window.addEventListener('DOMContentLoaded', initClient);
   setInterval(hookLoadButton, 1000);
 })();
 </script>
+<script>
+/* Polyfills für adaptives Lernen – funktionieren auch ohne Patch-Datei */
+(function () {
+  const client =
+    window.supabaseClient || window.supabase || window.supa || null;
+
+  // 1) Adaptive Karten laden (fallback: alle Fragen in Kategorie, gemischt)
+  if (typeof window.fetchAdaptiveCandidates !== "function") {
+    window.fetchAdaptiveCandidates = async function (category) {
+      if (!client || !client.from) {
+        console.warn("[Polyfill] Kein Supabase-Client gefunden.");
+        return [];
+      }
+      try {
+        let q = client
+          .from("questions")
+          .select("id, category, question, options, correct_index")
+          .limit(2000);
+        if (category) q = q.eq("category", category);
+        const { data, error } = await q;
+        if (error) {
+          console.warn("[Polyfill] Supabase select error:", error);
+          return [];
+        }
+        // mischen
+        const arr = data || [];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      } catch (e) {
+        console.warn("[Polyfill] fetchAdaptiveCandidates failed:", e);
+        return [];
+      }
+    };
+    console.log("[Polyfill] fetchAdaptiveCandidates aktiv");
+  }
+
+  // 2) Review schreiben (Antwort speichern) – benötigt Login
+  if (typeof window.recordReview !== "function") {
+    window.recordReview = async function (questionId, isCorrect) {
+      if (!client || !client.from) return;
+      try {
+        const { data: { user } = {} } = await client.auth.getUser();
+        if (!user || !user.id) {
+          console.warn("[Polyfill] Kein User eingeloggt – Review nicht gespeichert.");
+          return;
+        }
+        const { error } = await client.from("reviews").insert({
+          user_id: user.id,
+          question_id: questionId,
+          correct: !!isCorrect,
+        });
+        if (error) console.warn("[Polyfill] Review insert error:", error);
+      } catch (e) {
+        console.warn("[Polyfill] recordReview failed:", e);
+      }
+    };
+    console.log("[Polyfill] recordReview aktiv");
+  }
+})();
+</script>
 </body>
 </html>
