@@ -428,66 +428,166 @@ window.addEventListener('DOMContentLoaded', initClient);
 })();
 </script>
 <script>
-/* Polyfills für adaptives Lernen – funktionieren auch ohne Patch-Datei */
+<script>
 (function () {
-  const client =
-    window.supabaseClient || window.supabase || window.supa || null;
-
-  // 1) Adaptive Karten laden (fallback: alle Fragen in Kategorie, gemischt)
-  if (typeof window.fetchAdaptiveCandidates !== "function") {
-    window.fetchAdaptiveCandidates = async function (category) {
-      if (!client || !client.from) {
-        console.warn("[Polyfill] Kein Supabase-Client gefunden.");
-        return [];
-      }
-      try {
-        let q = client
-          .from("questions")
-          .select("id, category, question, options, correct_index")
-          .limit(2000);
-        if (category) q = q.eq("category", category);
-        const { data, error } = await q;
-        if (error) {
-          console.warn("[Polyfill] Supabase select error:", error);
-          return [];
-        }
-        // mischen
-        const arr = data || [];
-        for (let i = arr.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        return arr;
-      } catch (e) {
-        console.warn("[Polyfill] fetchAdaptiveCandidates failed:", e);
-        return [];
-      }
-    };
-    console.log("[Polyfill] fetchAdaptiveCandidates aktiv");
+  // Nur auf der Fortschritt-Seite laufen
+  function onProgressView() {
+    return (location.hash || "").toLowerCase().includes("progress");
   }
 
-  // 2) Review schreiben (Antwort speichern) – benötigt Login
-  if (typeof window.recordReview !== "function") {
-    window.recordReview = async function (questionId, isCorrect) {
-      if (!client || !client.from) return;
-      try {
-        const { data: { user } = {} } = await client.auth.getUser();
-        if (!user || !user.id) {
-          console.warn("[Polyfill] Kein User eingeloggt – Review nicht gespeichert.");
-          return;
-        }
-        const { error } = await client.from("reviews").insert({
-          user_id: user.id,
-          question_id: questionId,
-          correct: !!isCorrect,
-        });
-        if (error) console.warn("[Polyfill] Review insert error:", error);
-      } catch (e) {
-        console.warn("[Polyfill] recordReview failed:", e);
-      }
-    };
-    console.log("[Polyfill] recordReview aktiv");
+  async function getUser(client) {
+    try {
+      const { data: { user } = {} } = await client.auth.getUser();
+      return user || null;
+    } catch { return null; }
   }
+
+  // Lokale Sitzung aus LocalStorage (Fallback – passe Keys gern an deine App an)
+  function getLocalSessionStats() {
+    // Wenn deine App andere Keys nutzt, hier anpassen:
+    const answered = Number(localStorage.getItem("session_answered") || 0);
+    const correct  = Number(localStorage.getItem("session_correct")  || 0);
+    const quote = answered ? Math.round((correct / answered) * 100) : 0;
+    return { answered, correct, quote };
+  }
+
+  // Kleinster Helfer zum Rendern
+  function ensureProgressBox() {
+    const host = document.querySelector("#view-progress") || document.querySelector(".progress-view") || document.body;
+    let box = document.getElementById("progress-cloud-box");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "progress-cloud-box";
+      box.style.marginTop = "12px";
+      host.appendChild(box);
+    }
+    return box;
+  }
+
+  async function loadCloudStats() {
+    const client = window.supabaseClient;
+    const box = ensureProgressBox();
+
+    if (!client || !client.from) {
+      box.innerHTML = `<div class="card">Cloud-Statistik: <b>Supabase-Client nicht gefunden.</b><br>Bitte in den Einstellungen Projekt-URL & Anon Key eintragen und erneut laden.</div>`;
+      return;
+    }
+
+    const user = await getUser(client);
+
+    // --- Fragen gesamt ---
+    let totalQuestions = 0;
+    try {
+      const { count } = await client
+        .from("questions")
+        .select("id", { head: true, count: "exact" });
+      totalQuestions = count || 0;
+    } catch (e) {
+      console.warn("questions count error", e);
+    }
+
+    // Wenn kein Login, zeigen wir nur Gesamtfragen & lokalen Block
+    if (!user) {
+      const local = getLocalSessionStats();
+      box.innerHTML = `
+        <div class="card">
+          <div class="card-head"><b>Letzte Sitzung (lokal)</b></div>
+          Beantwortet: <b>${local.answered}</b> • Richtig: <b>${local.correct}</b> • Quote: <b>${local.quote}%</b>
+        </div>
+        <div class="card">
+          <div class="card-head"><b>Gesamt (Cloud)</b></div>
+          <div>Fragen gesamt: <b>${totalQuestions}</b></div>
+          <div style="margin-top:8px;color:var(--muted,#8aa)">Für Cloud-Details bitte einloggen.</div>
+        </div>
+      `;
+      return;
+    }
+
+    // --- Antworten gesamt / richtig / gelernt / offen ---
+    let totalAnswers = 0, correctAnswers = 0, learnedDistinct = 0;
+    try {
+      // alle Antworten des Users
+      const all = await client
+        .from("reviews")
+        .select("id", { head: true, count: "exact" })
+        .eq("user_id", user.id);
+      totalAnswers = all.count || 0;
+
+      // richtige Antworten des Users
+      const ok = await client
+        .from("reviews")
+        .select("id", { head: true, count: "exact" })
+        .eq("user_id", user.id)
+        .eq("correct", true);
+      correctAnswers = ok.count || 0;
+
+      // gelernt = distinct Fragen mit mind. 1x correct
+      const learned = await client
+        .from("reviews")
+        .select("question_id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("correct", true)
+        .distinct();
+      learnedDistinct = learned.count || 0;
+    } catch (e) {
+      console.warn("reviews stats error", e);
+    }
+
+    const open = Math.max(0, totalQuestions - learnedDistinct);
+    const quote = totalAnswers ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+
+    // --- Letzte Prüfungen ---
+    let examsHtml = `Keine Prüfungen vorhanden.`;
+    try {
+      const { data: exams } = await client
+        .from("exam_sessions")
+        .select("id, started_at, finished_at, total, correct")
+        .eq("user_id", user.id)
+        .order("started_at", { ascending: false })
+        .limit(5);
+      if (exams && exams.length) {
+        examsHtml = exams.map(x => {
+          const t = x.total || 0, c = x.correct || 0;
+          const q = t ? Math.round((c / t) * 100) : 0;
+          const d = x.started_at ? new Date(x.started_at).toLocaleString() : "-";
+          return `<div>• ${d}: <b>${c}/${t}</b> (${q}%)</div>`;
+        }).join("");
+      }
+    } catch (e) {
+      console.warn("exams load error", e);
+    }
+
+    // --- Lokale Sitzung ---
+    const local = getLocalSessionStats();
+
+    // Rendern
+    box.innerHTML = `
+      <div class="card">
+        <div class="card-head"><b>Letzte Sitzung (lokal)</b></div>
+        Beantwortet: <b>${local.answered}</b> • Richtig: <b>${local.correct}</b> • Quote: <b>${local.quote}%</b>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><b>Gesamt (Cloud)</b></div>
+        <div>Fragen gesamt: <b>${totalQuestions}</b></div>
+        <div>Antworten gesamt: <b>${totalAnswers}</b> • Richtig: <b>${correctAnswers}</b> • Quote: <b>${quote}%</b></div>
+        <div>Gelernt (mind. 1× richtig): <b>${learnedDistinct}</b> • Offen: <b>${open}</b></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><b>Letzte Prüfungen</b></div>
+        ${examsHtml}
+      </div>
+    `;
+  }
+
+  function run() {
+    if (onProgressView()) loadCloudStats();
+  }
+  window.addEventListener("hashchange", run);
+  window.addEventListener("DOMContentLoaded", run);
+  // Nachladen absichern
+  setTimeout(run, 200);
 })();
 </script>
 </body>
