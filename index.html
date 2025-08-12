@@ -295,5 +295,137 @@ window.addEventListener('DOMContentLoaded', initClient);
 </script>
 <script src="patch_progress_logo.js"></script>
 <script src="adapter_flashcards.js"></script>
+<script>
+/* 🔧 Lernkarten-Adapter – Smoke-Test & Fallback (v0)
+   -> Sichtbarer Badge unten links
+   -> Hakt sich an den "Laden"-Button in Lernkarten
+   -> Lädt adaptive Karten (fetchAdaptiveCandidates) oder zeigt Fallback
+   -> Speichert Antworten via recordReview (wenn vorhanden)
+*/
+(function () {
+  console.log("[Adapter Smoke] start");
+
+  // 1) Sichtbarer Badge, damit du SIEHST, dass das Skript läuft
+  function showBadge() {
+    if (document.getElementById("adapter-badge")) return;
+    const b = document.createElement("div");
+    b.id = "adapter-badge";
+    b.textContent = "Adapter aktiv";
+    b.style.cssText = "position:fixed;left:12px;bottom:12px;padding:6px 10px;border:1px solid #2a2f3a;border-radius:999px;background:#223; color:#9fd; font:12px/1.2 system-ui; z-index:99999; opacity:.9;";
+    document.body.appendChild(b);
+  }
+
+  // 2) Fallback-Renderer für 1 Karte
+  async function renderFallback(cards, root) {
+    const host = root ||
+      document.querySelector("#view-flashcards") ||
+      document.querySelector(".flashcards-view") ||
+      document.querySelector("main") || document.body;
+
+    let box = document.getElementById("flashcards-fallback");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "flashcards-fallback";
+      box.style.cssText = "margin-top:16px;padding:12px;border:1px solid var(--line,#2a2f3a);border-radius:10px";
+      host.appendChild(box);
+    }
+
+    if (!cards || !cards.length) {
+      box.innerHTML = `<div class="card"><b>Keine Karten gefunden.</b></div>`;
+      return;
+    }
+
+    const q = cards[0];
+    const opts = (q.options || []).map((o,i)=>`<button class="btn opt" data-i="${i}" style="margin:6px 0">${o}</button>`).join("");
+    box.innerHTML = `
+      <div class="card">
+        <div class="card-head"><b>Adaptive Lernkarten (Fallback)</b></div>
+        <div style="margin-top:8px">${q.question || "(ohne Text)"}</div>
+        <div style="display:grid;gap:8px;margin-top:10px">${opts}</div>
+      </div>`;
+
+    box.querySelectorAll(".opt").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const i = Number(btn.dataset.i);
+        const correct = (i === q.correct_index);
+        btn.textContent += correct ? " ✅" : " ❌";
+        try {
+          if (window.recordReview) await window.recordReview(q.id, correct);
+        } catch(e){ console.warn("recordReview failed", e); }
+      });
+    });
+  }
+
+  // 3) Klick-Handler für „Laden“ im Lernkarten-View
+  async function onLoadClick(ev) {
+    console.log("[Adapter] Lade Lernkarten (Adapter)");
+    // Blockiere Standard-Laden, damit garantiert unser Pfad läuft
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    const root =
+      document.querySelector("#view-flashcards") ||
+      document.querySelector(".flashcards-view") ||
+      document;
+
+    const select = root.querySelector("select");
+    const category = select ? select.value : undefined;
+
+    let cards = [];
+    try {
+      if (typeof window.fetchAdaptiveCandidates === "function") {
+        cards = await window.fetchAdaptiveCandidates(category);
+      } else {
+        console.warn("[Adapter] fetchAdaptiveCandidates fehlt – zeige leeren Fallback");
+      }
+    } catch (e) {
+      console.warn("[Adapter] Fehler beim Laden adaptiver Karten", e);
+    }
+
+    console.log("[Adapter] Karten geladen:", Array.isArray(cards)?cards.length:0, "Kategorie:", category);
+    // Versuche eine vorhandene Renderer-Funktion der App
+    const renderers = ["startFlashcards","renderFlashcards","showFlashcards","beginFlashcards","initFlashcards"];
+    let used = false;
+    for (const name of renderers) {
+      if (typeof window[name] === "function") {
+        try { window[name](cards); used = true; break; } catch(e){ console.warn(name, e); }
+      }
+    }
+    if (!used) await renderFallback(cards, root);
+  }
+
+  // 4) Den richtigen „Laden“-Button finden & patchen
+  function hookLoadButton() {
+    const root =
+      document.querySelector("#view-flashcards") ||
+      document.querySelector(".flashcards-view") ||
+      document;
+
+    // Kandidaten: Buttons mit Text „Laden“ oder Standard-Buttons
+    const btns = [...root.querySelectorAll("button")].filter(b =>
+      /laden/i.test(b.textContent) || b.dataset.view === "flashcards"
+    );
+    btns.forEach(btn=>{
+      if (!btn.__adapterPatched) {
+        btn.addEventListener("click", onLoadClick, true); // Capture, damit wir sicher davor sind
+        btn.__adapterPatched = true;
+        console.log("[Adapter] Button gepatcht:", btn.textContent.trim());
+      }
+    });
+  }
+
+  // 5) Initial & bei Hashwechsel
+  function run() {
+    showBadge();
+    if (location.hash && /flash|card/i.test(location.hash)) {
+      setTimeout(hookLoadButton, 60);
+    }
+  }
+  window.addEventListener("DOMContentLoaded", run);
+  window.addEventListener("hashchange", run);
+  // Wiederholtes Hooking (falls SPA nachlädt)
+  setInterval(hookLoadButton, 1000);
+})();
+</script>
 </body>
 </html>
