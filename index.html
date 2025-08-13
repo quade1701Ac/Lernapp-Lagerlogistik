@@ -46,15 +46,15 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
   <header class="topbar">
     <div class="brand"><div class="logo" id="brand-logo"></div><div><b>Lernapp Lagerlogistik</b><div style="font-size:12px;color:var(--muted)">Supabase • Login • Cloud</div></div></div>
     <div class="nav">
-      <button data-view="login">Login</button>
-      <button data-view="flashcards">Lernkarten</button>
-      <button data-view="train">Adaptiv</button>
-      <button data-view="exam">Prüfung</button>
-      <button data-view="stats">Statistik</button>
-      <button data-view="archive">Archiv</button>
-      <button data-view="progress">Fortschritt</button>
-      <button data-view="admin">Admin</button>
-      <button id="btn-settings">Einstellungen</button>
+      <button type="button" data-view="login">Login</button>
+      <button type="button" data-view="flashcards">Lernkarten</button>
+      <button type="button" data-view="train">Adaptiv</button>
+      <button type="button" data-view="exam">Prüfung</button>
+      <button type="button" data-view="stats">Statistik</button>
+      <button type="button" data-view="archive">Archiv</button>
+      <button type="button" data-view="progress">Fortschritt</button>
+      <button type="button" data-view="admin">Admin</button>
+      <button type="button" id="btn-settings">Einstellungen</button>
     </div>
   </header>
 
@@ -70,8 +70,8 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         </div>
         <label>Logo URL / Data‑URI<br/><input id="cfg-logo" placeholder="https://... oder data:image/png;base64,..."/></label>
         <div class="row" style="margin-top:8px">
-          <button id="cfg-save" class="btn primary">Speichern</button>
-          <button id="cfg-close" class="btn">Schließen</button>
+          <button type="button" id="cfg-save" class="btn primary">Speichern</button>
+          <button type="button" id="cfg-close" class="btn">Schließen</button>
           <span id="cfg-state" class="muted"></span>
         </div>
       </div>
@@ -90,9 +90,9 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         <div class="card"><div style="font-weight:700;margin-bottom:6px">Nach Kategorie</div><div id="res-cats"></div></div>
         <div class="cards" id="res-items" style="margin-top:10px"></div>
         <div class="row" style="justify-content:flex-end;margin-top:10px">
-          <button id="res-new" class="btn">Neue Prüfung</button>
-          <button id="res-close" class="btn">Schließen</button>
-          <button id="result-pdf" class="btn primary">PDF herunterladen</button>
+          <button type="button" id="res-new" class="btn">Neue Prüfung</button>
+          <button type="button" id="res-close" class="btn">Schließen</button>
+          <button type="button" id="result-pdf" class="btn primary">PDF herunterladen</button>
         </div>
       </div>
     </div>
@@ -104,9 +104,9 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         <div class="row">
           <input id="email" type="email" placeholder="dein.name@example.com"/>
           <input id="password" type="password" placeholder="••••••••"/>
-          <button id="btn-signup" class="btn">Registrieren</button>
-          <button id="btn-login" class="btn primary">Einloggen</button>
-          <button id="btn-logout" class="btn" disabled>Abmelden</button>
+          <button type="button" id="btn-signup" class="btn">Registrieren</button>
+          <button type="button" id="btn-login" class="btn primary">Einloggen</button>
+          <button type="button" id="btn-logout" class="btn" disabled>Abmelden</button>
           <span id="auth-state" class="muted"></span>
         </div>
         <div id="login-empty-info" class="alert" style="display:none;margin-top:10px"></div>
@@ -120,7 +120,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <h3>Lernkarten</h3>
           <div class="row">
             <select id="fc-category"></select>
-            <button id="fc-load" class="btn primary">Laden</button>
+            <button type="button" id="fc-load" class="btn primary">Laden</button>
             <span id="fc-stats" class="muted"></span>
           </div>
         </div>
@@ -141,7 +141,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
             <select id="train-category"><option value="">Alle Kategorien</option></select>
             <label class="row"><input type="checkbox" id="train-weak"/> <span>Nur Schwächen</span></label>
             <label class="row"><input type="checkbox" id="train-hide-learned" checked/> <span>Gelernt ausblenden</span></label>
-            <button id="train-next" class="btn primary">Nächste Karte</button>
+            <button type="button" id="train-next" class="btn primary">Nächste Karte</button>
           </div>
         </div>
         <div id="train-area" class="cards" style="margin-top:10px"></div>
@@ -158,9 +158,9 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
             <select id="exam-categories" multiple></select>
             <input id="exam-count" type="number" value="40" min="5" max="100" style="width:90px"/>
             <input id="exam-minutes" type="number" value="60" min="5" max="180" style="width:90px"/>
-            <button id="exam-start" class="btn primary">Start</button>
-            <button id="exam-submit" class="btn" disabled>Abgeben</button>
-            <button id="exam-reset" class="btn">Reset</button>
+            <button type="button" id="exam-start" class="btn primary">Start</button>
+            <button type="button" id="exam-submit" class="btn" disabled>Abgeben</button>
+            <button type="button" id="exam-reset" class="btn">Reset</button>
           </div>
         </div>
         <div id="exam-meta" class="muted" style="margin:8px 0"></div>
@@ -180,7 +180,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
               <option value="90">90 Tage</option>
               <option value="all">Alle</option>
             </select>
-            <button id="stats-refresh" class="btn">Aktualisieren</button>
+            <button type="button" id="stats-refresh" class="btn">Aktualisieren</button>
           </div>
         </div>
         <div class="cards" style="margin-top:10px">
@@ -199,7 +199,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <div class="row">
             <input id="arch-from" type="date"/>
             <input id="arch-to" type="date"/>
-            <button id="arch-load" class="btn">Filtern</button>
+            <button type="button" id="arch-load" class="btn">Filtern</button>
           </div>
         </div>
         <div id="archive-list" class="cards" style="margin-top:10px"></div>
@@ -213,13 +213,13 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <h3>Dein Fortschritt & Lernziel</h3>
           <div class="row">
             <input id="goal-daily" type="number" min="5" max="200" value="20" style="width:90px"/>
-            <button id="goal-save" class="btn">Ziel speichern</button>
-            <button id="goal-remind" class="btn">Erinnern (heute)</button>
+            <button type="button" id="goal-save" class="btn">Ziel speichern</button>
+            <button type="button" id="goal-remind" class="btn">Erinnern (heute)</button>
           </div>
         </div>
         <div id="goal-status" class="card"></div>
         <div class="row" style="margin-top:10px;justify-content:space-between">
-          <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
+          <button type="button" id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
         </div>
         <div id="progress-summary" class="cards" style="margin-top:10px"></div>
       </div>
@@ -231,7 +231,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         <div class="row" style="justify-content:space-between;align-items:flex-end">
           <h3>Admin</h3>
           <div class="row">
-            <button id="admin-export" class="btn">Export JSON</button>
+            <button type="button" id="admin-export" class="btn">Export JSON</button>
             <input type="file" id="admin-import" accept="application/json" multiple/>
           </div>
         </div>
@@ -240,14 +240,14 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <div class="row">
             <select id="admin-cat-old"></select>
             <input id="admin-cat-new" placeholder="Neue Kategorie (umbenennen/zusammenführen)"/>
-            <button id="admin-cat-apply" class="btn primary">Anwenden</button>
+            <button type="button" id="admin-cat-apply" class="btn primary">Anwenden</button>
             <span id="admin-cat-state" class="muted"></span>
           </div>
         </div>
         <div class="card">
           <h4>Duplikate scannen</h4>
           <div class="row">
-            <button id="admin-scan-dup" class="btn">Scan starten</button>
+            <button type="button" id="admin-scan-dup" class="btn">Scan starten</button>
             <span class="muted">Scannt gleiche <b>ID</b> oder gleiche <b>Fragentexte</b>.</span>
           </div>
           <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
@@ -260,7 +260,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
 Falsch 1
 Falsch 2" required></textarea>
           <textarea id="ad-expl" rows="2" placeholder="Erklärung (optional)"></textarea>
-          <div class="row"><button id="admin-save" class="btn primary">Speichern (DB)</button></div>
+          <div class="row"><button type="button" id="admin-save" class="btn primary">Speichern (DB)</button></div>
         </form>
         <div id="admin-list" class="cards"></div>
       </div>
@@ -298,7 +298,6 @@ function bindNavigation(){
   document.querySelectorAll('.nav button[data-view]').forEach(btn=>{
     btn.addEventListener('click', ()=>show(btn.dataset.view));
   });
-  // Standardansicht
   show('login');
 }
 
@@ -381,7 +380,6 @@ function bindAuth(){
   };
   btnLogout.onclick=async()=>{ if(supa) await supa.auth.signOut(); refreshAuthUI(); };
 
-  // beim Start einmal anzeigen
   refreshAuthUI();
 }
 
@@ -407,14 +405,28 @@ async function fetchQuestions(){
 }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 
+/* >>> NEU: Alle Selects auf einmal aktualisieren */
+async function refreshAllSelectors(){
+  const cats = await fetchCategories();
+  const fcSel = document.getElementById('fc-category');
+  if (fcSel) fcSel.innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+  const trSel = document.getElementById('train-category');
+  if (trSel) trSel.innerHTML = '<option value="">Alle Kategorien</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+  const exSel = document.getElementById('exam-categories');
+  if (exSel) exSel.innerHTML = cats.map(c=>`<option value="${c}" selected>${c}</option>`).join('');
+  const adminOld = document.getElementById('admin-cat-old');
+  if (adminOld) adminOld.innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+}
+
 /* ---------- Lernkarten (klassisch) ---------- */
 function bindFlashcards(){
   const fcCategory=document.getElementById('fc-category');
   const fcArea=document.getElementById('fc-area');
   const fcStats=document.getElementById('fc-stats');
   const fcEmpty=document.getElementById('fc-empty');
-  async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
-  async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
+
+  async function loadFlashcards(){
+    const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
     fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
     let n=0; cards.forEach(card=>{
       const wrap=document.createElement('div'); wrap.className='card';
@@ -437,9 +449,8 @@ function bindFlashcards(){
       fcArea.appendChild(wrap); n++;
     }); fcStats.textContent=`${n} Karten`;
   }
+
   document.getElementById('fc-load').onclick=loadFlashcards;
-  // Selects initial füllen
-  refreshSelectors();
 }
 
 /* ---------- Adaptives Training ---------- */
@@ -451,7 +462,6 @@ function bindAdaptive(){
   const trArea=document.getElementById('train-area');
   const trEmpty=document.getElementById('train-empty');
 
-  async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option>${c}</option>`).join(''); }
   function cooldownDaysForStreak(s){ if(s>=5) return 14; if(s>=4) return 7; if(s>=3) return 3; if(s>=2) return 1; return 0; }
   async function fetchStatsMap(userId){
     const map={}; if(!supa || !userId) return map;
@@ -520,7 +530,6 @@ function bindAdaptive(){
     const card=await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked);
     renderTrainCard(card);
   };
-  refreshTrainSelectors();
 }
 
 /* ---------- Prüfung (inkl. Sticky Abgeben) ---------- */
@@ -551,7 +560,6 @@ function bindExam(){
     b.disabled=!ihkRunning;
   }
   function pickN(a,n){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]];} return b.slice(0,n); }
-  async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
   function renderMeta(){ const total=examPool.length; const answered=Object.values(selections).filter(v=>v!=null).length; const mm=String(Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0'); const ss=String(Math.max(0,timeLeft%60)).padStart(2,'0'); examMeta.textContent=`Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`; updateStickySubmitLabel(); }
 
   examStart.onclick=async()=>{
@@ -599,14 +607,8 @@ function bindExam(){
       }
     }catch(e){ console.warn('Ergebnis speichern (optional):', e); }
     showResult(session);
-    // Stats/Archiv refreshen (optional, falls Supabase vorhanden)
     try{ if(supa){ await statsRefresh(); await archiveLoad(); } }catch{}
   }
-
-  async function statsRefresh(){ /* unten globale Stats-Implementierung nutzt diese ID's – hier nur Platzhalter, echte Funktion kommt später im Script */ }
-
-  // Kategorien initial füllen
-  refreshExamCategories();
 }
 
 /* ---------- Ergebnis-Panel + PDF ---------- */
@@ -717,8 +719,8 @@ async function archiveLoad(){
     return `<div class="card">
       <div class="row" style="justify-content:space-between"><div><b>${d}</b></div><div class="chip">${c}/${q} (${pct}%)</div></div>
       <div class="row" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn" data-viewpdf="${ex.id}">PDF</button>
-        <button class="btn" data-viewdetail="${ex.id}">Details</button>
+        <button type="button" class="btn" data-viewpdf="${ex.id}">PDF</button>
+        <button type="button" class="btn" data-viewdetail="${ex.id}">Details</button>
       </div></div>`;
   }).join('');
   archList.querySelectorAll('button[data-viewpdf]').forEach(btn=>btn.onclick=async()=>{
@@ -741,7 +743,7 @@ function bindAdmin(){
   const list=document.getElementById('admin-list');
   async function render(){ const q=await fetchQuestions();
     list.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between">
-      <div><span class="chip">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div>
+      <div><span class="chip">${x.category}</span></div><button type="button" data-del="${x.id}" class="btn">Löschen</button></div>
       <div><b>${x.question}</b></div></div>`).join('');
     list.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{
       if(!supa) return alert('Supabase nicht konfiguriert.');
@@ -760,9 +762,8 @@ function bindAdmin(){
     let ok=0, bad=0;
     for(const q of cleaned){ const {error}=await supa.from('questions').upsert(q,{onConflict:'id'}); if(error) bad++; else ok++; }
     alert(`Import: OK ${ok}, Fehler ${bad}`);
-    await render(); // nachladen
+    await render();
   };
-  // Kategorie-Tools
   async function fillCatSelect(){ const cats=await fetchCategories(); document.getElementById('admin-cat-old').innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
   document.getElementById('admin-cat-apply').onclick=async()=>{
     if(!supa) return alert('Supabase nicht konfiguriert.');
@@ -785,23 +786,6 @@ function bindAdmin(){
       return `<div class="card"><div><b>${head}</b></div>${rows}</div>`;
     }).join('');
   };
-  // Formular „Neue Frage“
-  document.getElementById('admin-save').onclick=async()=>{
-    if(!supa) return alert('Supabase nicht konfiguriert.');
-    const id='q_'+Math.random().toString(36).slice(2,10);
-    const category=document.getElementById('ad-category').value.trim();
-    const question=document.getElementById('ad-question').value.trim();
-    const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
-    const options=[], correctIndexRaw=lines.findIndex(l=>l.startsWith('***'));
-    lines.forEach(l=>options.push(l.replace(/^\*{3}\s?/,'')));
-    const correct_index = correctIndexRaw>=0 ? correctIndexRaw : 0;
-    const explanation=document.getElementById('ad-expl').value.trim();
-    const obj={id,category,question,options,correct_index,explanation};
-    const {error}=await supa.from('questions').upsert(obj,{onConflict:'id'});
-    if(error) alert(error.message); else { alert('Gespeichert.'); render(); }
-  };
-  // Start
   render(); fillCatSelect();
 }
 
@@ -811,21 +795,21 @@ document.getElementById('arch-load').onclick=archiveLoad;
 
 /* ---------- DOM Ready: Alles binden, dann Supabase laden ---------- */
 window.addEventListener('DOMContentLoaded', async () => {
-  applyBranding();           // Logo sofort
-  bindNavigation();          // Tabs sofort klickbar
-  bindSettings();            // Einstellungen klickbar
-  bindProgressButtons();     // Reset funktioniert sofort
-  renderProgress();          // lokale Anzeige
+  applyBranding();
+  bindNavigation();
+  bindSettings();
+  bindProgressButtons();
+  renderProgress();
 
-  // Feature-Bindings (arbeiten auch ohne Supabase, wo möglich)
   bindFlashcards();
   bindAdaptive();
   bindExam();
   bindAdmin();
 
-  // Supabase sicher initialisieren – UI bleibt aktiv, auch wenn es scheitert
   try{
     await initClientSafe();
+    // >>> Selektoren NACH erfolgreichem Supabase-Init aktualisieren
+    await refreshAllSelectors();
   }catch(e){
     console.warn('Supabase Init Fehler (nicht kritisch):', e);
   }
