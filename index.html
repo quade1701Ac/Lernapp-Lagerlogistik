@@ -207,14 +207,7 @@ function renderProgressLocalOnly(){
   if(!box) return;
   const p = JSON.parse(localStorage.getItem('session_stats') || '{"seen":0,"correct":0}');
   const acc = p.seen ? Math.round(p.correct/p.seen*100) : 0;
-  const html = `<div class="card"><b>Letzte Sitzung</b><div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div></div>`;
-  const old = box.querySelector('[data-local]');
-  if (old) old.remove();
-  const wrap = document.createElement('div');
-  wrap.dataset.local='1';
-  wrap.className='card';
-  wrap.innerHTML = `<div><b>Letzte Sitzung (lokal)</b></div><div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div>`;
-  box.prepend(wrap);
+  box.innerHTML = `<div class="card"><b>Letzte Sitzung (lokal)</b><div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div></div>`;
 }
 
 /* Einstellungen */
@@ -357,12 +350,39 @@ const examStart=document.getElementById('exam-start'), examReset=document.getEle
 async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
 function pickN(a,n){ const b=shuffle(a); return b.slice(0,Math.max(0,Math.min(n,b.length))); }
 
+/* IHK Modus State/Timer */
+let examTimerHandle=null;
+let examIhkActive=false;
+function startCountdown(seconds, onTick, onEnd){
+  clearInterval(examTimerHandle); let left=seconds; onTick(left);
+  examTimerHandle=setInterval(()=>{ left--; onTick(left); if(left<=0){clearInterval(examTimerHandle); onEnd && onEnd();}},1000);
+}
+function fmtTime(s){ const m=Math.floor(s/60), r=s%60; return `${m}:${String(r).padStart(2,'0')}`; }
+
+/* Gemeinsame IHK-Auswertung */
+async function doIhkFinish(){
+  clearInterval(examTimerHandle);
+  const cards=[...document.querySelectorAll('#exam-area .card')];
+  let total=0, correct=0;
+  cards.forEach(card=>{
+    const r=card.querySelector('.reveal');
+    if(r && r.style.display==='block'){ total++; if(r.classList.contains('ok')) correct++; }
+  });
+  const planned = Number(document.getElementById('exam-count').value)||40;
+  total = Math.max(total, planned);
+  const user=await getCurrentUser(); if(user) await supa.from('exam_sessions').insert({user_id:user.id,total,correct,detail:null});
+  alert(`Prüfung beendet. Ergebnis: ${correct}/${total} (${Math.round(correct/total*100)}%)`);
+  examIhkActive=false;
+  document.getElementById('exam-timer').textContent='';
+}
+
 examStart.onclick=async()=>{
   const all=await fetchQuestions();
   const chosen=[...examCategories.selectedOptions].map(o=>o.value); const pool=all.filter(q=>chosen.includes(q.category));
   const n=Math.max(5,Math.min(Number(examCount.value||20),100)); const pick=pickN(pool,n);
   if(pick.length===0) return alert('Keine Fragen gefunden. Importiere zuerst.');
   const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte zuerst einloggen.');
+
   examArea.innerHTML='';
   pick.forEach((q,idx)=>{ const el=document.createElement('div'); el.className='card'; const opts=shuffle(q.options.map((t,i)=>({text:t,correct:i===q.correct_index})));
     el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span style="font-size:12px;color:var(--muted)">${q.category}</span></div><div style="color:var(--muted)">Frage ${idx+1}/${n}</div></div>
@@ -375,35 +395,27 @@ examStart.onclick=async()=>{
       const chosen=opts[selected]; const reveal=el.querySelector('.reveal'); reveal.style.display='block'; reveal.textContent=chosen.correct?'✅ Richtig':'❌ Falsch';
       reveal.classList.toggle('ok',chosen.correct); reveal.classList.toggle('err',!chosen.correct);
       bumpSession(1, chosen.correct?1:0); const btn=el.querySelector('.check'); btn.disabled=true; btn.textContent='Gewertet';
+
+      /* NEU: Wenn IHK aktiv, nach jeder Wertung prüfen, ob alle gewertet sind */
+      if (examIhkActive) {
+        const planned = Number(document.getElementById('exam-count').value)||40;
+        const answeredCount = [...document.querySelectorAll('#exam-area .card .reveal')].filter(r=>r.style.display==='block').length;
+        if (answeredCount >= planned) doIhkFinish();
+      }
     };
     examArea.appendChild(el);
   });
 };
-examReset.onclick=()=> examArea.innerHTML='';
+examReset.onclick=()=>{ examArea.innerHTML=''; clearInterval(examTimerHandle); examIhkActive=false; document.getElementById('exam-timer').textContent=''; };
 
 /* IHK Modus (40 Fragen / 60 Minuten) */
-let examTimerHandle=null;
-function startCountdown(seconds, onTick, onEnd){
-  clearInterval(examTimerHandle); let left=seconds; onTick(left);
-  examTimerHandle=setInterval(()=>{ left--; onTick(left); if(left<=0){clearInterval(examTimerHandle); onEnd && onEnd();}},1000);
-}
-function fmtTime(s){ const m=Math.floor(s/60), r=s%60; return `${m}:${String(r).padStart(2,'0')}`; }
 const examIhkBtn=document.getElementById('exam-ihk'); const examTimerEl=document.getElementById('exam-timer');
 examIhkBtn.onclick=async()=>{
-  examCount.value=40; await examStart.click();
+  document.getElementById('exam-count').value=40;
+  examIhkActive=true;
+  await examStart.click();
   const DURATION=60*60;
-  startCountdown(DURATION, (left)=> examTimerEl.textContent=`Zeit: ${fmtTime(left)}`, async ()=>{
-    examTimerEl.textContent='Zeit: 0:00';
-    // Autosubmit
-    let total=0, correct=0;
-    document.querySelectorAll('#exam-area .card').forEach(card=>{
-      const r=card.querySelector('.reveal');
-      if(r && r.style.display==='block'){ total++; if(r.classList.contains('ok')) correct++; }
-    });
-    total=Math.max(total, 40);
-    const user=await getCurrentUser(); if(user) await supa.from('exam_sessions').insert({user_id:user.id,total,correct,detail:null});
-    alert(`Zeit abgelaufen. Ergebnis (gewertet): ${correct}/${total} (${Math.round(correct/total*100)}%)`);
-  });
+  startCountdown(DURATION, (left)=> examTimerEl.textContent=`Zeit: ${fmtTime(left)}`, ()=> doIhkFinish());
 };
 
 /* Admin */
@@ -425,18 +437,18 @@ document.getElementById('reset-progress').onclick=resetSession;
 function attachProgressCloud(){
   async function render(){
     const box=document.getElementById('progress-summary'); if(!box) return;
-    // lokale Kachel bleibt oben, Cloud darunter
-    const existingCloud = box.querySelector('[data-cloud]');
-    if (existingCloud) existingCloud.remove();
+    // lokale Kachel
+    renderProgressLocalOnly();
 
+    // Cloud-Teil
     let totalQuestions=0, totalAnswers=0, correctAnswers=0, learnedDistinct=0, open=0, quote=0;
     try{
       const {count:qCount}=await supa.from('questions').select('id',{head:true,count:'exact'}); totalQuestions=qCount||0;
       const {data:{user}}=await supa.auth.getUser();
       if(user){
-        const all = await supa.from('reviews').select('id',{head:true,count:'exact'}).eq('user_id',user.id);
+        const all = await supa.from('reviews').select('*',{head:true,count:'exact'}).eq('user_id',user.id);
         totalAnswers = all.count||0;
-        const ok = await supa.from('reviews').select('id',{head:true,count:'exact'}).eq('user_id',user.id).eq('correct',true);
+        const ok  = await supa.from('reviews').select('*',{head:true,count:'exact'}).eq('user_id',user.id).eq('correct',true);
         correctAnswers = ok.count||0;
         const learned = await supa.from('reviews').select('question_id',{count:'exact',head:true}).eq('user_id',user.id).eq('correct',true).distinct();
         learnedDistinct = learned.count||0;
@@ -446,17 +458,15 @@ function attachProgressCloud(){
     }catch(e){ console.warn('progress cloud',e); }
 
     const cloud = document.createElement('div');
-    cloud.dataset.cloud='1';
     cloud.className='card';
     cloud.innerHTML = `
       <div><b>Gesamt (Cloud)</b></div>
       <div>Fragen gesamt: <b>${totalQuestions}</b></div>
       <div>Antworten gesamt: <b>${totalAnswers}</b> • Richtig: <b>${correctAnswers}</b> • Quote: <b>${quote}%</b></div>
       <div>Gelernt (mind. 1× richtig): <b>${learnedDistinct}</b> • Offen: <b>${open}</b></div>`;
-    // lokale Box steht oben (prepend), Cloud danach:
     box.appendChild(cloud);
 
-    // Prüfungs-Liste
+    // Prüfungs‑Historie
     const list = document.createElement('div');
     list.className='card';
     list.innerHTML = `<div><b>Letzte Prüfungen</b></div><div id="exams-list" style="margin-top:6px;color:var(--muted)"></div>`;
@@ -468,12 +478,12 @@ function attachProgressCloud(){
         const el=document.getElementById('exams-list');
         if(exams && exams.length){
           el.style.color='inherit';
-          el.innerHTML = exams.map(x=>{const t=x.total||0,c=x.correct||0,q=t?Math.round(c/t*100):0; const d=x.started_at?new Date(x.started_at).toLocaleString():'-'; return `• ${d}: <b>${c}/${t}</b> (${q}%)`;}).join('<br>');
+          el.innerHTML = exams.map(x=>{const t=x.total||0,c=x.correct||0,q=t?Math.round(c/t*100):0; const d=x.started_at? new Date(x.started_at).toLocaleString():'-'; return `• ${d}: <b>${c}/${t}</b> (${q}%)`;}).join('<br>');
         } else el.textContent='Keine Prüfungen vorhanden.';
       } else document.getElementById('exams-list').textContent='Für Cloud-Details bitte einloggen.';
     }catch(e){ console.warn('exams list',e); }
   }
-  render(); // einmal direkt beim Init
+  render();
 }
 
 /* Infos bei leerer DB */
