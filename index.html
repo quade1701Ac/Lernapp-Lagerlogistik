@@ -4,17 +4,20 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Lernapp Lagerlogistik</title>
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
 :root{--line:rgba(255,255,255,.12);--text:#E5E7EB;--muted:#A7B0C3;--primary:#60A5FA;--panel:rgba(255,255,255,.06)}
+*{box-sizing:border-box}
 body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b1020;color:var(--text)}
-.topbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(10,14,28,.85);backdrop-filter:blur(8px)}
+.topbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(10,14,28,.85);backdrop-filter:blur(8px);z-index:10}
 .brand{display:flex;gap:10px;align-items:center}
 .brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
 .nav{display:flex;gap:8px;flex-wrap:wrap}
 .nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
 .container{max-width:980px;margin:0 auto;padding:20px}
-.view{display:none}.view.active{display:block}
+.view{display:none}
+.view.active{display:block}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
 .cards{display:grid;gap:14px}
 .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
@@ -26,18 +29,22 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
 .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
 .options.locked{pointer-events:none;opacity:.85}
 .reveal{margin-top:8px;padding:8px 10px;border-radius:10px;border:1px solid var(--line)}
-.reveal.ok{background:rgba(34,197,94,.13)}.reveal.err{background:rgba(239,68,68,.15)}
-.alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
+.reveal.ok{background:rgba(34,197,94,.13)}
+.reveal.err{background:rgba(239,68,68,.15)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
 .modal.show{display:flex}
 .modal .box{width:min(720px,calc(100% - 32px));background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <div class="logo"></div>
-      <div><b>Lernapp Lagerlogistik</b><div style="font-size:12px;color:var(--muted)">Supabase • Login • Cloud</div></div>
+      <div>
+        <b>Lernapp Lagerlogistik</b>
+        <div style="font-size:12px;color:var(--muted)">Supabase • Login • Cloud</div>
+      </div>
     </div>
     <div class="nav">
       <button data-view="login">Login</button>
@@ -50,7 +57,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
   </header>
 
   <div class="container">
-    <!-- Settings -->
+    <!-- Einstellungen -->
     <div id="settings-modal" class="modal">
       <div class="box">
         <h3>Supabase & Branding</h3>
@@ -90,7 +97,12 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <h3>Lernkarten</h3>
           <div class="row">
             <select id="fc-category"></select>
+            <label class="row" style="gap:6px;align-items:center">
+              <input type="checkbox" id="fc-adaptive"/>
+              <span>Adaptiv (fällige zuerst)</span>
+            </label>
             <button id="fc-load" class="btn primary">Laden</button>
+            <button id="fc-load-due" class="btn">Nur fällige</button>
             <span id="fc-stats" style="color:var(--muted)"></span>
           </div>
         </div>
@@ -109,6 +121,8 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
             <input id="exam-count" type="number" value="20" min="5" max="100" style="width:80px"/>
             <button id="exam-start" class="btn primary">Start</button>
             <button id="exam-reset" class="btn">Reset</button>
+            <button id="exam-ihk" class="btn">IHK‑Start (40/60)</button>
+            <span id="exam-timer" style="color:var(--muted)"></span>
           </div>
         </div>
         <div id="exam-area" class="cards"></div>
@@ -123,7 +137,6 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
         </div>
         <div id="progress-summary" class="cards"></div>
-        <div id="progress-cloud-box" class="cards"></div>
       </div>
     </section>
 
@@ -153,19 +166,18 @@ Falsch 2" required></textarea>
   </div>
 
 <script>
-/* ===== Navigation ===== */
+/* ---------- Navigation ---------- */
 const views=['login','flashcards','exam','progress','admin'];
-document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>{
-  views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view));
-  // bei Tabwechsel ggf. Fortschritt neu zeichnen
-  if (b.dataset.view==='progress') renderProgress(true);
+document.querySelectorAll('.nav button[data-view]').forEach(b=>{
+  b.onclick=()=>views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view));
 });
-const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 
-/* ===== Branding & Config ===== */
+/* ---------- Helpers ---------- */
+const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 const KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
 let supa=null;
 
+/* Branding */
 function applyBranding(){
   const logo = localStorage.getItem(KEY_LOGO);
   const el = document.querySelector('.brand .logo');
@@ -179,10 +191,37 @@ function applyBranding(){
   }
 }
 
+/* Lokale Sitzung (nur Fortschritt-UI) */
+function bumpSession(seenDelta, correctDelta){
+  const p = JSON.parse(localStorage.getItem('session_stats') || '{"seen":0,"correct":0}');
+  p.seen += seenDelta; p.correct += correctDelta;
+  localStorage.setItem('session_stats', JSON.stringify(p));
+  renderProgressLocalOnly();
+}
+function resetSession(){
+  localStorage.removeItem('session_stats');
+  renderProgressLocalOnly();
+}
+function renderProgressLocalOnly(){
+  const box = document.getElementById('progress-summary');
+  if(!box) return;
+  const p = JSON.parse(localStorage.getItem('session_stats') || '{"seen":0,"correct":0}');
+  const acc = p.seen ? Math.round(p.correct/p.seen*100) : 0;
+  const html = `<div class="card"><b>Letzte Sitzung</b><div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div></div>`;
+  const old = box.querySelector('[data-local]');
+  if (old) old.remove();
+  const wrap = document.createElement('div');
+  wrap.dataset.local='1';
+  wrap.className='card';
+  wrap.innerHTML = `<div><b>Letzte Sitzung (lokal)</b></div><div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div>`;
+  box.prepend(wrap);
+}
+
+/* Einstellungen */
 document.getElementById('btn-settings').onclick=()=>{
   document.getElementById('settings-modal').classList.add('show');
   document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||'https://ebqfupcivmkbuadbbnwg.supabase.co';
-  document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'';
+  document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicWZ1cGNpdm1rYnVhZGJibndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MDA5ODIsImV4cCI6MjA3MDQ3Njk4Mn0.P6IiwjFSpqVmObRbvxvY46l6vJlPsxPAc-wbr15Dhl0';
   document.getElementById('cfg-logo').value=localStorage.getItem(KEY_LOGO)||'';
 };
 document.getElementById('cfg-close').onclick=()=>document.getElementById('settings-modal').classList.remove('show');
@@ -196,233 +235,249 @@ document.getElementById('cfg-save').onclick=()=>{
   setTimeout(()=>location.reload(),400);
 };
 
-/* ===== Supabase Init ===== */
+/* Supabase Init */
 async function initClient(){
   const url=localStorage.getItem(KEY_URL)||'https://ebqfupcivmkbuadbbnwg.supabase.co';
-  const anon=localStorage.getItem(KEY_ANON)||'';
+  const anon=localStorage.getItem(KEY_ANON)||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicWZ1cGNpdm1rYnVhZGJibndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MDA5ODIsImV4cCI6MjA3MDQ3Njk4Mn0.P6IiwjFSpqVmObRbvxvY46l6vJlPsxPAc-wbr15Dhl0';
   supa = supabase.createClient(url, anon);
   applyBranding();
-  refreshAuthUI();
-  await Promise.all([refreshSelectors(), refreshExamCategories(), renderAdminList()]);
-  showEmptyHints();
-  renderProgress(true);
+  renderProgressLocalOnly();
+  refreshAuthUI(); await refreshSelectors(); await refreshExamCategories();
+  await renderAdminList(); await showEmptyHints(); attachProgressCloud();
 }
+window.addEventListener('DOMContentLoaded', initClient);
 
-/* ===== Auth ===== */
+/* Auth */
 const email=document.getElementById('email'), password=document.getElementById('password');
 const btnSignup=document.getElementById('btn-signup'), btnLogin=document.getElementById('btn-login'), btnLogout=document.getElementById('btn-logout');
 const authState=document.getElementById('auth-state'), loginEmptyInfo=document.getElementById('login-empty-info');
-
-async function refreshAuthUI(){ const {data:{user}}=await supa.auth.getUser();
+async function refreshAuthUI(){
+  const {data:{user}}=await supa.auth.getUser();
   if(user){btnLogout.disabled=false;btnLogin.disabled=true;btnSignup.disabled=true;authState.textContent=`Eingeloggt: ${user.email}`;}
-  else{btnLogout.disabled=true;btnLogin.disabled=false;btnSignup.disabled=false;authState.textContent='Nicht eingeloggt';}
+  else {btnLogout.disabled=true;btnLogin.disabled=false;btnSignup.disabled=false;authState.textContent='Nicht eingeloggt';}
 }
 btnSignup.onclick=async()=>{const {error}=await supa.auth.signUp({email:email.value,password:password.value}); if(error) alert(error.message); else alert('Registriert. Prüfe dein Postfach.'); refreshAuthUI();};
-btnLogin.onclick=async()=>{const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value}); if(error) alert(error.message); await refreshAuthUI(); renderProgress(true);};
-btnLogout.onclick=async()=>{await supa.auth.signOut(); await refreshAuthUI(); renderProgress(true);};
+btnLogin.onclick=async()=>{const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value}); if(error) alert(error.message); await refreshAuthUI();};
+btnLogout.onclick=async()=>{await supa.auth.signOut(); await refreshAuthUI();};
 
-/* ===== Data Helpers ===== */
+/* Data helpers */
 async function fetchQuestions(){ const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true}); if(error){alert(error.message); return [];} return data||[]; }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
-
-/* ===== Lernkarten ===== */
-const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
-document.getElementById('fc-load').onclick=loadFlashcards;
-async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
-
-function bumpSession(seenDelta, correctDelta){
-  const s = JSON.parse(localStorage.getItem('session_stats')||'{"answered":0,"correct":0}');
-  s.answered += seenDelta; s.correct += correctDelta;
-  localStorage.setItem('session_stats', JSON.stringify(s));
+async function getCurrentUser(){ const {data:{user}}=await supa.auth.getUser(); return user||null; }
+async function fetchUserReviews(userId){
+  if(!userId) return [];
+  const {data,error}=await supa.from('reviews').select('question_id, ts, correct').eq('user_id',userId).order('ts',{ascending:false});
+  return error?[]:(data||[]);
 }
 
-async function loadFlashcards(){
-  const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
+/* Spaced-Repetition Logik */
+function computeDueInfoForQuestion(qid, reviews){
+  const r = reviews.filter(x=>x.question_id===qid);
+  if(r.length===0) return {dueAt:new Date(0), score:999};
+  let streak=0; for(const ans of r){ if(ans.correct) streak++; else break; }
+  const last=r[0];
+  if(!last.correct) return {dueAt:new Date(0), score:998};
+  const days = (streak<=1)?1:(streak===2?3:(streak===3?7:14));
+  const dueAt = new Date(new Date(last.ts).getTime()+days*24*3600*1000);
+  const score = Math.max(0, Math.round((Date.now()-dueAt.getTime())/3600000));
+  return {dueAt, score};
+}
+async function fetchAdaptiveCandidates(category, onlyDue=false, limit=50){
+  const user = await getCurrentUser();
+  const questions = await fetchQuestions();
+  const pool = category ? questions.filter(q=>q.category===category) : questions;
+  if(!user) return pool.slice(0,limit);
+  const reviews = await fetchUserReviews(user.id);
+  const enriched = pool.map(q=>{
+    const {dueAt,score}=computeDueInfoForQuestion(q.id,reviews);
+    return {...q,_dueAt:dueAt,_score:score};
+  });
+  const now=new Date();
+  const filtered = onlyDue ? enriched.filter(x=>x._dueAt<=now) : enriched;
+  filtered.sort((a,b)=>(b._score-a._score)||(a.id>b.id?1:-1));
+  return filtered.slice(0,limit);
+}
+
+/* Lernkarten */
+const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
+document.getElementById('fc-load').onclick=()=>loadFlashcards(false);
+document.getElementById('fc-load-due').onclick=()=>loadFlashcards(true);
+async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
+
+async function loadFlashcards(onlyDue=false){
+  const all=await fetchQuestions();
+  const cat=fcCategory.value;
+  const adaptive=document.getElementById('fc-adaptive').checked;
+
+  let cards=[];
+  if(adaptive) cards = await fetchAdaptiveCandidates(cat, !!onlyDue, 100);
+  else cards = all.filter(x=>x.category===cat);
+
   fcArea.innerHTML='';
-  if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;}
+  if(cards.length===0){
+    fcEmpty.style.display='block';
+    fcEmpty.textContent = adaptive ? 'Keine fälligen Karten in dieser Kategorie.' : 'Keine Fragen in dieser Kategorie. Admin → Import nutzen.';
+    fcStats.textContent='0 Karten';
+    return;
+  }
   fcEmpty.style.display='none';
+
   let n=0;
-  cards.forEach(card=>{
+  for(const card of cards){
     const wrap=document.createElement('div'); wrap.className='card';
     const opts=shuffle(card.options.map((t,i)=>({text:t,correct:i===card.correct_index})));
-    wrap.innerHTML=`<div class="row" style="justify-content:space-between"><div><span style="font-size:12px;color:var(--muted)">${card.category}</span></div><div style="color:var(--muted)">ID: ${card.id}</div></div>
+    wrap.innerHTML=`<div class="row" style="justify-content:space-between">
+      <div><span style="font-size:12px;color:var(--muted)">${card.category}</span></div>
+      <div style="color:var(--muted)">ID: ${card.id}${card._dueAt?` • fällig: ${card._dueAt.toLocaleDateString()}`:''}</div></div>
       <div><b>${card.question}</b></div><div class="options"></div>
       <div class="row" style="margin-top:8px"><button class="btn primary check" disabled>Prüfen</button><button class="btn next">Weiter</button></div>
       <div class="reveal" style="display:none"></div>`;
-    const box=wrap.querySelector('.options'); let selected=-1;
+    const box=wrap.querySelector('.options'); let selected=-1, locked=false;
     opts.forEach((o,i)=>{ const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/><span><b>${String.fromCharCode(65+i)}.</b> ${o.text}</span>`;
-      d.onclick=()=>{ selected=i; [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected'); wrap.querySelector('.check').disabled=false; }; box.appendChild(d); });
+      d.onclick=()=>{ if(locked) return; selected=i; [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected'); wrap.querySelector('.check').disabled=false; }; box.appendChild(d); });
     wrap.querySelector('.check').onclick=async()=>{
       if(selected<0) return alert('Bitte wählen.');
+      locked=true; box.classList.add('locked'); box.querySelectorAll('input[type=radio]').forEach(r=>r.disabled=true);
       const chosen=opts[selected]; const solution=opts.find(o=>o.correct)?.text; const reveal=wrap.querySelector('.reveal');
       reveal.style.display='block'; reveal.textContent = chosen.correct ? '✅ Richtig!' : `❌ Falsch. Richtig: ${solution}`;
       reveal.classList.toggle('ok',chosen.correct); reveal.classList.toggle('err',!chosen.correct);
       bumpSession(1, chosen.correct?1:0);
-      const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:chosen.correct});
+      const user = await getCurrentUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:chosen.correct});
+      wrap.querySelector('.check').disabled=true; wrap.querySelector('.check').textContent='Gewertet';
     };
     wrap.querySelector('.next').onclick=()=>wrap.remove();
     fcArea.appendChild(wrap); n++;
-  });
-  fcStats.textContent=`${n} Karten geladen`;
+  }
+  fcStats.textContent=`${n} Karten geladen${adaptive? ' (adaptiv)':''}${onlyDue?' – nur fällige':''}`;
 }
 
-/* ===== Prüfung ===== */
+/* Prüfung */
 const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count');
 const examStart=document.getElementById('exam-start'), examReset=document.getElementById('exam-reset'), examArea=document.getElementById('exam-area');
 async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
 function pickN(a,n){ const b=shuffle(a); return b.slice(0,Math.max(0,Math.min(n,b.length))); }
 
 examStart.onclick=async()=>{
-  const all=await fetchQuestions(); const chosen=[...examCategories.selectedOptions].map(o=>o.value); const pool=all.filter(q=>chosen.includes(q.category));
+  const all=await fetchQuestions();
+  const chosen=[...examCategories.selectedOptions].map(o=>o.value); const pool=all.filter(q=>chosen.includes(q.category));
   const n=Math.max(5,Math.min(Number(examCount.value||20),100)); const pick=pickN(pool,n);
   if(pick.length===0) return alert('Keine Fragen gefunden. Importiere zuerst.');
   const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte zuerst einloggen.');
-  const session={items:[],total:n,correct:0}; examArea.innerHTML='';
-  pick.forEach((q,idx)=>{
-    const el=document.createElement('div'); el.className='card'; const opts=shuffle(q.options.map((t,i)=>({text:t,correct:i===q.correct_index})));
+  examArea.innerHTML='';
+  pick.forEach((q,idx)=>{ const el=document.createElement('div'); el.className='card'; const opts=shuffle(q.options.map((t,i)=>({text:t,correct:i===q.correct_index})));
     el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span style="font-size:12px;color:var(--muted)">${q.category}</span></div><div style="color:var(--muted)">Frage ${idx+1}/${n}</div></div>
       <div><b>${q.question}</b></div><div class="options"></div><div class="row" style="margin-top:8px"><button class="btn primary check" disabled>Antwort prüfen</button></div><div class="reveal" style="display:none"></div>`;
     const box=el.querySelector('.options'); let selected=-1,locked=false;
     opts.forEach((o,i)=>{ const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/><span><b>${String.fromCharCode(65+i)}.</b> ${o.text}</span>`;
       d.onclick=()=>{ if(locked) return; selected=i; [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected'); el.querySelector('.check').disabled=false; }; box.appendChild(d); });
-    el.querySelector('.check').onclick=()=>{
-      if(locked) return; if(selected<0) return alert('Bitte wählen.');
+    el.querySelector('.check').onclick=()=>{ if(locked) return; if(selected<0) return alert('Bitte wählen.');
       locked=true; box.classList.add('locked'); box.querySelectorAll('input[type=radio]').forEach(r=>r.disabled=true);
       const chosen=opts[selected]; const reveal=el.querySelector('.reveal'); reveal.style.display='block'; reveal.textContent=chosen.correct?'✅ Richtig':'❌ Falsch';
       reveal.classList.toggle('ok',chosen.correct); reveal.classList.toggle('err',!chosen.correct);
-      session.items.push({qid:q.id,selected:opts[selected].text,correct:chosen.correct}); if(chosen.correct) session.correct++;
-      bumpSession(1, chosen.correct?1:0);
-      const btn=el.querySelector('.check'); btn.disabled=true; btn.textContent='Gewertet';
+      bumpSession(1, chosen.correct?1:0); const btn=el.querySelector('.check'); btn.disabled=true; btn.textContent='Gewertet';
     };
     examArea.appendChild(el);
   });
-  const footer=document.createElement('div'); footer.className='row';
-  const finish=document.createElement('button'); finish.className='btn primary'; finish.textContent='Ergebnis anzeigen';
-  footer.appendChild(finish); examArea.appendChild(footer);
-  finish.onclick=async()=>{ const percent=Math.round((session.correct/session.total)*100); alert(`Ergebnis: ${session.correct}/${session.total} (${percent}%)`);
-    const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('exam_sessions').insert({user_id:user.id,total:session.total,correct:session.correct,detail:session.items}); renderProgress(true); };
 };
 examReset.onclick=()=> examArea.innerHTML='';
 
-/* ===== Admin ===== */
-const adminList=document.getElementById('admin-list');
-async function renderAdminList(){
-  const q=await fetchQuestions();
-  adminList.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between"><div><span style="font-size:12px;color:var(--muted)">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div><div><b>${x.question}</b></div></div>`).join('');
-  adminList.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{
-    const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id);
-    if(error) alert(error.message); else renderAdminList();
+/* IHK Modus (40 Fragen / 60 Minuten) */
+let examTimerHandle=null;
+function startCountdown(seconds, onTick, onEnd){
+  clearInterval(examTimerHandle); let left=seconds; onTick(left);
+  examTimerHandle=setInterval(()=>{ left--; onTick(left); if(left<=0){clearInterval(examTimerHandle); onEnd && onEnd();}},1000);
+}
+function fmtTime(s){ const m=Math.floor(s/60), r=s%60; return `${m}:${String(r).padStart(2,'0')}`; }
+const examIhkBtn=document.getElementById('exam-ihk'); const examTimerEl=document.getElementById('exam-timer');
+examIhkBtn.onclick=async()=>{
+  examCount.value=40; await examStart.click();
+  const DURATION=60*60;
+  startCountdown(DURATION, (left)=> examTimerEl.textContent=`Zeit: ${fmtTime(left)}`, async ()=>{
+    examTimerEl.textContent='Zeit: 0:00';
+    // Autosubmit
+    let total=0, correct=0;
+    document.querySelectorAll('#exam-area .card').forEach(card=>{
+      const r=card.querySelector('.reveal');
+      if(r && r.style.display==='block'){ total++; if(r.classList.contains('ok')) correct++; }
+    });
+    total=Math.max(total, 40);
+    const user=await getCurrentUser(); if(user) await supa.from('exam_sessions').insert({user_id:user.id,total,correct,detail:null});
+    alert(`Zeit abgelaufen. Ergebnis (gewertet): ${correct}/${total} (${Math.round(correct/total*100)}%)`);
   });
-}
-document.getElementById('admin-export').onclick=async()=>{
-  const q=await fetchQuestions(); const blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fragen_export_supabase.json'; a.click(); URL.revokeObjectURL(url);
-};
-document.getElementById('admin-import').onchange=async(e)=>{
-  const f=e.target.files?.[0]; if(!f) return; const text=await f.text();
-  try{
-    const data=JSON.parse(text); if(!Array.isArray(data)) throw new Error('Erwarte Array');
-    const cleaned=data.map(x=>{const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex};});
-    for(const item of cleaned){const {error}=await supa.from('questions').upsert(item,{onConflict:'id'}); if(error) console.warn('Fehler',item.id,error.message);}
-    alert('Import abgeschlossen'); renderAdminList(); await refreshSelectors(); await refreshExamCategories(); renderProgress(true);
-  }catch(err){alert('Import fehlgeschlagen: '+err.message);}
 };
 
-/* ===== Fortschritt (lokal + Cloud) ===== */
-function getLocalSessionStats(){
-  const s = JSON.parse(localStorage.getItem("session_stats") || '{"answered":0,"correct":0}');
-  return { answered: s.answered||0, correct: s.correct||0, quote: (s.answered? Math.round(s.correct/s.answered*100):0) };
+/* Admin */
+const adminList=document.getElementById('admin-list');
+async function renderAdminList(){ const q=await fetchQuestions();
+  adminList.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between"><div><span style="font-size:12px;color:var(--muted)">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div><div><b>${x.question}</b></div></div>`).join('');
+  adminList.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id); if(error) alert(error.message); else renderAdminList();});
 }
-async function renderProgress(force=false){
-  const progressView = document.getElementById('view-progress');
-  const isActive = progressView && progressView.classList.contains('active');
-  if(!isActive && !force) return;
+document.getElementById('admin-export').onclick=async()=>{const q=await fetchQuestions(); const blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fragen_export_supabase.json'; a.click(); URL.revokeObjectURL(url);};
+document.getElementById('admin-import').onchange=async(e)=>{const f=e.target.files?.[0]; if(!f) return; const text=await f.text(); try{const data=JSON.parse(text); if(!Array.isArray(data)) throw new Error('Erwarte Array');
+  const cleaned=data.map(x=>{const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex};});
+  for(const item of cleaned){const {error}=await supa.from('questions').upsert(item,{onConflict:'id'}); if(error) console.warn('Fehler',item.id,error.message);}
+  alert('Import abgeschlossen'); renderAdminList(); await refreshSelectors(); await refreshExamCategories();
+}catch(err){alert('Import fehlgeschlagen: '+err.message);}};
 
-  // Lokale Box
-  const local = getLocalSessionStats();
-  document.getElementById('progress-summary').innerHTML =
-    `<div class="card"><b>Letzte Sitzung (lokal)</b><div>Beantwortet: <b>${local.answered}</b> • Richtig: <b>${local.correct}</b> • Quote: <b>${local.quote}%</b></div></div>`;
+/* Fortschritt (Cloud + lokal) */
+document.getElementById('reset-progress').onclick=resetSession;
 
-  // Cloud Box (nur, wenn Supabase & Benutzer)
-  const box = document.getElementById('progress-cloud-box'); box.innerHTML = '';
-  if(!supa){ box.innerHTML = `<div class="card">Cloud‑Statistik: Supabase‑Client nicht gefunden.</div>`; return; }
+function attachProgressCloud(){
+  async function render(){
+    const box=document.getElementById('progress-summary'); if(!box) return;
+    // lokale Kachel bleibt oben, Cloud darunter
+    const existingCloud = box.querySelector('[data-cloud]');
+    if (existingCloud) existingCloud.remove();
 
-  const {data:{user}} = await supa.auth.getUser();
-  // Gesamtfragen
-  let totalQuestions = 0;
-  try{
-    const { count } = await supa.from("questions").select("id", { head: true, count: "exact" });
-    totalQuestions = count || 0;
-  }catch(e){}
+    let totalQuestions=0, totalAnswers=0, correctAnswers=0, learnedDistinct=0, open=0, quote=0;
+    try{
+      const {count:qCount}=await supa.from('questions').select('id',{head:true,count:'exact'}); totalQuestions=qCount||0;
+      const {data:{user}}=await supa.auth.getUser();
+      if(user){
+        const all = await supa.from('reviews').select('id',{head:true,count:'exact'}).eq('user_id',user.id);
+        totalAnswers = all.count||0;
+        const ok = await supa.from('reviews').select('id',{head:true,count:'exact'}).eq('user_id',user.id).eq('correct',true);
+        correctAnswers = ok.count||0;
+        const learned = await supa.from('reviews').select('question_id',{count:'exact',head:true}).eq('user_id',user.id).eq('correct',true).distinct();
+        learnedDistinct = learned.count||0;
+      }
+      open=Math.max(0,totalQuestions-learnedDistinct);
+      quote=totalAnswers?Math.round(correctAnswers/totalAnswers*100):0;
+    }catch(e){ console.warn('progress cloud',e); }
 
-  if(!user){
-    box.innerHTML = `
-      <div class="card">
-        <div class="card-head"><b>Gesamt (Cloud)</b></div>
-        <div>Fragen gesamt: <b>${totalQuestions}</b></div>
-        <div style="margin-top:8px;color:var(--muted)">Für Cloud‑Details bitte einloggen.</div>
-      </div>`;
-    return;
-  }
-
-  // Antworten & gelernt
-  let totalAnswers=0, correctAnswers=0, learnedDistinct=0;
-  try{
-    const all = await supa.from("reviews").select("id", { head:true, count:"exact" }).eq("user_id", user.id);
-    totalAnswers = all.count||0;
-    const ok  = await supa.from("reviews").select("id", { head:true, count:"exact" }).eq("user_id", user.id).eq("correct", true);
-    correctAnswers = ok.count||0;
-    const learned = await supa.from("reviews").select("question_id", { head:true, count:"exact" }).eq("user_id", user.id).eq("correct", true).distinct();
-    learnedDistinct = learned.count||0;
-  }catch(e){}
-
-  const open = Math.max(0, totalQuestions - learnedDistinct);
-  const quote = totalAnswers ? Math.round((correctAnswers/totalAnswers)*100) : 0;
-
-  // Letzte Prüfungen
-  let examsHtml = `Keine Prüfungen vorhanden.`;
-  try{
-    const { data: exams } = await supa.from("exam_sessions")
-      .select("id, started_at, total, correct")
-      .eq("user_id", user.id)
-      .order("started_at", { ascending:false })
-      .limit(5);
-    if(exams?.length){
-      examsHtml = exams.map(x=>{
-        const t=x.total||0, c=x.correct||0, q=t?Math.round((c/t)*100):0;
-        const d=x.started_at? new Date(x.started_at).toLocaleString() : '-';
-        return `<div>• ${d}: <b>${c}/${t}</b> (${q}%)</div>`;
-      }).join("");
-    }
-  }catch(e){}
-
-  box.innerHTML = `
-    <div class="card">
-      <div class="card-head"><b>Gesamt (Cloud)</b></div>
+    const cloud = document.createElement('div');
+    cloud.dataset.cloud='1';
+    cloud.className='card';
+    cloud.innerHTML = `
+      <div><b>Gesamt (Cloud)</b></div>
       <div>Fragen gesamt: <b>${totalQuestions}</b></div>
       <div>Antworten gesamt: <b>${totalAnswers}</b> • Richtig: <b>${correctAnswers}</b> • Quote: <b>${quote}%</b></div>
-      <div>Gelernt (≥1× richtig): <b>${learnedDistinct}</b> • Offen: <b>${open}</b></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><b>Letzte Prüfungen</b></div>
-      ${examsHtml}
-    </div>`;
+      <div>Gelernt (mind. 1× richtig): <b>${learnedDistinct}</b> • Offen: <b>${open}</b></div>`;
+    // lokale Box steht oben (prepend), Cloud danach:
+    box.appendChild(cloud);
+
+    // Prüfungs-Liste
+    const list = document.createElement('div');
+    list.className='card';
+    list.innerHTML = `<div><b>Letzte Prüfungen</b></div><div id="exams-list" style="margin-top:6px;color:var(--muted)"></div>`;
+    box.appendChild(list);
+    try{
+      const {data:{user}}=await supa.auth.getUser();
+      if(user){
+        const {data:exams}=await supa.from('exam_sessions').select('started_at,total,correct').eq('user_id',user.id).order('started_at',{ascending:false}).limit(5);
+        const el=document.getElementById('exams-list');
+        if(exams && exams.length){
+          el.style.color='inherit';
+          el.innerHTML = exams.map(x=>{const t=x.total||0,c=x.correct||0,q=t?Math.round(c/t*100):0; const d=x.started_at?new Date(x.started_at).toLocaleString():'-'; return `• ${d}: <b>${c}/${t}</b> (${q}%)`;}).join('<br>');
+        } else el.textContent='Keine Prüfungen vorhanden.';
+      } else document.getElementById('exams-list').textContent='Für Cloud-Details bitte einloggen.';
+    }catch(e){ console.warn('exams list',e); }
+  }
+  render(); // einmal direkt beim Init
 }
 
-document.getElementById('reset-progress').onclick=()=>{
-  localStorage.removeItem('session_stats');
-  renderProgress(true);
-};
-
-/* ===== Hints ===== */
-async function showEmptyHints(){
-  const all=await fetchQuestions();
-  const hint=document.getElementById('login-empty-info');
-  if(!all.length){ hint.style.display='block'; hint.innerHTML='Noch keine Fragen in der Datenbank. Admin → Import nutzen.'; }
-  else hint.style.display='none';
-}
-
-window.addEventListener('DOMContentLoaded', initClient);
+/* Infos bei leerer DB */
+async function showEmptyHints(){ const all=await fetchQuestions(); const hint=document.getElementById('login-empty-info'); if(!all.length){ hint.style.display='block'; hint.innerHTML='Noch keine Fragen in der Datenbank. Admin → Import nutzen.'; } else hint.style.display='none'; }
 </script>
 </body>
 </html>
