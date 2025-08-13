@@ -1,64 +1,68 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Lernapp Lagerlogistik</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Ccircle cx='64' cy='64' r='64' fill='%23131a32'/%3E%3Ccircle cx='64' cy='64' r='52' fill='%2360A5FA'/%3E%3C/svg%3E">
-<!-- Libs -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Lernapp Lagerlogistik</title>
 
-<style>
-:root{--line:rgba(255,255,255,.12);--text:#E5E7EB;--muted:#A7B0C3;--primary:#60A5FA;--panel:rgba(255,255,255,.06)}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b1020;color:var(--text)}
-.topbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(10,14,28,.85);backdrop-filter:blur(8px);z-index:5}
-.brand{display:flex;gap:10px;align-items:center}
-.brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
-.nav{display:flex;gap:8px;flex-wrap:wrap}
-.nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
-.container{max-width:1100px;margin:0 auto;padding:20px}
-.view{display:none}.view.active{display:block}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
-.cards{display:grid;gap:14px}
-.card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-.btn{border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--text)}
-.btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
-.chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
-.option{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer}
-.option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
-.muted{color:var(--muted)}
-.alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- jsPDF für den PDF-Export -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-/* Sticky Submit */
-#exam-submit-sticky{position:fixed;right:20px;bottom:20px;padding:12px 18px;border-radius:12px;border:1px solid var(--line);background:#2563EB;color:#fff;font-weight:600;cursor:pointer;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-#exam-submit-sticky[disabled]{opacity:.6;cursor:not-allowed}
+  <style>
+    :root{--line:rgba(255,255,255,.12);--text:#E5E7EB;--muted:#A7B0C3;--primary:#60A5FA;--panel:rgba(255,255,255,.06)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b1020;color:var(--text)}
+    .topbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(10,14,28,.85);backdrop-filter:blur(8px);z-index:5}
+    .brand{display:flex;gap:10px;align-items:center}
+    .brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
+    .nav{display:flex;gap:8px;flex-wrap:wrap}
+    .nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
+    .container{max-width:1000px;margin:0 auto;padding:20px}
+    .view{display:none}.view.active{display:block}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+    .cards{display:grid;gap:14px}
+    .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+    .btn{border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--text)}
+    .btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
+    .chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+    .option{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer}
+    .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
+    .muted{color:var(--muted)}
 
-/* Modal */
-.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
-.modal.show{display:flex}
-.modal .backdrop{position:absolute;inset:0;background:#0b1020e6;backdrop-filter:blur(6px)}
-.modal .box{position:relative;width:min(980px,calc(100% - 32px));max-height:90vh;overflow:auto;background:#0f1427;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.55)}
-.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 10px}
-.stat{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03)}
-.stat .val{font-size:22px;font-weight:800;margin-top:4px}
-.chart-box{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:12px}
-</style>
+    /* Modal (Einstellungen + Ergebnis) */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
+    .modal.show{display:flex}
+    .modal .backdrop{position:absolute;inset:0;background:#0b1020e6;backdrop-filter:blur(6px)}
+    .modal .box{position:relative;width:min(980px,calc(100% - 32px));max-height:90vh;overflow:auto;background:#0f1427;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.55)}
+
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:8px 0 10px}
+    .stat{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03)}
+    .stat .val{font-size:22px;font-weight:800;margin-top:4px}
+    .alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
+
+    /* Sticky-Abgeben-Button (IHK-Modus) */
+    #exam-submit-sticky{
+      position: fixed; right: 20px; bottom: 20px;
+      padding: 12px 18px; border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #2563EB; color: #fff; font-weight: 600;
+      cursor: pointer; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
+  </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><div class="logo" id="brand-logo"></div><div><b>Lernapp Lagerlogistik</b><div style="font-size:12px;color:var(--muted)">Supabase • Login • Cloud</div></div></div>
+    <div class="brand"><div class="logo"></div><div><b>Lernapp Lagerlogistik</b><div style="font-size:12px;color:var(--muted)">Supabase • Login • Cloud</div></div></div>
     <div class="nav">
       <button data-view="login">Login</button>
       <button data-view="flashcards">Lernkarten</button>
       <button data-view="train">Adaptiv</button>
       <button data-view="exam">Prüfung</button>
-      <button data-view="stats">Statistik</button>
-      <button data-view="archive">Archiv</button>
       <button data-view="progress">Fortschritt</button>
       <button data-view="admin">Admin</button>
       <button id="btn-settings">Einstellungen</button>
@@ -120,7 +124,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
       </div>
     </section>
 
-    <!-- Lernkarten -->
+    <!-- Lernkarten (klassisch) -->
     <section id="view-flashcards" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -142,7 +146,9 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         <div class="row" style="justify-content:space-between;align-items:flex-end">
           <div>
             <h3>Adaptiv trainieren</h3>
-            <div class="muted" style="max-width:720px">Ab 3× korrekt in Folge → „gelernt“ (mit Cooldown); Schwächen kommen häufiger.</div>
+            <div class="muted" style="max-width:720px">
+              Wiederholt Fragen mit niedriger Quote häufiger. Ab 3× korrekt in Folge → „gelernt“ und ausgeblendet (mit Cooldown).
+            </div>
           </div>
           <div class="row">
             <select id="train-category"><option value="">Alle Kategorien</option></select>
@@ -156,7 +162,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
       </div>
     </section>
 
-    <!-- Prüfung -->
+    <!-- Prüfung (IHK 2.0) -->
     <section id="view-exam" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -175,60 +181,14 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
       </div>
     </section>
 
-    <!-- Statistik -->
-    <section id="view-stats" class="view">
-      <div class="panel">
-        <div class="row" style="justify-content:space-between;align-items:flex-end">
-          <h3>Statistik</h3>
-          <div class="row">
-            <select id="stats-range">
-              <option value="7">7 Tage</option>
-              <option value="30" selected>30 Tage</option>
-              <option value="90">90 Tage</option>
-              <option value="all">Alle</option>
-            </select>
-            <button id="stats-refresh" class="btn">Aktualisieren</button>
-          </div>
-        </div>
-        <div class="cards" style="margin-top:10px">
-          <div class="chart-box"><canvas id="chart-accuracy"></canvas></div>
-          <div class="chart-box"><canvas id="chart-daily"></canvas></div>
-          <div id="stats-topcats" class="card"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Archiv -->
-    <section id="view-archive" class="view">
-      <div class="panel">
-        <div class="row" style="justify-content:space-between;align-items:flex-end">
-          <h3>Prüfungsarchiv</h3>
-          <div class="row">
-            <input id="arch-from" type="date"/>
-            <input id="arch-to" type="date"/>
-            <button id="arch-load" class="btn">Filtern</button>
-          </div>
-        </div>
-        <div id="archive-list" class="cards" style="margin-top:10px"></div>
-      </div>
-    </section>
-
     <!-- Fortschritt -->
     <section id="view-progress" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
-          <h3>Dein Fortschritt & Lernziel</h3>
-          <div class="row">
-            <input id="goal-daily" type="number" min="5" max="200" value="20" style="width:90px"/>
-            <button id="goal-save" class="btn">Ziel speichern</button>
-            <button id="goal-remind" class="btn">Erinnern (heute)</button>
-          </div>
-        </div>
-        <div id="goal-status" class="card"></div>
-        <div class="row" style="margin-top:10px;justify-content:space-between">
+          <h3>Dein Fortschritt</h3>
           <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
         </div>
-        <div id="progress-summary" class="cards" style="margin-top:10px"></div>
+        <div id="progress-summary" class="cards"></div>
       </div>
     </section>
 
@@ -242,6 +202,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
             <input type="file" id="admin-import" accept="application/json" multiple/>
           </div>
         </div>
+
         <div class="card">
           <h4>Kategorie verwalten</h4>
           <div class="row">
@@ -251,14 +212,16 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
             <span id="admin-cat-state" class="muted"></span>
           </div>
         </div>
+
         <div class="card">
           <h4>Duplikate scannen</h4>
           <div class="row">
             <button id="admin-scan-dup" class="btn">Scan starten</button>
-            <span class="muted">Scannt gleiche <b>ID</b> oder gleiche <b>Fragentexte</b>.</span>
+            <span class="muted">Scannt gleiche <b>ID</b> oder sehr ähnliche <b>Fragentexte</b>.</span>
           </div>
           <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
         </div>
+
         <form id="admin-form" onsubmit="return false;" class="card">
           <h4>Neue Frage</h4>
           <input id="ad-category" placeholder="z.B. LL01/2 – Güter kontrollieren" required/>
@@ -269,359 +232,338 @@ Falsch 2" required></textarea>
           <textarea id="ad-expl" rows="2" placeholder="Erklärung (optional)"></textarea>
           <div class="row"><button id="admin-save" class="btn primary">Speichern (DB)</button></div>
         </form>
+
         <div id="admin-list" class="cards"></div>
       </div>
     </section>
   </div>
 
 <script>
-/* ---------- Basiskonstanten & Branding ---------- */
+/* ====== Utilities / Setup ====== */
+const views=['login','flashcards','train','exam','progress','admin'];
+document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view)));
+const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
+
 const KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
 let supa=null;
 
-/* Logo unabhängig von Supabase anwenden */
 function applyBranding(){
-  try{
-    const logo = localStorage.getItem(KEY_LOGO);
-    const el = document.getElementById('brand-logo');
-    if(!el) return;
-    if(logo){
-      el.style.background='none';
-      el.style.backgroundImage=`url(${logo})`;
-      el.style.backgroundSize='cover';
-      el.style.backgroundPosition='center';
-      el.style.border='1px solid var(--line)';
-    }else{
-      el.style.background='conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)';
-      el.style.border='none';
-    }
-  }catch{}
+  const logo = localStorage.getItem(KEY_LOGO);
+  const el = document.querySelector('.brand .logo');
+  if (logo && el){ el.style.background='none'; el.style.backgroundImage=`url(${logo})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.border='1px solid var(--line)'; }
 }
 
-/* ---------- Navigation ---------- */
-function bindNavigation(){
-  const views=['login','flashcards','train','exam','stats','archive','progress','admin'];
-  const show=(v)=>views.forEach(x=>document.getElementById('view-'+x).classList.toggle('active',x===v));
-  document.querySelectorAll('.nav button[data-view]').forEach(btn=>{
-    btn.addEventListener('click', ()=>show(btn.dataset.view));
-  });
-  show('login');
-}
+/* ====== Einstellungen ====== */
+document.getElementById('btn-settings').onclick=()=>{document.getElementById('settings-modal').classList.add('show');
+  document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||'';
+  document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'';
+  document.getElementById('cfg-logo').value=localStorage.getItem(KEY_LOGO)||'';
+};
+document.getElementById('cfg-close').onclick=()=>document.getElementById('settings-modal').classList.remove('show');
+document.getElementById('cfg-save').onclick=()=>{localStorage.setItem(KEY_URL, document.getElementById('cfg-url').value.trim());
+  localStorage.setItem(KEY_ANON, document.getElementById('cfg-key').value.trim());
+  const logo=document.getElementById('cfg-logo').value.trim();
+  if(logo) localStorage.setItem(KEY_LOGO, logo); else localStorage.removeItem(KEY_LOGO);
+  applyBranding(); document.getElementById('cfg-state').textContent='Gespeichert. Seite lädt neu...';
+  setTimeout(()=>location.reload(),400);
+};
 
-/* ---------- Einstellungen ---------- */
-function bindSettings(){
-  const modal=document.getElementById('settings-modal');
-  document.getElementById('btn-settings').onclick=()=>{
-    modal.classList.add('show');
-    document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||'';
-    document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'';
-    document.getElementById('cfg-logo').value=localStorage.getItem(KEY_LOGO)||'';
-  };
-  document.getElementById('cfg-close').onclick=()=>modal.classList.remove('show');
-  document.getElementById('cfg-save').onclick=()=>{
-    localStorage.setItem(KEY_URL, document.getElementById('cfg-url').value.trim());
-    localStorage.setItem(KEY_ANON, document.getElementById('cfg-key').value.trim());
-    const logo=document.getElementById('cfg-logo').value.trim();
-    if(logo) localStorage.setItem(KEY_LOGO, logo); else localStorage.removeItem(KEY_LOGO);
-    applyBranding();
-    document.getElementById('cfg-state').textContent='Gespeichert. Seite lädt neu...';
-    setTimeout(()=>location.reload(),400);
-  };
-}
-
-/* ---------- Fortschritt lokal ---------- */
-function bumpProgress(seenDelta, correctDelta){
-  const p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
-  p.seen += seenDelta; p.correct += correctDelta;
-  localStorage.setItem('progress_local', JSON.stringify(p));
-  renderProgress();
-}
-function renderProgress(){
-  const p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
-  const acc = p.seen ? Math.round(p.correct/p.seen*100) : 0;
-  const box=document.getElementById('progress-summary');
-  if(box) box.innerHTML =
-    `<div class="card"><b>Letzte Sitzung</b><div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div></div>`;
-}
-function bindProgressButtons(){
-  const reset=document.getElementById('reset-progress');
-  if(reset) reset.onclick=()=>{localStorage.removeItem('progress_local'); renderProgress();};
-}
-
-/* ---------- Supabase Init ---------- */
-async function initClientSafe(){
+/* ====== Supabase Init ====== */
+async function initClient(){
   const url=localStorage.getItem(KEY_URL)||'';
   const anon=localStorage.getItem(KEY_ANON)||'';
-  if(!url || !anon){
-    const info=document.getElementById('login-empty-info');
-    if(info){ info.style.display='block'; info.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.'; }
-    return;
-  }
+  if(!url || !anon){ document.getElementById('login-empty-info').style.display='block'; document.getElementById('login-empty-info').textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.'; applyBranding(); return; }
   supa = supabase.createClient(url, anon);
+  applyBranding();
+  renderProgress();
+  refreshAuthUI(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await renderAdminList(); await showEmptyHints(); await fillAdminCatSelect();
 }
 
-/* ---------- Auth ---------- */
-function bindAuth(){
-  const email=document.getElementById('email'), password=document.getElementById('password');
-  const btnSignup=document.getElementById('btn-signup'), btnLogin=document.getElementById('btn-login'), btnLogout=document.getElementById('btn-logout');
-  const authState=document.getElementById('auth-state');
+/* ====== Auth ====== */
+const email=document.getElementById('email'), password=document.getElementById('password');
+const btnSignup=document.getElementById('btn-signup'), btnLogin=document.getElementById('btn-login'), btnLogout=document.getElementById('btn-logout');
+const authState=document.getElementById('auth-state'), loginEmptyInfo=document.getElementById('login-empty-info');
 
-  async function refreshAuthUI(){
-    if(!supa){ authState.textContent='Offline‑Modus (kein Supabase konfiguriert)'; btnLogout.disabled=true; return; }
-    const {data:{user}}=await supa.auth.getUser();
-    if(user){btnLogout.disabled=false;btnLogin.disabled=true;btnSignup.disabled=true;authState.textContent=`Eingeloggt: ${user.email}`;}
-    else {btnLogout.disabled=true;btnLogin.disabled=false;btnSignup.disabled=false;authState.textContent='Nicht eingeloggt';}
-  }
+async function refreshAuthUI(){ if(!supa) return; const {data:{user}}=await supa.auth.getUser();
+  if(user){btnLogout.disabled=false;btnLogin.disabled=true;btnSignup.disabled=true;authState.textContent=`Eingeloggt: ${user.email}`;} else {
+    btnLogout.disabled=true;btnLogin.disabled=false;btnSignup.disabled=false;authState.textContent='Nicht eingeloggt';} }
+btnSignup.onclick=async()=>{const {error}=await supa.auth.signUp({email:email.value,password:password.value}); if(error) alert(error.message); else alert('Registriert. Prüfe dein Postfach.'); refreshAuthUI();};
+btnLogin.onclick=async()=>{const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value}); if(error) alert(error.message); await refreshAuthUI();};
+btnLogout.onclick=async()=>{await supa.auth.signOut(); await refreshAuthUI();};
 
-  btnSignup.onclick=async()=>{
-    if(!supa) return alert('Supabase nicht konfiguriert.');
-    const {error}=await supa.auth.signUp({email:email.value,password:password.value});
-    if(error) alert(error.message); else alert('Registriert. Prüfe dein Postfach.');
-    refreshAuthUI();
-  };
-  btnLogin.onclick=async()=>{
-    if(!supa) return alert('Supabase nicht konfiguriert.');
-    const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value});
-    if(error) alert(error.message);
-    refreshAuthUI();
-  };
-  btnLogout.onclick=async()=>{ if(supa) await supa.auth.signOut(); refreshAuthUI(); };
-
-  refreshAuthUI();
-}
-
-/* ---------- Fragen & Kategorien (mit Cache) ---------- */
-const LOCAL_Q='questions_cache_v1';
-async function fetchQuestionsOnline(){
-  const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
-  if(error) throw error; return data||[];
-}
-async function fetchQuestions(){
-  if(!supa){
-    const cached = JSON.parse(localStorage.getItem(LOCAL_Q)||'null');
-    return (cached && Array.isArray(cached.items)) ? cached.items : [];
-  }
-  try{
-    const online=await fetchQuestionsOnline();
-    localStorage.setItem(LOCAL_Q, JSON.stringify({ts:Date.now(), items:online}));
-    return online;
-  }catch(e){
-    const cached = JSON.parse(localStorage.getItem(LOCAL_Q)||'null');
-    return (cached && Array.isArray(cached.items)) ? cached.items : [];
-  }
-}
+/* ====== Data helpers ====== */
+async function fetchQuestions(){ if(!supa) return []; const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true}); if(error){alert(error.message); return [];} return data||[]; }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 
-/* ---------- Lernkarten ---------- */
-function bindFlashcards(){
-  const fcCategory=document.getElementById('fc-category');
-  const fcArea=document.getElementById('fc-area');
-  const fcStats=document.getElementById('fc-stats');
-  const fcEmpty=document.getElementById('fc-empty');
-
-  async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
-  async function loadFlashcards(){
-    const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
-    fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
-    let n=0; cards.forEach(card=>{
-      const wrap=document.createElement('div'); wrap.className='card';
-      const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
-      wrap.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${card.category}</span></div><div class="muted">ID: ${card.id}</div></div>
-        <div><b>${card.question}</b></div><div class="options"></div><div class="reveal" style="display:none"></div>`;
-      const box=wrap.querySelector('.options');
-      opts.forEach((o,i)=>{
-        const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/><span>${o.text}</span>`;
-        d.onclick=async()=>{
-          [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
-          const ok = i===opts.findIndex(z=>z.correct);
-          const reveal=wrap.querySelector('.reveal'); reveal.style.display='block';
-          reveal.textContent = ok? '✅ Richtig!' : `❌ Falsch. Richtig: ${opts.find(o=>o.correct)?.text}`;
-          bumpProgress(1, ok?1:0);
-          if(supa){ const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok}); }
-        };
-        box.appendChild(d);
-      });
-      fcArea.appendChild(wrap); n++;
-    }); fcStats.textContent=`${n} Karten`;
-  }
-  document.getElementById('fc-load').onclick=loadFlashcards;
-  refreshSelectors();
-}
-
-/* ---------- Adaptives Training ---------- */
-function bindAdaptive(){
-  const trCategory=document.getElementById('train-category');
-  const trWeak=document.getElementById('train-weak');
-  const trHideLearned=document.getElementById('train-hide-learned');
-  const trNext=document.getElementById('train-next');
-  const trArea=document.getElementById('train-area');
-  const trEmpty=document.getElementById('train-empty');
-
-  async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option>${c}</option>`).join(''); }
-  function cooldownDaysForStreak(s){ if(s>=5) return 14; if(s>=4) return 7; if(s>=3) return 3; if(s>=2) return 1; return 0; }
-  async function fetchStatsMap(userId){
-    const map={}; if(!supa || !userId) return map;
-    const { data } = await supa.from('reviews').select('question_id,ts,correct').eq('user_id',userId).order('ts',{ascending:true});
-    (data||[]).forEach(r=>{
-      const m = map[r.question_id] ||= {seen:0,correct:0,streak:0,last:false,lastTs:null};
-      m.seen++; if(r.correct){ m.correct++; m.streak=(m.last===true)?(m.streak+1):1; } else { m.streak=0; }
-      m.last=r.correct; m.lastTs=r.ts;
-    }); return map;
-  }
-  function isInCooldown(entry){
-    if(!entry||!entry.lastTs) return false;
-    const d=cooldownDaysForStreak(entry.streak||0); if(d<=0) return false;
-    const next=new Date(entry.lastTs); next.setDate(next.getDate()+d);
-    return (new Date()<next);
-  }
-  async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
-    const all=await fetchQuestions();
-    let user=null; if(supa){ const r=await supa.auth.getUser(); user=r?.data?.user||null; }
-    const stats = await fetchStatsMap(user?.id);
-    let pool = all.filter(q=>!categoryFilter || q.category===categoryFilter).map(q=>{
-      const s=stats[q.id]||{seen:0,correct:0,streak:0,last:false,lastTs:null};
-      const acc = s.seen ? s.correct/s.seen : 0;
-      const wrongBias = (s.last===false)?0.2:0;
-      const seenPenalty = Math.min(s.seen*0.02,0.2);
-      const learned=(s.streak||0)>=3;
-      const cooldown=isInCooldown(s);
-      let weight=(1-acc)+wrongBias-seenPenalty;
-      if(learned && hideLearned) weight-=1.5;
-      if(cooldown) weight-=0.8;
-      return {q,s,acc,learned,cooldown,weight};
-    });
-    if(onlyWeak) pool=pool.filter(x=> (x.acc<0.7) || (x.s.last===false));
-    pool=pool.filter(x=>x.weight>-0.3);
-    if(!pool.length) return null;
-    const minW=Math.min(...pool.map(x=>x.weight));
-    const norm=pool.map(p=>({...p,w:p.weight-minW+0.001}));
-    const sum=norm.reduce((a,b)=>a+b.w,0);
-    let r=Math.random()*sum; for(const p of norm){ r-=p.w; if(r<=0) return p.q; }
-    return norm[norm.length-1].q;
-  }
-  function renderTrainCard(card){
-    trArea.innerHTML='';
-    if(!card){ trEmpty.style.display='block'; trEmpty.textContent='Keine geeignete Karte gefunden. Filter anpassen.'; return; }
-    trEmpty.style.display='none';
+/* ====== Lernkarten (klassisch) ====== */
+const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
+document.getElementById('fc-load').onclick=loadFlashcards;
+async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
+async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
+  fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
+  let n=0; cards.forEach(card=>{ const wrap=document.createElement('div'); wrap.className='card';
     const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
-    const wrap=document.createElement('div'); wrap.className='card';
     wrap.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${card.category}</span></div><div class="muted">ID: ${card.id}</div></div>
-      <div style="margin-top:6px"><b>${card.question}</b></div><div class="options" style="margin-top:6px"></div><div class="reveal" style="display:none;margin-top:8px"></div>`;
-    const box=wrap.querySelector('.options');
-    opts.forEach((o,i)=>{
-      const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/> <span>${o.text}</span>`;
-      d.onclick=async()=>{
-        [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
-        const ok=(i===opts.findIndex(z=>z.correct));
-        const rev=wrap.querySelector('.reveal'); rev.style.display='block';
-        rev.textContent = ok? '✅ Richtig!' : `❌ Falsch. Richtig: ${opts.find(o=>o.correct)?.text}`;
-        bumpProgress(1, ok?1:0);
-        if(supa){ const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok}); }
+      <div><b>${card.question}</b></div><div class="options"></div>
+      <div class="row" style="margin-top:8px"><span class="muted">Klick zum Markieren, Lösung wird angezeigt.</span></div>
+      <div class="reveal" style="display:none"></div>`;
+    const box=wrap.querySelector('.options'); let selected=-1;
+    opts.forEach((o,i)=>{ const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/><span>${o.text}</span>`;
+      d.onclick=async()=>{ selected=i; [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
+        const solution=opts.find(o=>o.correct)?.text; const reveal=wrap.querySelector('.reveal');
+        reveal.style.display='block'; reveal.textContent = (i===opts.findIndex(z=>z.correct)) ? '✅ Richtig!' : `❌ Falsch. Richtig: ${solution}`;
+        bumpProgress(1, i===opts.findIndex(z=>z.correct)?1:0);
+        const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:i===opts.findIndex(z=>z.correct)});
       };
       box.appendChild(d);
     });
-    trArea.appendChild(wrap);
-  }
-  document.getElementById('train-next').onclick=async()=>{
-    const card=await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked);
-    renderTrainCard(card);
-  };
-  refreshTrainSelectors();
+    fcArea.appendChild(wrap); n++;
+  }); fcStats.textContent=`${n} Karten`;
 }
 
-/* ---------- Prüfung ---------- */
-function bindExam(){
-  const examCategories=document.getElementById('exam-categories');
-  const examCount=document.getElementById('exam-count');
-  const examMinutes=document.getElementById('exam-minutes');
-  const examStart=document.getElementById('exam-start');
-  const examSubmit=document.getElementById('exam-submit');
-  const examReset=document.getElementById('exam-reset');
-  const examArea=document.getElementById('exam-area');
-  const examMeta=document.getElementById('exam-meta');
+/* ====== Adaptives Training ====== */
+const trCategory=document.getElementById('train-category'), trWeak=document.getElementById('train-weak'), trHideLearned=document.getElementById('train-hide-learned');
+const trNext=document.getElementById('train-next'), trArea=document.getElementById('train-area'), trEmpty=document.getElementById('train-empty');
 
-  let ihkRunning=false, timerId=null, timeLeft=0;
-  let examPool=[], selections={}, session=null;
+async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option>${c}</option>`).join(''); }
 
-  function ensureStickySubmit(){
-    let b=document.getElementById('exam-submit-sticky');
-    if(!b){ b=document.createElement('button'); b.id='exam-submit-sticky'; b.textContent='Abgeben'; b.onclick=()=>examSubmit.click(); document.body.appendChild(b); }
-    b.disabled=!ihkRunning; updateStickySubmitLabel(); return b;
+async function getUser(){ try{ const {data:{user}}=await supa.auth.getUser(); return user||null; }catch{return null;} }
+
+async function fetchStatsMap(userId){
+  // Hol dir alle Reviews für den User und baue eine Map: qid -> { seen, correct, last, streak }
+  const map={};
+  if(!userId) return map;
+  let from = supa.from('reviews').select('question_id,ts,correct').eq('user_id',userId).order('ts',{ascending:true});
+  const { data, error } = await from;
+  if(error || !data) return map;
+  for(const r of data){
+    const m = map[r.question_id] ||= { seen:0, correct:0, streak:0, last:false, lastTs:null };
+    m.seen++; if(r.correct){ m.correct++; m.streak = (m.last===true)?(m.streak+1):1; } else { m.streak = 0; }
+    m.last = r.correct; m.lastTs = r.ts;
   }
-  function removeStickySubmit(){ const b=document.getElementById('exam-submit-sticky'); if(b) b.remove(); }
-  function updateStickySubmitLabel(){
-    const b=document.getElementById('exam-submit-sticky'); if(!b) return;
-    const total=examPool.length||0;
-    const answered=Object.values(selections).filter(v=>v!=null).length;
-    b.textContent = total? `Abgeben (${answered}/${total})`:'Abgeben';
-    b.disabled=!ihkRunning;
+  return map;
+}
+function cooldownDaysForStreak(streak){
+  // Einfacher Cooldown: 0, 1, 3, 7 Tage…
+  if(streak>=5) return 14;
+  if(streak>=4) return 7;
+  if(streak>=3) return 3;
+  if(streak>=2) return 1;
+  return 0;
+}
+function isInCooldown(entry){
+  if(!entry || !entry.lastTs) return false;
+  const days = cooldownDaysForStreak(entry.streak||0);
+  if(days<=0) return false;
+  const next = new Date(entry.lastTs); next.setDate(next.getDate()+days);
+  return (new Date()<next);
+}
+
+async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
+  const all=await fetchQuestions();
+  const user=await getUser();
+  const stats = await fetchStatsMap(user?.id);
+  // Score bilden: hohe Priorität für wenig korrekte Quote, zuletzt falsch, keine/kurze Cooldowns
+  let pool = all.filter(q => !categoryFilter || q.category===categoryFilter).map(q=>{
+    const s = stats[q.id] || { seen:0, correct:0, last:false, streak:0, lastTs:null };
+    const acc = s.seen ? s.correct/s.seen : 0;         // 0..1
+    const wrongBias = (s.last===false) ? 0.2 : 0;      // zuletzt falsch → push
+    const seenPenalty = Math.min(s.seen*0.02, 0.2);    // viel gesehen → leicht runter
+    const streak = s.streak||0;
+    const learned = (streak>=3);
+    const cooldown = isInCooldown(s);
+    // Basisgewicht: je schlechter die Quote, desto höher
+    let weight = (1-acc) + wrongBias - seenPenalty;
+    if(learned && hideLearned) weight -= 1.5;
+    if(cooldown) weight -= 0.8;
+    return { q, s, acc, learned, cooldown, weight };
+  });
+
+  if(onlyWeak){
+    // nur solche, deren Accuracy < 0.7 oder zuletzt falsch
+    pool = pool.filter(x => (x.acc < 0.7) || (x.s.last===false));
   }
-  function pickN(a,n){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]];} return b.slice(0,n); }
-  async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
-  function renderMeta(){ const total=examPool.length; const answered=Object.values(selections).filter(v=>v!=null).length; const mm=String(Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0'); const ss=String(Math.max(0,timeLeft%60)).padStart(2,'0'); examMeta.textContent=`Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`; updateStickySubmitLabel(); }
+  // Filter raus, die stark negativ sind (z.B. gelernt+cooldown)
+  pool = pool.filter(x=>x.weight> -0.3);
 
-  examStart.onclick=async()=>{
-    if(!supa){ alert('Bitte Supabase konfigurieren und einloggen.'); return; }
-    const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte zuerst einloggen.');
-    const all=await fetchQuestions(); const chosen=[...examCategories.selectedOptions].map(o=>o.value);
-    const pool=all.filter(q=>chosen.includes(q.category)); if(!pool.length) return alert('Keine Fragen in den gewählten Kategorien.');
-    const n=Math.max(5,Math.min(Number(examCount.value||40),100));
-    examPool = pickN(pool,n); selections={}; examArea.innerHTML=''; ihkRunning=true; examSubmit.disabled=false;
+  if(pool.length===0) return null;
+  // Roulette-Wheel Auswahl
+  const minW = Math.min(...pool.map(x=>x.weight));
+  const normalized = pool.map(p=>({ ...p, w: p.weight - minW + 0.001 }));
+  const sum = normalized.reduce((a,b)=>a+b.w,0);
+  let r = Math.random()*sum;
+  for(const p of normalized){ r-=p.w; if(r<=0) return p.q; }
+  return normalized[normalized.length-1].q;
+}
 
-    timeLeft=(Number(examMinutes.value||60))*60; renderMeta();
-    if(timerId) clearInterval(timerId);
-    timerId=setInterval(()=>{ timeLeft--; renderMeta(); if(timeLeft<=0){ clearInterval(timerId); finishExam(true); } },1000);
+function renderTrainCard(card){
+  trArea.innerHTML='';
+  if(!card){ trEmpty.style.display='block'; trEmpty.textContent='Keine geeignete Karte gefunden. Passe Filter an (z. B. „Gelernt ausblenden“ deaktivieren).'; return; }
+  trEmpty.style.display='none';
 
-    examPool.forEach((q,idx)=>{
-      const el=document.createElement('div'); el.className='card';
-      const opts=q.options.map((t,i)=>({text:t,correct:i===q.correct_index}));
-      el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${q.category}</span></div><div class="muted">Frage ${idx+1}/${n}</div></div>
-        <div style="margin-top:4px"><b>${q.question}</b></div><div class="options"></div>`;
-      const box=el.querySelector('.options');
-      opts.forEach((o,i)=>{ const d=document.createElement('label'); d.className='option'; d.innerHTML=`<input type="radio" name="q_${q.id}"/> <span>${o.text}</span>`;
-        d.onclick=()=>{ selections[q.id]=i; [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected'); renderMeta(); };
-        box.appendChild(d);
-      });
-      examArea.appendChild(el);
-    });
-    session={items:[],total:n,correct:0,startedAt:new Date().toISOString()};
-    ensureStickySubmit();
-  };
-
-  examSubmit.onclick=()=>{ if(!ihkRunning) return; finishExam(false); };
-  examReset.onclick=()=>{ ihkRunning=false; clearInterval(timerId); examArea.innerHTML=''; examMeta.textContent=''; examSubmit.disabled=true; removeStickySubmit(); };
-
-  async function finishExam(auto=false){
-    ihkRunning=false; clearInterval(timerId); examSubmit.disabled=true; removeStickySubmit();
-    session.items = examPool.map(q=>{ const chosenIndex=selections[q.id]; const correctIndex=q.correct_index; const correct=chosenIndex===correctIndex;
-      return { id:q.id, category:q.category, question:q.question, selectedText:(q.options[chosenIndex]??''), correctText:q.options[correctIndex], explanation:q.explanation||'', correct }; });
-    session.correct = session.items.filter(x=>x.correct).length; session.finishedAt=new Date().toISOString();
-
-    try{
+  const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
+  const wrap=document.createElement('div'); wrap.className='card';
+  wrap.innerHTML = `
+    <div class="row" style="justify-content:space-between">
+      <div><span class="chip">${card.category}</span></div>
+      <div class="muted">ID: ${card.id}</div>
+    </div>
+    <div style="margin-top:6px"><b>${card.question}</b></div>
+    <div class="options" style="margin-top:6px"></div>
+    <div class="reveal" style="display:none;margin-top:8px"></div>
+  `;
+  const box=wrap.querySelector('.options');
+  opts.forEach((o,i)=>{
+    const d=document.createElement('div'); d.className='option';
+    d.innerHTML=`<input type="radio"/> <span>${o.text}</span>`;
+    d.onclick=async()=>{
+      [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
+      const ok = (i===opts.findIndex(z=>z.correct));
+      const reveal=wrap.querySelector('.reveal');
+      reveal.style.display='block';
+      reveal.textContent = ok? '✅ Richtig!' : `❌ Falsch. Richtig: ${opts.find(o=>o.correct)?.text}`;
+      bumpProgress(1, ok?1:0);
       const {data:{user}}=await supa.auth.getUser();
-      if(user){
-        await supa.from('exam_sessions').insert({ user_id:user.id, total:session.total, correct:session.correct, detail:session.items });
-        for(const it of session.items){ await supa.from('reviews').insert({user_id:user.id,question_id:it.id,correct:it.correct}); }
-      }
-    }catch(e){ console.warn('Ergebnis speichern (optional):', e); }
-    showResult(session);
-    try{ if(supa){ await statsRefresh(); await archiveLoad(); } }catch{}
-  }
-
-  refreshExamCategories();
+      if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok});
+    };
+    box.appendChild(d);
+  });
+  trArea.appendChild(wrap);
 }
 
-/* ---------- Ergebnis-Panel + PDF ---------- */
-function showResult(session){
+trNext.onclick=async()=>{
+  const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked);
+  renderTrainCard(card);
+};
+
+/* ====== IHK-Prüfungsmodus 2.0 (mit Sticky-Abgeben) ====== */
+const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count'), examMinutes=document.getElementById('exam-minutes');
+const examStart=document.getElementById('exam-start'), examSubmit=document.getElementById('exam-submit'), examReset=document.getElementById('exam-reset');
+const examArea=document.getElementById('exam-area'), examMeta=document.getElementById('exam-meta');
+
+let ihkRunning=false, timerId=null, timeLeft=0;
+let examPool=[], selections={}, session=null; // selections[q.id] = index
+
+// Sticky-Abgeben-Button Helpers
+function ensureStickySubmit(){
+  let b = document.getElementById('exam-submit-sticky');
+  if(!b){
+    b = document.createElement('button');
+    b.id = 'exam-submit-sticky';
+    b.textContent = 'Abgeben';
+    b.onclick = () => examSubmit.click(); // identisches Verhalten
+    document.body.appendChild(b);
+  }
+  b.disabled = !ihkRunning;
+  updateStickySubmitLabel();
+  return b;
+}
+function removeStickySubmit(){
+  const b = document.getElementById('exam-submit-sticky');
+  if(b) b.remove();
+}
+function updateStickySubmitLabel(){
+  const b = document.getElementById('exam-submit-sticky');
+  if(!b) return;
+  const total = examPool.length||0;
+  const answered = Object.values(selections).filter(v=>v!==null && v!==undefined).length;
+  b.textContent = total ? `Abgeben (${answered}/${total})` : 'Abgeben';
+  b.disabled = !ihkRunning;
+}
+
+async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
+function pickN(a,n){ const b=shuffle(a); return b.slice(0,Math.max(0,Math.min(n,b.length))); }
+
+function renderMeta(){
+  const total = examPool.length;
+  const answered = Object.values(selections).filter(v=>v!==null && v!==undefined).length;
+  const mm = String(Math.max(0, Math.floor(timeLeft/60))).padStart(2,'0');
+  const ss = String(Math.max(0, timeLeft%60)).padStart(2,'0');
+  examMeta.textContent = `Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`;
+  updateStickySubmitLabel();
+}
+
+examStart.onclick=async()=>{
+  const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte zuerst einloggen.');
+  const all=await fetchQuestions(); const chosen=[...examCategories.selectedOptions].map(o=>o.value);
+  const pool=all.filter(q=>chosen.includes(q.category)); if(!pool.length) return alert('Keine Fragen in den gewählten Kategorien.');
+  const n=Math.max(5,Math.min(Number(examCount.value||40),100));
+  examPool = pickN(pool,n); selections={}; examArea.innerHTML=''; ihkRunning=true;
+  examSubmit.disabled=false;
+
+  timeLeft = (Number(examMinutes.value||60))*60;
+  renderMeta();
+  if(timerId) clearInterval(timerId);
+  timerId=setInterval(()=>{ timeLeft--; renderMeta(); if(timeLeft<=0){ clearInterval(timerId); finishExam(true); } },1000);
+
+  examPool.forEach((q,idx)=>{
+    const el=document.createElement('div'); el.className='card';
+    const opts = q.options.map((t,i)=>({text:t,correct:i===q.correct_index}));
+    el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${q.category}</span></div><div class="muted">Frage ${idx+1}/${n}</div></div>
+      <div style="margin-top:4px"><b>${q.question}</b></div>
+      <div class="options"></div>`;
+    const box=el.querySelector('.options');
+    opts.forEach((o,i)=>{
+      const d=document.createElement('label'); d.className='option';
+      d.innerHTML=`<input type="radio" name="q_${q.id}"/> <span>${o.text}</span>`;
+      d.onclick=()=>{ selections[q.id]=i; [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected'); renderMeta(); };
+      box.appendChild(d);
+    });
+    examArea.appendChild(el);
+  });
+
+  session = { items:[], total:n, correct:0, startedAt:new Date().toISOString() };
+  ensureStickySubmit();
+};
+
+examSubmit.onclick=()=>{ if(!ihkRunning) return; finishExam(false); };
+examReset.onclick=()=>{ ihkRunning=false; clearInterval(timerId); examArea.innerHTML=''; examMeta.textContent=''; examSubmit.disabled=true; removeStickySubmit(); };
+
+async function finishExam(auto=false){
+  ihkRunning=false; clearInterval(timerId); examSubmit.disabled=true; removeStickySubmit();
+
+  session.items = examPool.map(q=>{
+    const chosenIndex = selections[q.id];
+    const correctIndex = q.correct_index;
+    const correct = chosenIndex===correctIndex;
+    return {
+      id:q.id, category:q.category, question:q.question,
+      selectedText: (q.options[chosenIndex] ?? ''),
+      correctText: q.options[correctIndex],
+      explanation: q.explanation || '',
+      correct
+    };
+  });
+  session.correct = session.items.filter(x=>x.correct).length;
+  session.finishedAt = new Date().toISOString();
+
+  const {data:{user}}=await supa.auth.getUser();
+  if(user){
+    try { await supa.from('exam_sessions').insert({ user_id:user.id, total:session.total, correct:session.correct, detail:session.items }); }
+    catch(e){ console.warn('exam_sessions insert', e); }
+    try {
+      const rows = session.items.map(it=>({user_id:user.id,question_id:it.id,correct:it.correct}));
+      for(const r of rows){ await supa.from('reviews').insert(r); }
+    } catch(e){ console.warn('reviews insert', e); }
+  }
+  showResult(session, auto);
+}
+
+/* ====== Ergebnis-Panel + PDF ====== */
+function showResult(session, autoTrigger){
   const modal=document.getElementById('result-modal');
   document.getElementById('res-total').textContent = `${session.correct} / ${session.total}`;
   document.getElementById('res-quote').textContent = `${session.total?Math.round(100*session.correct/session.total):0}%`;
   document.getElementById('res-date').textContent = new Date().toLocaleString();
+
   const byCat={}; session.items.forEach(it=>{ const c=it.category||'–'; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0; });
-  document.getElementById('res-cats').innerHTML = Object.entries(byCat).map(([c,s])=>{
+  const cats = Object.entries(byCat).map(([c,s])=>{
     const pct = s.total? Math.round(100*s.correct/s.total):0;
-    return `<div class="row" style="justify-content:space-between;border-bottom:1px dashed var(--line);padding:6px 0"><div>${c}</div><div class="muted">${s.correct}/${s.total} (${pct}%)</div></div>`;
-  }).join('') || '<div class="muted">Keine Daten.</div>';
+    return `<div class="row" style="justify-content:space-between;border-bottom:1px dashed var(--line);padding:6px 0">
+      <div>${c}</div><div class="muted">${s.correct}/${s.total} (${pct}%)</div></div>`;
+  }).join('');
+  document.getElementById('res-cats').innerHTML=cats||'<div class="muted">Keine Daten.</div>';
+
   const items=document.getElementById('res-items');
   items.innerHTML = session.items.map((it,i)=>`
     <div class="card">
@@ -633,241 +575,207 @@ function showResult(session){
       <div style="margin-top:6px"><b>Deine Antwort:</b> ${it.selectedText||''}</div>
       <div><b>Richtige Lösung:</b> ${it.correctText||''}</div>
       ${it.explanation?`<div><b>Erklärung:</b> ${it.explanation}</div>`:''}
-    </div>`).join('');
-  document.getElementById('res-new').onclick=()=>{ modal.classList.remove('show'); document.getElementById('exam-reset').click(); };
+    </div>
+  `).join('');
+
+  document.getElementById('res-new').onclick=()=>{ modal.classList.remove('show'); examReset.click(); };
   document.getElementById('res-close').onclick=()=> modal.classList.remove('show');
   document.getElementById('result-pdf').onclick = async () => {
-    const { data:{user} = {} } = supa? (await supa.auth.getUser()) : {data:{}}; 
+    const { data:{user} = {} } = await supa.auth.getUser();
     const logo = localStorage.getItem(KEY_LOGO) || null;
     await generateExamPDF({ session, userEmail: user?.email || "", logoUrlOrDataUri: logo });
   };
+
   modal.classList.add('show');
 }
+
+/* ====== Fortschritt (lokal) ====== */
+function bumpProgress(seenDelta, correctDelta){
+  const p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
+  p.seen += seenDelta; p.correct += correctDelta;
+  localStorage.setItem('progress_local', JSON.stringify(p));
+  renderProgress();
+}
+function renderProgress(){
+  const p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
+  const acc = p.seen ? Math.round(p.correct/p.seen*100) : 0;
+  document.getElementById('progress-summary').innerHTML = `
+    <div class="card"><b>Letzte Sitzung</b>
+    <div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div></div>`;
+}
+document.getElementById('reset-progress').onclick=()=>{localStorage.removeItem('progress_local'); renderProgress();}
+
+/* ====== Admin ====== */
+const adminList=document.getElementById('admin-list');
+async function renderAdminList(){ const q=await fetchQuestions();
+  adminList.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between">
+  <div><span class="chip">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div>
+  <div><b>${x.question}</b></div></div>`).join('');
+  adminList.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id); if(error) alert(error.message); else renderAdminList();});
+}
+
+document.getElementById('admin-export').onclick=async()=>{const q=await fetchQuestions(); const blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fragen_export_supabase.json'; a.click(); URL.revokeObjectURL(url);};
+
+document.getElementById('admin-import').onchange=async(e)=>{
+  const files=[...(e.target.files||[])]; if(!files.length) return;
+  const allItems=[];
+  for(const f of files){
+    try{
+      const text=await f.text(); const arr=JSON.parse(text);
+      if(Array.isArray(arr)) allItems.push(...arr);
+      else if(arr && typeof arr==='object') allItems.push(arr);
+    }catch(err){ alert(`Fehler in ${f.name}: ${err.message}`); }
+  }
+  if(!allItems.length){ alert('Keine gültigen Fragen gefunden.'); return; }
+
+  // Duplikat-Check (ID & Question-Text)
+  const seenId=new Set(), seenText=new Set(), dup=[];
+  const cleaned = allItems.map(x=>{ const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex}; })
+    .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
+
+  const unique=[];
+  for(const q of cleaned){
+    const keyText=(q.question||'').trim().toLowerCase();
+    const idDup = seenId.has(q.id); const textDup = seenText.has(keyText);
+    if(idDup || textDup){ dup.push(q); continue; }
+    seenId.add(q.id); seenText.add(keyText); unique.push(q);
+  }
+
+  if(dup.length){
+    const ok=confirm(`${dup.length} Duplikate erkannt (ID oder gleicher Fragentext). Diese werden per upsert überschrieben. Fortfahren?`);
+    if(!ok) return;
+  }
+
+  // Upsert in Batches
+  let okCount=0, errCount=0;
+  for(const item of unique){
+    const {error}=await supa.from('questions').upsert(item,{onConflict:'id'});
+    if(error){ errCount++; console.warn('Fehler',item.id,error.message); } else okCount++;
+  }
+  alert(`Import fertig. Erfolgreich: ${okCount} • Fehler: ${errCount} • Duplikate erkannt: ${dup.length}`);
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await showEmptyHints(); await fillAdminCatSelect();
+};
+
+async function fillAdminCatSelect(){
+  const cats=await fetchCategories();
+  document.getElementById('admin-cat-old').innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+}
+document.getElementById('admin-cat-apply').onclick=async()=>{
+  const oldVal=document.getElementById('admin-cat-old').value;
+  const newVal=(document.getElementById('admin-cat-new').value||'').trim();
+  if(!oldVal || !newVal) return alert('Bitte alte Kategorie wählen und neue Kategorie eintragen.');
+  const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
+  document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
+};
+
+document.getElementById('admin-scan-dup').onclick=async()=>{
+  const list=document.getElementById('admin-dup-list'); list.innerHTML='Suche…';
+  const q=await fetchQuestions(); if(!q.length){ list.innerHTML='<div class="card muted">Keine Fragen.</div>'; return; }
+  const byText={};
+  for(const it of q){
+    const key=(it.question||'').trim().toLowerCase();
+    (byText[key] ||= []).push(it);
+  }
+  const groups=Object.values(byText).filter(arr=>arr.length>1);
+  if(!groups.length){ list.innerHTML='<div class="card">Keine Duplikate per Fragentext gefunden.</div>'; return; }
+  list.innerHTML = groups.map(arr=>{
+    const head=arr[0].question.slice(0,120);
+    const rows=arr.map(x=>`<div class="row" style="justify-content:space-between"><div><span class="chip">${x.category}</span></div><div class="muted">${x.id}</div></div>`).join('');
+    return `<div class="card"><div><b>${head}</b></div>${rows}</div>`;
+  }).join('');
+};
+
+document.getElementById('admin-save').onclick=async()=>{
+  const id='q_'+Math.random().toString(36).slice(2,10);
+  const category=document.getElementById('ad-category').value.trim();
+  const question=document.getElementById('ad-question').value.trim();
+  const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
+  const options=[], correctIndexRaw=lines.findIndex(l=>l.startsWith('***'));
+  lines.forEach(l=>options.push(l.replace(/^\*{3}\s?/,'')));
+  const correct_index = correctIndexRaw>=0 ? correctIndexRaw : 0;
+  const explanation=document.getElementById('ad-expl').value.trim();
+  const obj={id,category,question,options,correct_index,explanation};
+  const {error}=await supa.from('questions').upsert(obj,{onConflict:'id'});
+  if(error) alert(error.message); else { alert('Gespeichert.'); renderAdminList(); }
+};
+
+/* ====== Empty DB Hinweis ====== */
+async function showEmptyHints(){ const all=await fetchQuestions(); const hint=document.getElementById('login-empty-info'); if(!all.length){ hint.style.display='block'; hint.innerHTML='Noch keine Fragen in der Datenbank. Admin → Import nutzen.'; } else hint.style.display='none'; }
+
+/* ====== PDF (ausführlich, mit Logo auf Seite 1) ====== */
 async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const left = 20, right = 190; let y = 20;
-  const set = (size=11, bold=false, color=20) => { doc.setFont("helvetica", bold? "bold":"normal"); doc.setFontSize(size); doc.setTextColor(color); };
+
+  const left = 20, right = 190;
+  let y = 20;
+
+  const set = (size=11, bold=false, color=20) => {
+    doc.setFont("helvetica", bold? "bold":"normal");
+    doc.setFontSize(size);
+    doc.setTextColor(color);
+  };
   const addY = (h) => { y += h; if (y > 280){ doc.addPage(); y = 20; } };
   const hr = () => { doc.setDrawColor(220); doc.line(left, y, right, y); addY(4); };
   const wrap = (text) => doc.splitTextToSize(text||"", right-left);
-  try { if (logoUrlOrDataUri) { const img = await fetch(logoUrlOrDataUri).then(r=>r.blob()).then(b=>new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); })); doc.addImage(img, 'PNG', right-20-16, 10, 16, 16); } } catch(e){}
+
+  try {
+    if (logoUrlOrDataUri) {
+      const img = await fetch(logoUrlOrDataUri).then(r=>r.blob()).then(b=>new Promise((res) => {
+        const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b);
+      }));
+      doc.addImage(img, 'PNG', right-20-16, 10, 16, 16);
+    }
+  } catch(e) {}
+
   set(18,true); doc.text("Prüfungsergebnis – Lernapp Lagerlogistik", left, y); addY(10);
+
   const created = new Date().toLocaleString();
   set(10,true,120); doc.text("Erstellt:", left, y); set(12,false,20); doc.text(created, left, y+6);
   set(10,true,120); doc.text("Prüfling:", left+90, y); set(12,false,20); doc.text(`E‑Mail: ${userEmail||"-"}`, left+90, y+6);
-  addY(16); hr();
+  addY(16);
+
+  hr();
   set(10,true,120); doc.text("Gesamt richtig:", left, y); set(12,false); doc.text(`${session.correct} / ${session.total}`, left, y+6);
   set(10,true,120); doc.text("Quote:", left+90, y); set(12,false); doc.text(`${session.total?Math.round(100*session.correct/session.total):0}%`, left+90, y+6);
   addY(16); hr();
+
   set(13,true); doc.text("Nach Kategorie:", left, y); addY(7);
   const byCat={}; (session.items||[]).forEach(it=>{const c=it.category||"–"; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0;});
-  Object.entries(byCat).forEach(([c,s])=>{ const pct=s.total?Math.round(100*s.correct/s.total):0; set(12,false); doc.text(`• ${c}: ${s.correct}/${s.total} (${pct}%)`, left, y); addY(6); });
+  Object.entries(byCat).forEach(([c,s])=>{
+    const pct = s.total? Math.round(100*s.correct/s.total):0;
+    set(12,false); doc.text(`• ${c}: ${s.correct}/${s.total} (${pct}%)`, left, y); addY(6);
+  });
   addY(4); hr();
+
   set(13,true); doc.text("Einzelaufstellung (Fragen & Antworten)", left, y); addY(8);
   (session.items||[]).forEach((it, idx) => {
     set(12,true); doc.text(`${idx+1}. ${it.category||''}`, left, y); addY(6);
     wrap(it.question).forEach(row=>{ set(12,false); doc.text(row,left,y); addY(5); });
+
     set(10,true,120); doc.text("Deine Antwort:", left, y); addY(5);
     wrap(it.selectedText).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
+
     set(10,true,120); doc.text("Richtige Lösung:", left, y); addY(5);
     wrap(it.correctText).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
-    if (it.explanation){ set(10,true,120); doc.text("Erklärung:", left, y); addY(5); wrap(it.explanation).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); }); }
-    set(11,true, it.correct?20:180); doc.text(`Bewertung: ${it.correct?'RICHTIG':'FALSCH'}`, left, y); addY(7); hr();
+
+    if (it.explanation){
+      set(10,true,120); doc.text("Erklärung:", left, y); addY(5);
+      wrap(it.explanation).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
+    }
+
+    set(11,true, it.correct?20:180); doc.text(`Bewertung: ${it.correct?'RICHTIG':'FALSCH'}`, left, y); addY(7);
+    hr();
   });
-  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); doc.save(`pruefungsbericht_${stamp}.pdf`);
+
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  doc.save(`pruefungsbericht_${stamp}.pdf`);
 }
 
-/* ---------- Statistik ---------- */
-let chartAcc=null, chartDaily=null;
-async function statsRefresh(){
-  if(!supa){ alert('Supabase nicht konfiguriert.'); return; }
-  const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte einloggen.');
-
-  const { data: exams } = await supa.from('exam_sessions')
-    .select('id,started_at,total,correct,detail')
-    .eq('user_id',user.id).order('started_at',{ascending:true});
-
-  const { data: revs }  = await supa.from('reviews')
-    .select('ts,correct,question_id')
-    .eq('user_id',user.id).order('ts',{ascending:true});
-
-  /* Kategorien-Quote */
-  var catMap={};
-  (exams||[]).forEach(function(ex){
-    (ex.detail||[]).forEach(function(it){
-      var c=it.category||'–';
-      if(!catMap[c]) catMap[c]={t:0,c:0};
-      catMap[c].t++;
-      if(it.correct) catMap[c].c++;
-    });
-  });
-  var labelsCats=Object.keys(catMap);
-  var dataCats=labelsCats.map(function(k){
-    var v=catMap[k]; return Math.round(100*(v.c/v.t));
-  });
-
-  var ca=document.getElementById('chart-accuracy');
-  if(ca){
-    var ctx1=ca.getContext('2d');
-    if(chartAcc) chartAcc.destroy();
-    chartAcc=new Chart(ctx1,{type:'bar',data:{labels:labelsCats,datasets:[{label:'Kategorie‑Quote (%)',data:dataCats}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{stepSize:20}}}});
-  }
-
-  /* Tagesquote */
-  var range=document.getElementById('stats-range').value;
-  var byDay={};
-  (revs||[]).forEach(function(rv){
-    var key=new Date(rv.ts).toISOString().slice(0,10);
-    if(!byDay[key]) byDay[key]={seen:0,ok:0};
-    byDay[key].seen++;
-    if(rv.correct) byDay[key].ok++;
-  });
-  var days=Object.keys(byDay).sort();
-  if(range!=='all'){ days=days.slice(-Number(range)); }
-  var dailyAcc=days.map(function(k){
-    var m=byDay[k]; return m.seen? Math.round(100*m.ok/m.seen):0;
-  });
-
-  var cd=document.getElementById('chart-daily');
-  if(cd){
-    var ctx2=cd.getContext('2d');
-    if(chartDaily) chartDaily.destroy();
-    chartDaily=new Chart(ctx2,{type:'line',data:{labels:days,datasets:[{label:'Tages‑Quote (%)',data:dailyAcc,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{stepSize:20}}}});
-  }
-
-  /* Top/Worst */
-  var top = labelsCats.map(function(c,i){return {c:c,acc:dataCats[i]};}).sort(function(a,b){return b.acc-a.acc;});
-  var worst = labelsCats.map(function(c,i){return {c:c,acc:dataCats[i]};}).sort(function(a,b){return a.acc-b.acc;});
-  var box=document.getElementById('stats-topcats');
-  if(box){
-    box.innerHTML =
-      '<div><b>Stärkste Bereiche</b></div><div>' +
-      (top.slice(0,3).map(function(t){return '• '+t.c+': '+t.acc+'%';}).join('<br/>')||'–') +
-      '</div><div style="margin-top:8px"><b>Schwächste Bereiche</b></div><div>' +
-      (worst.slice(0,3).map(function(t){return '• '+t.c+': '+t.acc+'%';}).join('<br/>')||'–') +
-      '</div>';
-  }
-}
-document.getElementById('stats-refresh').onclick=statsRefresh;
-
-/* ---------- Archiv ---------- */
-const archList=document.getElementById('archive-list');
-async function archiveLoad(){
-  if(!supa){ archList.innerHTML='<div class="card">Supabase nicht konfiguriert.</div>'; return; }
-  const {data:{user}}=await supa.auth.getUser(); if(!user){ archList.innerHTML='<div class="card">Bitte einloggen.</div>'; return; }
-  const from=document.getElementById('arch-from').value; const to=document.getElementById('arch-to').value;
-  let q = supa.from('exam_sessions').select('id, started_at, total, correct, detail').eq('user_id',user.id).order('started_at',{ascending:false}).limit(100);
-  if(from) q=q.gte('started_at', from+'T00:00:00'); if(to) q=q.lte('started_at', to+'T23:59:59');
-  const { data } = await q;
-  if(!data || !data.length){ archList.innerHTML='<div class="card">Keine Prüfungen im Zeitraum.</div>'; return; }
-  archList.innerHTML = data.map(ex=>{
-    const q = ex.total||0, c=ex.correct||0, pct=q?Math.round(100*c/q):0;
-    const d = ex.started_at? new Date(ex.started_at).toLocaleString() : '-';
-    return `<div class="card">
-      <div class="row" style="justify-content:space-between"><div><b>${d}</b></div><div class="chip">${c}/${q} (${pct}%)</div></div>
-      <div class="row" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn" data-viewpdf="${ex.id}">PDF</button>
-        <button class="btn" data-viewdetail="${ex.id}">Details</button>
-      </div></div>`;
-  }).join('');
-  archList.querySelectorAll('button[data-viewpdf]').forEach(btn=>btn.onclick=async()=>{
-    const id=btn.dataset.viewpdf;
-    const ex = (data.find(x=>x.id===id));
-    const { data:{user} } = await supa.auth.getUser();
-    const logo = localStorage.getItem(KEY_LOGO)||null;
-    await generateExamPDF({ session:{ total:ex.total, correct:ex.correct, items:ex.detail||[] }, userEmail:user?.email||'', logoUrlOrDataUri:logo });
-  });
-  archList.querySelectorAll('button[data-viewdetail]').forEach(btn=>btn.onclick=()=>{
-    const id=btn.dataset.viewdetail;
-    const ex = (data.find(x=>x.id===id));
-    showResult({ total:ex.total, correct:ex.correct, items:ex.detail||[] });
-  });
-}
-document.getElementById('arch-load').onclick=archiveLoad;
-
-/* ---------- Admin ---------- */
-function bindAdmin(){
-  const list=document.getElementById('admin-list');
-  async function render(){ const q=await fetchQuestions();
-    list.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between">
-      <div><span class="chip">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div>
-      <div><b>${x.question}</b></div></div>`).join('');
-    list.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{
-      if(!supa) return alert('Supabase nicht konfiguriert.');
-      const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id);
-      if(error) alert(error.message); else render();
-    });
-  }
-  document.getElementById('admin-export').onclick=async()=>{const q=await fetchQuestions(); const blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fragen_export_supabase.json'; a.click(); URL.revokeObjectURL(url);};
-  document.getElementById('admin-import').onchange=async(e)=>{
-    const files=[...(e.target.files||[])]; if(!files.length) return;
-    const all=[]; for(const f of files){ try{ const text=await f.text(); const arr=JSON.parse(text); if(Array.isArray(arr)) all.push(...arr); else if(arr&&typeof arr==='object') all.push(arr);}catch(err){ alert(`Fehler in ${f.name}: ${err.message}`); } }
-    if(!all.length) return alert('Keine gültigen Fragen gefunden.');
-    if(!supa) return alert('Supabase nicht konfiguriert.');
-    const cleaned = all.map(x=>{ const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex}; })
-      .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
-    let ok=0, bad=0;
-    for(const q of cleaned){ const {error}=await supa.from('questions').upsert(q,{onConflict:'id'}); if(error) bad++; else ok++; }
-    alert(`Import: OK ${ok}, Fehler ${bad}`);
-    await render();
-  };
-  async function fillCatSelect(){ const cats=await fetchCategories(); document.getElementById('admin-cat-old').innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
-  document.getElementById('admin-cat-apply').onclick=async()=>{
-    if(!supa) return alert('Supabase nicht konfiguriert.');
-    const oldVal=document.getElementById('admin-cat-old').value;
-    const newVal=(document.getElementById('admin-cat-new').value||'').trim();
-    if(!oldVal||!newVal) return alert('Bitte alte & neue Kategorie befüllen.');
-    const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
-    document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
-    await render(); await fillCatSelect();
-  };
-  document.getElementById('admin-scan-dup').onclick=async()=>{
-    const out=document.getElementById('admin-dup-list'); out.innerHTML='Suche…';
-    const q=await fetchQuestions(); if(!q.length){ out.innerHTML='<div class="card muted">Keine Fragen.</div>'; return; }
-    const byText={}; for(const it of q){ const key=(it.question||'').trim().toLowerCase(); (byText[key] ||= []).push(it); }
-    const groups=Object.values(byText).filter(arr=>arr.length>1);
-    if(!groups.length){ out.innerHTML='<div class="card">Keine Duplikate per Fragentext.</div>'; return; }
-    out.innerHTML = groups.map(arr=>{
-      const head=arr[0].question.slice(0,120);
-      const rows=arr.map(x=>`<div class="row" style="justify-content:space-between"><div><span class="chip">${x.category}</span></div><div class="muted">${x.id}</div></div>`).join('');
-      return `<div class="card"><div><b>${head}</b></div>${rows}</div>`;
-    }).join('');
-  };
-  document.getElementById('admin-save').onclick=async()=>{
-    if(!supa) return alert('Supabase nicht konfiguriert.');
-    const id='q_'+Math.random().toString(36).slice(2,10);
-    const category=document.getElementById('ad-category').value.trim();
-    const question=document.getElementById('ad-question').value.trim();
-    const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
-    const options=[], correctIndexRaw=lines.findIndex(l=>l.startsWith('***'));
-    lines.forEach(l=>options.push(l.replace(/^\*{3}\s?/,'')));
-    const correct_index = correctIndexRaw>=0 ? correctIndexRaw : 0;
-    const explanation=document.getElementById('ad-expl').value.trim();
-    const obj={id,category,question,options,correct_index,explanation};
-    const {error}=await supa.from('questions').upsert(obj,{onConflict:'id'});
-    if(error) alert(error.message); else { alert('Gespeichert.'); render(); }
-  };
-  render(); fillCatSelect();
-}
-
-/* ---------- DOM Ready ---------- */
-window.addEventListener('DOMContentLoaded', async () => {
-  applyBranding();
-  bindNavigation();
-  bindSettings();
-  bindProgressButtons();
-  renderProgress();
-
-  bindFlashcards();
-  bindAdaptive();
-  bindExam();
-  bindAdmin();
-  bindAuth();
-
-  try{ await initClientSafe(); }catch(e){ console.warn('Supabase Init Fehler:', e); }
-});
+/* ====== Boot ====== */
+window.addEventListener('DOMContentLoaded', initClient);
 </script>
 </body>
 </html>
