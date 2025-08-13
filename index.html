@@ -4,10 +4,12 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Lernapp Lagerlogistik</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%231b2440'/%3E%3Cpath d='M18 40l14-22 14 22H18z' fill='%2360A5FA'/%3E%3C/svg%3E"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Ccircle cx='64' cy='64' r='64' fill='%23131a32'/%3E%3Ccircle cx='64' cy='64' r='52' fill='%2360A5FA'/%3E%3C/svg%3E">
+<!-- Libs -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <style>
 :root{--line:rgba(255,255,255,.12);--text:#E5E7EB;--muted:#A7B0C3;--primary:#60A5FA;--panel:rgba(255,255,255,.06)}
 *{box-sizing:border-box}
@@ -31,8 +33,12 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
 .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
 .muted{color:var(--muted)}
 .alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
+
+/* Sticky Submit */
 #exam-submit-sticky{position:fixed;right:20px;bottom:20px;padding:12px 18px;border-radius:12px;border:1px solid var(--line);background:#2563EB;color:#fff;font-weight:600;cursor:pointer;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 #exam-submit-sticky[disabled]{opacity:.6;cursor:not-allowed}
+
+/* Modal */
 .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
 .modal.show{display:flex}
 .modal .backdrop{position:absolute;inset:0;background:#0b1020e6;backdrop-filter:blur(6px)}
@@ -47,15 +53,15 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
   <header class="topbar">
     <div class="brand"><div class="logo" id="brand-logo"></div><div><b>Lernapp Lagerlogistik</b><div style="font-size:12px;color:var(--muted)">Supabase • Login • Cloud</div></div></div>
     <div class="nav">
-      <button type="button" data-view="login">Login</button>
-      <button type="button" data-view="flashcards">Lernkarten</button>
-      <button type="button" data-view="train">Adaptiv</button>
-      <button type="button" data-view="exam">Prüfung</button>
-      <button type="button" data-view="stats">Statistik</button>
-      <button type="button" data-view="archive">Archiv</button>
-      <button type="button" data-view="progress">Fortschritt</button>
-      <button type="button" data-view="admin">Admin</button>
-      <button type="button" id="btn-settings">Einstellungen</button>
+      <button data-view="login">Login</button>
+      <button data-view="flashcards">Lernkarten</button>
+      <button data-view="train">Adaptiv</button>
+      <button data-view="exam">Prüfung</button>
+      <button data-view="stats">Statistik</button>
+      <button data-view="archive">Archiv</button>
+      <button data-view="progress">Fortschritt</button>
+      <button data-view="admin">Admin</button>
+      <button id="btn-settings">Einstellungen</button>
     </div>
   </header>
 
@@ -71,8 +77,8 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         </div>
         <label>Logo URL / Data‑URI<br/><input id="cfg-logo" placeholder="https://... oder data:image/png;base64,..."/></label>
         <div class="row" style="margin-top:8px">
-          <button type="button" id="cfg-save" class="btn primary">Speichern</button>
-          <button type="button" id="cfg-close" class="btn">Schließen</button>
+          <button id="cfg-save" class="btn primary">Speichern</button>
+          <button id="cfg-close" class="btn">Schließen</button>
           <span id="cfg-state" class="muted"></span>
         </div>
       </div>
@@ -91,9 +97,9 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         <div class="card"><div style="font-weight:700;margin-bottom:6px">Nach Kategorie</div><div id="res-cats"></div></div>
         <div class="cards" id="res-items" style="margin-top:10px"></div>
         <div class="row" style="justify-content:flex-end;margin-top:10px">
-          <button type="button" id="res-new" class="btn">Neue Prüfung</button>
-          <button type="button" id="res-close" class="btn">Schließen</button>
-          <button type="button" id="result-pdf" class="btn primary">PDF herunterladen</button>
+          <button id="res-new" class="btn">Neue Prüfung</button>
+          <button id="res-close" class="btn">Schließen</button>
+          <button id="result-pdf" class="btn primary">PDF herunterladen</button>
         </div>
       </div>
     </div>
@@ -105,9 +111,9 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         <div class="row">
           <input id="email" type="email" placeholder="dein.name@example.com"/>
           <input id="password" type="password" placeholder="••••••••"/>
-          <button type="button" id="btn-signup" class="btn">Registrieren</button>
-          <button type="button" id="btn-login" class="btn primary">Einloggen</button>
-          <button type="button" id="btn-logout" class="btn" disabled>Abmelden</button>
+          <button id="btn-signup" class="btn">Registrieren</button>
+          <button id="btn-login" class="btn primary">Einloggen</button>
+          <button id="btn-logout" class="btn" disabled>Abmelden</button>
           <span id="auth-state" class="muted"></span>
         </div>
         <div id="login-empty-info" class="alert" style="display:none;margin-top:10px"></div>
@@ -121,7 +127,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <h3>Lernkarten</h3>
           <div class="row">
             <select id="fc-category"></select>
-            <button type="button" id="fc-load" class="btn primary">Laden</button>
+            <button id="fc-load" class="btn primary">Laden</button>
             <span id="fc-stats" class="muted"></span>
           </div>
         </div>
@@ -142,7 +148,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
             <select id="train-category"><option value="">Alle Kategorien</option></select>
             <label class="row"><input type="checkbox" id="train-weak"/> <span>Nur Schwächen</span></label>
             <label class="row"><input type="checkbox" id="train-hide-learned" checked/> <span>Gelernt ausblenden</span></label>
-            <button type="button" id="train-next" class="btn primary">Nächste Karte</button>
+            <button id="train-next" class="btn primary">Nächste Karte</button>
           </div>
         </div>
         <div id="train-area" class="cards" style="margin-top:10px"></div>
@@ -159,9 +165,9 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
             <select id="exam-categories" multiple></select>
             <input id="exam-count" type="number" value="40" min="5" max="100" style="width:90px"/>
             <input id="exam-minutes" type="number" value="60" min="5" max="180" style="width:90px"/>
-            <button type="button" id="exam-start" class="btn primary">Start</button>
-            <button type="button" id="exam-submit" class="btn" disabled>Abgeben</button>
-            <button type="button" id="exam-reset" class="btn">Reset</button>
+            <button id="exam-start" class="btn primary">Start</button>
+            <button id="exam-submit" class="btn" disabled>Abgeben</button>
+            <button id="exam-reset" class="btn">Reset</button>
           </div>
         </div>
         <div id="exam-meta" class="muted" style="margin:8px 0"></div>
@@ -181,7 +187,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
               <option value="90">90 Tage</option>
               <option value="all">Alle</option>
             </select>
-            <button type="button" id="stats-refresh" class="btn">Aktualisieren</button>
+            <button id="stats-refresh" class="btn">Aktualisieren</button>
           </div>
         </div>
         <div class="cards" style="margin-top:10px">
@@ -200,27 +206,27 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <div class="row">
             <input id="arch-from" type="date"/>
             <input id="arch-to" type="date"/>
-            <button type="button" id="arch-load" class="btn">Filtern</button>
+            <button id="arch-load" class="btn">Filtern</button>
           </div>
         </div>
         <div id="archive-list" class="cards" style="margin-top:10px"></div>
       </div>
     </section>
 
-    <!-- Fortschritt & Lernziel -->
+    <!-- Fortschritt -->
     <section id="view-progress" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
           <h3>Dein Fortschritt & Lernziel</h3>
           <div class="row">
             <input id="goal-daily" type="number" min="5" max="200" value="20" style="width:90px"/>
-            <button type="button" id="goal-save" class="btn">Ziel speichern</button>
-            <button type="button" id="goal-remind" class="btn">Erinnern (heute)</button>
+            <button id="goal-save" class="btn">Ziel speichern</button>
+            <button id="goal-remind" class="btn">Erinnern (heute)</button>
           </div>
         </div>
         <div id="goal-status" class="card"></div>
         <div class="row" style="margin-top:10px;justify-content:space-between">
-          <button type="button" id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
+          <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
         </div>
         <div id="progress-summary" class="cards" style="margin-top:10px"></div>
       </div>
@@ -232,7 +238,7 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
         <div class="row" style="justify-content:space-between;align-items:flex-end">
           <h3>Admin</h3>
           <div class="row">
-            <button type="button" id="admin-export" class="btn">Export JSON</button>
+            <button id="admin-export" class="btn">Export JSON</button>
             <input type="file" id="admin-import" accept="application/json" multiple/>
           </div>
         </div>
@@ -241,14 +247,14 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <div class="row">
             <select id="admin-cat-old"></select>
             <input id="admin-cat-new" placeholder="Neue Kategorie (umbenennen/zusammenführen)"/>
-            <button type="button" id="admin-cat-apply" class="btn primary">Anwenden</button>
+            <button id="admin-cat-apply" class="btn primary">Anwenden</button>
             <span id="admin-cat-state" class="muted"></span>
           </div>
         </div>
         <div class="card">
           <h4>Duplikate scannen</h4>
           <div class="row">
-            <button type="button" id="admin-scan-dup" class="btn">Scan starten</button>
+            <button id="admin-scan-dup" class="btn">Scan starten</button>
             <span class="muted">Scannt gleiche <b>ID</b> oder gleiche <b>Fragentexte</b>.</span>
           </div>
           <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
@@ -257,9 +263,11 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
           <h4>Neue Frage</h4>
           <input id="ad-category" placeholder="z.B. LL01/2 – Güter kontrollieren" required/>
           <textarea id="ad-question" rows="2" placeholder="Frage" required></textarea>
-          <textarea id="ad-options" rows="4" placeholder="***Korrekt&#10;Falsch 1&#10;Falsch 2" required></textarea>
+          <textarea id="ad-options" rows="4" placeholder="***Korrekt
+Falsch 1
+Falsch 2" required></textarea>
           <textarea id="ad-expl" rows="2" placeholder="Erklärung (optional)"></textarea>
-          <div class="row"><button type="button" id="admin-save" class="btn primary">Speichern (DB)</button></div>
+          <div class="row"><button id="admin-save" class="btn primary">Speichern (DB)</button></div>
         </form>
         <div id="admin-list" class="cards"></div>
       </div>
@@ -268,17 +276,18 @@ input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:
 
 <script>
 /* ---------- Basiskonstanten & Branding ---------- */
-var KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
-var supa=null;
+const KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
+let supa=null;
 
+/* Logo unabhängig von Supabase anwenden */
 function applyBranding(){
   try{
-    var logo = localStorage.getItem(KEY_LOGO);
-    var el = document.getElementById('brand-logo');
+    const logo = localStorage.getItem(KEY_LOGO);
+    const el = document.getElementById('brand-logo');
     if(!el) return;
     if(logo){
       el.style.background='none';
-      el.style.backgroundImage='url('+logo+')';
+      el.style.backgroundImage=`url(${logo})`;
       el.style.backgroundSize='cover';
       el.style.backgroundPosition='center';
       el.style.border='1px solid var(--line)';
@@ -286,64 +295,65 @@ function applyBranding(){
       el.style.background='conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)';
       el.style.border='none';
     }
-  }catch(e){}
+  }catch{}
 }
 
 /* ---------- Navigation ---------- */
 function bindNavigation(){
-  var views=['login','flashcards','train','exam','stats','archive','progress','admin'];
-  function show(v){ views.forEach(function(x){ document.getElementById('view-'+x).classList.toggle('active',x===v); }); }
-  Array.prototype.forEach.call(document.querySelectorAll('.nav button[data-view]'),function(btn){
-    btn.addEventListener('click', function(){ show(btn.dataset.view); });
+  const views=['login','flashcards','train','exam','stats','archive','progress','admin'];
+  const show=(v)=>views.forEach(x=>document.getElementById('view-'+x).classList.toggle('active',x===v));
+  document.querySelectorAll('.nav button[data-view]').forEach(btn=>{
+    btn.addEventListener('click', ()=>show(btn.dataset.view));
   });
   show('login');
 }
 
 /* ---------- Einstellungen ---------- */
 function bindSettings(){
-  var modal=document.getElementById('settings-modal');
-  document.getElementById('btn-settings').onclick=function(){
+  const modal=document.getElementById('settings-modal');
+  document.getElementById('btn-settings').onclick=()=>{
     modal.classList.add('show');
     document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||'';
     document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'';
     document.getElementById('cfg-logo').value=localStorage.getItem(KEY_LOGO)||'';
   };
-  document.getElementById('cfg-close').onclick=function(){ modal.classList.remove('show'); };
-  document.getElementById('cfg-save').onclick=function(){
-    localStorage.setItem(KEY_URL, (document.getElementById('cfg-url').value||'').trim());
-    localStorage.setItem(KEY_ANON, (document.getElementById('cfg-key').value||'').trim());
-    var logo=(document.getElementById('cfg-logo').value||'').trim();
-    if(logo){ localStorage.setItem(KEY_LOGO, logo); } else { localStorage.removeItem(KEY_LOGO); }
+  document.getElementById('cfg-close').onclick=()=>modal.classList.remove('show');
+  document.getElementById('cfg-save').onclick=()=>{
+    localStorage.setItem(KEY_URL, document.getElementById('cfg-url').value.trim());
+    localStorage.setItem(KEY_ANON, document.getElementById('cfg-key').value.trim());
+    const logo=document.getElementById('cfg-logo').value.trim();
+    if(logo) localStorage.setItem(KEY_LOGO, logo); else localStorage.removeItem(KEY_LOGO);
     applyBranding();
     document.getElementById('cfg-state').textContent='Gespeichert. Seite lädt neu...';
-    setTimeout(function(){ location.reload(); },400);
+    setTimeout(()=>location.reload(),400);
   };
 }
 
-/* ---------- Lokaler Fortschritt ---------- */
+/* ---------- Fortschritt lokal ---------- */
 function bumpProgress(seenDelta, correctDelta){
-  var p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
+  const p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
   p.seen += seenDelta; p.correct += correctDelta;
   localStorage.setItem('progress_local', JSON.stringify(p));
   renderProgress();
 }
 function renderProgress(){
-  var p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
-  var acc = p.seen ? Math.round(p.correct/p.seen*100) : 0;
-  var box=document.getElementById('progress-summary');
-  if(box){ box.innerHTML = '<div class="card"><b>Letzte Sitzung</b><div>Beantwortet: <b>'+p.seen+'</b> • Richtig: <b>'+p.correct+'</b> • Quote: <b>'+acc+'%</b></div></div>'; }
+  const p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
+  const acc = p.seen ? Math.round(p.correct/p.seen*100) : 0;
+  const box=document.getElementById('progress-summary');
+  if(box) box.innerHTML =
+    `<div class="card"><b>Letzte Sitzung</b><div>Beantwortet: <b>${p.seen}</b> • Richtig: <b>${p.correct}</b> • Quote: <b>${acc}%</b></div></div>`;
 }
 function bindProgressButtons(){
-  var reset=document.getElementById('reset-progress');
-  if(reset){ reset.onclick=function(){ localStorage.removeItem('progress_local'); renderProgress(); }; }
+  const reset=document.getElementById('reset-progress');
+  if(reset) reset.onclick=()=>{localStorage.removeItem('progress_local'); renderProgress();};
 }
 
-/* ---------- Supabase ---------- */
+/* ---------- Supabase Init ---------- */
 async function initClientSafe(){
-  var url=localStorage.getItem(KEY_URL)||'';
-  var anon=localStorage.getItem(KEY_ANON)||'';
+  const url=localStorage.getItem(KEY_URL)||'';
+  const anon=localStorage.getItem(KEY_ANON)||'';
   if(!url || !anon){
-    var info=document.getElementById('login-empty-info');
+    const info=document.getElementById('login-empty-info');
     if(info){ info.style.display='block'; info.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.'; }
     return;
   }
@@ -352,502 +362,498 @@ async function initClientSafe(){
 
 /* ---------- Auth ---------- */
 function bindAuth(){
-  var email=document.getElementById('email'), password=document.getElementById('password');
-  var btnSignup=document.getElementById('btn-signup'), btnLogin=document.getElementById('btn-login'), btnLogout=document.getElementById('btn-logout');
-  var authState=document.getElementById('auth-state');
+  const email=document.getElementById('email'), password=document.getElementById('password');
+  const btnSignup=document.getElementById('btn-signup'), btnLogin=document.getElementById('btn-login'), btnLogout=document.getElementById('btn-logout');
+  const authState=document.getElementById('auth-state');
 
   async function refreshAuthUI(){
     if(!supa){ authState.textContent='Offline‑Modus (kein Supabase konfiguriert)'; btnLogout.disabled=true; return; }
-    var r=await supa.auth.getUser();
-    var user=r && r.data ? r.data.user : null;
-    if(user){ btnLogout.disabled=false; btnLogin.disabled=true; btnSignup.disabled=true; authState.textContent='Eingeloggt: '+user.email; }
-    else { btnLogout.disabled=true; btnLogin.disabled=false; btnSignup.disabled=false; authState.textContent='Nicht eingeloggt'; }
+    const {data:{user}}=await supa.auth.getUser();
+    if(user){btnLogout.disabled=false;btnLogin.disabled=true;btnSignup.disabled=true;authState.textContent=`Eingeloggt: ${user.email}`;}
+    else {btnLogout.disabled=true;btnLogin.disabled=false;btnSignup.disabled=false;authState.textContent='Nicht eingeloggt';}
   }
 
-  btnSignup.onclick=async function(){
+  btnSignup.onclick=async()=>{
     if(!supa) return alert('Supabase nicht konfiguriert.');
-    var out=await supa.auth.signUp({email:email.value,password:password.value});
-    if(out.error) alert(out.error.message); else alert('Registriert. Prüfe dein Postfach.');
+    const {error}=await supa.auth.signUp({email:email.value,password:password.value});
+    if(error) alert(error.message); else alert('Registriert. Prüfe dein Postfach.');
     refreshAuthUI();
   };
-  btnLogin.onclick=async function(){
+  btnLogin.onclick=async()=>{
     if(!supa) return alert('Supabase nicht konfiguriert.');
-    var out=await supa.auth.signInWithPassword({email:email.value,password:password.value});
-    if(out.error) alert(out.error.message);
+    const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value});
+    if(error) alert(error.message);
     refreshAuthUI();
   };
-  btnLogout.onclick=async function(){ if(supa) await supa.auth.signOut(); refreshAuthUI(); };
+  btnLogout.onclick=async()=>{ if(supa) await supa.auth.signOut(); refreshAuthUI(); };
 
   refreshAuthUI();
 }
 
-/* ---------- Fragen & Kategorien (kompatibel) ---------- */
-var LOCAL_Q='questions_cache_v1';
+/* ---------- Fragen & Kategorien (mit Cache) ---------- */
+const LOCAL_Q='questions_cache_v1';
 async function fetchQuestionsOnline(){
-  var r=await supa.from('questions').select('*').order('category',{ascending:true});
-  if(r.error) throw r.error; return r.data||[];
+  const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
+  if(error) throw error; return data||[];
 }
 async function fetchQuestions(){
   if(!supa){
-    var cached = JSON.parse(localStorage.getItem(LOCAL_Q)||'null');
+    const cached = JSON.parse(localStorage.getItem(LOCAL_Q)||'null');
     return (cached && Array.isArray(cached.items)) ? cached.items : [];
   }
   try{
-    var online=await fetchQuestionsOnline();
+    const online=await fetchQuestionsOnline();
     localStorage.setItem(LOCAL_Q, JSON.stringify({ts:Date.now(), items:online}));
     return online;
   }catch(e){
-    var cached2 = JSON.parse(localStorage.getItem(LOCAL_Q)||'null');
-    return (cached2 && Array.isArray(cached2.items)) ? cached2.items : [];
+    const cached = JSON.parse(localStorage.getItem(LOCAL_Q)||'null');
+    return (cached && Array.isArray(cached.items)) ? cached.items : [];
   }
 }
-async function fetchCategories(){
-  var q=await fetchQuestions(); 
-  var set={}; q.forEach(function(x){ set[x.category]=true; }); 
-  return Object.keys(set).sort();
-}
-async function refreshAllSelectors(){
-  var cats = await fetchCategories();
-  var fcSel = document.getElementById('fc-category');
-  if (fcSel) fcSel.innerHTML = cats.map(function(c){return '<option>'+c+'</option>';}).join('');
-  var trSel = document.getElementById('train-category');
-  if (trSel) trSel.innerHTML = '<option value="">Alle Kategorien</option>' + cats.map(function(c){return '<option>'+c+'</option>';}).join('');
-  var exSel = document.getElementById('exam-categories');
-  if (exSel) exSel.innerHTML = cats.map(function(c){return '<option value="'+c+'" selected>'+c+'</option>';}).join('');
-  var adminOld = document.getElementById('admin-cat-old');
-  if (adminOld) adminOld.innerHTML = cats.map(function(c){return '<option>'+c+'</option>';}).join('');
-}
+async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 
 /* ---------- Lernkarten ---------- */
 function bindFlashcards(){
-  var fcCategory=document.getElementById('fc-category');
-  var fcArea=document.getElementById('fc-area');
-  var fcStats=document.getElementById('fc-stats');
-  var fcEmpty=document.getElementById('fc-empty');
+  const fcCategory=document.getElementById('fc-category');
+  const fcArea=document.getElementById('fc-area');
+  const fcStats=document.getElementById('fc-stats');
+  const fcEmpty=document.getElementById('fc-empty');
 
+  async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
   async function loadFlashcards(){
-    var all=await fetchQuestions(); var cat=fcCategory.value; var cards=all.filter(function(x){return x.category===cat;});
-    fcArea.innerHTML=''; 
-    if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return; } 
-    fcEmpty.style.display='none';
-    var n=0; cards.forEach(function(card){
-      var wrap=document.createElement('div'); wrap.className='card';
-      var opts=card.options.map(function(t,i){return {text:t,correct:i===card.correct_index};});
-      wrap.innerHTML='<div class="row" style="justify-content:space-between"><div><span class="chip">'+card.category+'</span></div><div class="muted">ID: '+card.id+'</div></div>'
-        +'<div><b>'+card.question+'</b></div><div class="options"></div><div class="reveal" style="display:none"></div>';
-      var box=wrap.querySelector('.options');
-      opts.forEach(function(o,i){
-        var d=document.createElement('div'); d.className='option'; d.innerHTML='<input type="radio"/><span>'+o.text+'</span>';
-        d.onclick=async function(){
-          Array.prototype.forEach.call(box.children,function(c){ c.classList.remove('selected'); });
-          d.classList.add('selected');
-          var ok = i===opts.map(function(z){return z.correct;}).indexOf(true);
-          var reveal=wrap.querySelector('.reveal'); reveal.style.display='block';
-          var sol = opts.filter(function(o2){return o2.correct;})[0]; 
-          reveal.textContent = (i===ok)? '✅ Richtig!' : ('❌ Falsch. Richtig: '+(sol?sol.text:''));
-          bumpProgress(1, (i===ok)?1:0);
-          if(supa){ 
-            var r=await supa.auth.getUser(); var user=r && r.data ? r.data.user : null;
-            if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:(i===ok)});
-          }
+    const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
+    fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
+    let n=0; cards.forEach(card=>{
+      const wrap=document.createElement('div'); wrap.className='card';
+      const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
+      wrap.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${card.category}</span></div><div class="muted">ID: ${card.id}</div></div>
+        <div><b>${card.question}</b></div><div class="options"></div><div class="reveal" style="display:none"></div>`;
+      const box=wrap.querySelector('.options');
+      opts.forEach((o,i)=>{
+        const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/><span>${o.text}</span>`;
+        d.onclick=async()=>{
+          [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
+          const ok = i===opts.findIndex(z=>z.correct);
+          const reveal=wrap.querySelector('.reveal'); reveal.style.display='block';
+          reveal.textContent = ok? '✅ Richtig!' : `❌ Falsch. Richtig: ${opts.find(o=>o.correct)?.text}`;
+          bumpProgress(1, ok?1:0);
+          if(supa){ const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok}); }
         };
         box.appendChild(d);
       });
       fcArea.appendChild(wrap); n++;
-    }); 
-    fcStats.textContent=n+' Karten';
+    }); fcStats.textContent=`${n} Karten`;
   }
   document.getElementById('fc-load').onclick=loadFlashcards;
+  refreshSelectors();
 }
 
 /* ---------- Adaptives Training ---------- */
 function bindAdaptive(){
-  var trCategory=document.getElementById('train-category');
-  var trWeak=document.getElementById('train-weak');
-  var trHideLearned=document.getElementById('train-hide-learned');
-  var trNext=document.getElementById('train-next');
-  var trArea=document.getElementById('train-area');
-  var trEmpty=document.getElementById('train-empty');
+  const trCategory=document.getElementById('train-category');
+  const trWeak=document.getElementById('train-weak');
+  const trHideLearned=document.getElementById('train-hide-learned');
+  const trNext=document.getElementById('train-next');
+  const trArea=document.getElementById('train-area');
+  const trEmpty=document.getElementById('train-empty');
 
+  async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option>${c}</option>`).join(''); }
   function cooldownDaysForStreak(s){ if(s>=5) return 14; if(s>=4) return 7; if(s>=3) return 3; if(s>=2) return 1; return 0; }
   async function fetchStatsMap(userId){
-    var map={}; if(!supa || !userId) return map;
-    var out = await supa.from('reviews').select('question_id,ts,correct').eq('user_id',userId).order('ts',{ascending:true});
-    (out.data||[]).forEach(function(r){
-      if(!map[r.question_id]) map[r.question_id]={seen:0,correct:0,streak:0,last:false,lastTs:null};
-      var m=map[r.question_id];
-      m.seen++; 
-      if(r.correct){ m.correct++; m.streak = (m.last===true) ? (m.streak+1) : 1; } 
-      else { m.streak=0; }
+    const map={}; if(!supa || !userId) return map;
+    const { data } = await supa.from('reviews').select('question_id,ts,correct').eq('user_id',userId).order('ts',{ascending:true});
+    (data||[]).forEach(r=>{
+      const m = map[r.question_id] ||= {seen:0,correct:0,streak:0,last:false,lastTs:null};
+      m.seen++; if(r.correct){ m.correct++; m.streak=(m.last===true)?(m.streak+1):1; } else { m.streak=0; }
       m.last=r.correct; m.lastTs=r.ts;
-    });
-    return map;
+    }); return map;
   }
   function isInCooldown(entry){
     if(!entry||!entry.lastTs) return false;
-    var d=cooldownDaysForStreak(entry.streak||0); if(d<=0) return false;
-    var next=new Date(entry.lastTs); next.setDate(next.getDate()+d);
+    const d=cooldownDaysForStreak(entry.streak||0); if(d<=0) return false;
+    const next=new Date(entry.lastTs); next.setDate(next.getDate()+d);
     return (new Date()<next);
   }
   async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
-    var all=await fetchQuestions();
-    var r= supa ? await supa.auth.getUser() : null;
-    var user= r && r.data ? r.data.user : null;
-    var stats = await fetchStatsMap(user ? user.id : null);
-
-    var pool = all.filter(function(q){ return !categoryFilter || q.category===categoryFilter; }).map(function(q){
-      var s=stats[q.id] || {seen:0,correct:0,streak:0,last:false,lastTs:null};
-      var acc = s.seen ? (s.correct/s.seen) : 0;
-      var wrongBias = (s.last===false)?0.2:0;
-      var seenPenalty = Math.min(s.seen*0.02,0.2);
-      var learned=(s.streak||0)>=3;
-      var cooldown=isInCooldown(s);
-      var weight=(1-acc)+wrongBias-seenPenalty;
+    const all=await fetchQuestions();
+    let user=null; if(supa){ const r=await supa.auth.getUser(); user=r?.data?.user||null; }
+    const stats = await fetchStatsMap(user?.id);
+    let pool = all.filter(q=>!categoryFilter || q.category===categoryFilter).map(q=>{
+      const s=stats[q.id]||{seen:0,correct:0,streak:0,last:false,lastTs:null};
+      const acc = s.seen ? s.correct/s.seen : 0;
+      const wrongBias = (s.last===false)?0.2:0;
+      const seenPenalty = Math.min(s.seen*0.02,0.2);
+      const learned=(s.streak||0)>=3;
+      const cooldown=isInCooldown(s);
+      let weight=(1-acc)+wrongBias-seenPenalty;
       if(learned && hideLearned) weight-=1.5;
       if(cooldown) weight-=0.8;
-      return {q:q,s:s,acc:acc,learned:learned,cooldown:cooldown,weight:weight};
+      return {q,s,acc,learned,cooldown,weight};
     });
-
-    if(onlyWeak) pool=pool.filter(function(x){ return (x.acc<0.7) || (x.s.last===false); });
-    pool=pool.filter(function(x){ return x.weight>-0.3; });
+    if(onlyWeak) pool=pool.filter(x=> (x.acc<0.7) || (x.s.last===false));
+    pool=pool.filter(x=>x.weight>-0.3);
     if(!pool.length) return null;
-
-    var minW=Math.min.apply(Math, pool.map(function(x){return x.weight;}));
-    var norm=pool.map(function(p){ return {p:p, w:(p.weight-minW+0.001)}; });
-    var sum=norm.reduce(function(a,b){return a+b.w;},0);
-    var r2=Math.random()*sum; 
-    for(var i=0;i<norm.length;i++){ r2-=norm[i].w; if(r2<=0) return norm[i].p.q; }
-    return norm[norm.length-1].p.q;
+    const minW=Math.min(...pool.map(x=>x.weight));
+    const norm=pool.map(p=>({...p,w:p.weight-minW+0.001}));
+    const sum=norm.reduce((a,b)=>a+b.w,0);
+    let r=Math.random()*sum; for(const p of norm){ r-=p.w; if(r<=0) return p.q; }
+    return norm[norm.length-1].q;
   }
   function renderTrainCard(card){
     trArea.innerHTML='';
     if(!card){ trEmpty.style.display='block'; trEmpty.textContent='Keine geeignete Karte gefunden. Filter anpassen.'; return; }
     trEmpty.style.display='none';
-    var opts=card.options.map(function(t,i){return {text:t,correct:i===card.correct_index};});
-    var wrap=document.createElement('div'); wrap.className='card';
-    wrap.innerHTML='<div class="row" style="justify-content:space-between"><div><span class="chip">'+card.category+'</span></div><div class="muted">ID: '+card.id+'</div></div>'
-      +'<div style="margin-top:6px"><b>'+card.question+'</b></div><div class="options" style="margin-top:6px"></div><div class="reveal" style="display:none;margin-top:8px"></div>';
-    var box=wrap.querySelector('.options');
-    opts.forEach(function(o,i){
-      var d=document.createElement('div'); d.className='option'; d.innerHTML='<input type="radio"/> <span>'+o.text+'</span>';
-      d.onclick=async function(){
-        Array.prototype.forEach.call(box.children,function(c){ c.classList.remove('selected'); });
-        d.classList.add('selected');
-        var ok=(i===opts.map(function(z){return z.correct;}).indexOf(true));
-        var rev=wrap.querySelector('.reveal'); rev.style.display='block';
-        var sol=opts.filter(function(o2){return o2.correct;})[0];
-        rev.textContent = ok? '✅ Richtig!' : ('❌ Falsch. Richtig: '+(sol?sol.text:''));
+    const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
+    const wrap=document.createElement('div'); wrap.className='card';
+    wrap.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${card.category}</span></div><div class="muted">ID: ${card.id}</div></div>
+      <div style="margin-top:6px"><b>${card.question}</b></div><div class="options" style="margin-top:6px"></div><div class="reveal" style="display:none;margin-top:8px"></div>`;
+    const box=wrap.querySelector('.options');
+    opts.forEach((o,i)=>{
+      const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/> <span>${o.text}</span>`;
+      d.onclick=async()=>{
+        [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
+        const ok=(i===opts.findIndex(z=>z.correct));
+        const rev=wrap.querySelector('.reveal'); rev.style.display='block';
+        rev.textContent = ok? '✅ Richtig!' : `❌ Falsch. Richtig: ${opts.find(o=>o.correct)?.text}`;
         bumpProgress(1, ok?1:0);
-        if(supa){ var r=await supa.auth.getUser(); var user=r&&r.data?r.data.user:null; if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok}); }
+        if(supa){ const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok}); }
       };
       box.appendChild(d);
     });
     trArea.appendChild(wrap);
   }
-  document.getElementById('train-next').onclick=async function(){
-    var card=await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked);
+  document.getElementById('train-next').onclick=async()=>{
+    const card=await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked);
     renderTrainCard(card);
   };
+  refreshTrainSelectors();
 }
 
-/* ---------- Prüfung + Sticky Abgeben ---------- */
+/* ---------- Prüfung ---------- */
 function bindExam(){
-  var examCategories=document.getElementById('exam-categories');
-  var examCount=document.getElementById('exam-count');
-  var examMinutes=document.getElementById('exam-minutes');
-  var examStart=document.getElementById('exam-start');
-  var examSubmit=document.getElementById('exam-submit');
-  var examReset=document.getElementById('exam-reset');
-  var examArea=document.getElementById('exam-area');
-  var examMeta=document.getElementById('exam-meta');
+  const examCategories=document.getElementById('exam-categories');
+  const examCount=document.getElementById('exam-count');
+  const examMinutes=document.getElementById('exam-minutes');
+  const examStart=document.getElementById('exam-start');
+  const examSubmit=document.getElementById('exam-submit');
+  const examReset=document.getElementById('exam-reset');
+  const examArea=document.getElementById('exam-area');
+  const examMeta=document.getElementById('exam-meta');
 
-  var ihkRunning=false, timerId=null, timeLeft=0;
-  var examPool=[], selections={}, session=null;
+  let ihkRunning=false, timerId=null, timeLeft=0;
+  let examPool=[], selections={}, session=null;
 
   function ensureStickySubmit(){
-    var b=document.getElementById('exam-submit-sticky');
-    if(!b){ b=document.createElement('button'); b.id='exam-submit-sticky'; b.textContent='Abgeben'; b.onclick=function(){ examSubmit.click(); }; document.body.appendChild(b); }
+    let b=document.getElementById('exam-submit-sticky');
+    if(!b){ b=document.createElement('button'); b.id='exam-submit-sticky'; b.textContent='Abgeben'; b.onclick=()=>examSubmit.click(); document.body.appendChild(b); }
     b.disabled=!ihkRunning; updateStickySubmitLabel(); return b;
   }
-  function removeStickySubmit(){ var b=document.getElementById('exam-submit-sticky'); if(b) b.remove(); }
+  function removeStickySubmit(){ const b=document.getElementById('exam-submit-sticky'); if(b) b.remove(); }
   function updateStickySubmitLabel(){
-    var b=document.getElementById('exam-submit-sticky'); if(!b) return;
-    var total=examPool.length||0;
-    var answered=Object.keys(selections).map(function(k){return selections[k];}).filter(function(v){return v!=null;}).length;
-    b.textContent = total? ('Abgeben ('+answered+'/'+total+')'):'Abgeben';
+    const b=document.getElementById('exam-submit-sticky'); if(!b) return;
+    const total=examPool.length||0;
+    const answered=Object.values(selections).filter(v=>v!=null).length;
+    b.textContent = total? `Abgeben (${answered}/${total})`:'Abgeben';
     b.disabled=!ihkRunning;
   }
-  function pickN(a,n){ var b=a.slice(); for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)); var tmp=b[i]; b[i]=b[j]; b[j]=tmp;} return b.slice(0,n); }
-  function renderMeta(){ var total=examPool.length; var answered=Object.keys(selections).map(function(k){return selections[k];}).filter(function(v){return v!=null;}).length; var mm=(''+Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0'); var ss=(''+Math.max(0,timeLeft%60)).padStart(2,'0'); examMeta.textContent='Fragen: '+answered+'/'+total+' • Restzeit '+mm+':'+ss; updateStickySubmitLabel(); }
+  function pickN(a,n){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]];} return b.slice(0,n); }
+  async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
+  function renderMeta(){ const total=examPool.length; const answered=Object.values(selections).filter(v=>v!=null).length; const mm=String(Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0'); const ss=String(Math.max(0,timeLeft%60)).padStart(2,'0'); examMeta.textContent=`Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`; updateStickySubmitLabel(); }
 
-  examStart.onclick=async function(){
-    if(!supa){ alert('Bitte Supabase in den Einstellungen eintragen und einloggen.'); return; }
-    var r=await supa.auth.getUser(); var user=r&&r.data?r.data.user:null; if(!user) return alert('Bitte zuerst einloggen.');
-    var all=await fetchQuestions(); var chosen=Array.prototype.map.call(examCategories.selectedOptions,function(o){return o.value;});
-    var pool=all.filter(function(q){return chosen.indexOf(q.category)>=0;}); if(!pool.length) return alert('Keine Fragen in den gewählten Kategorien.');
-    var n=Math.max(5,Math.min(Number(examCount.value||40),100));
+  examStart.onclick=async()=>{
+    if(!supa){ alert('Bitte Supabase konfigurieren und einloggen.'); return; }
+    const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte zuerst einloggen.');
+    const all=await fetchQuestions(); const chosen=[...examCategories.selectedOptions].map(o=>o.value);
+    const pool=all.filter(q=>chosen.includes(q.category)); if(!pool.length) return alert('Keine Fragen in den gewählten Kategorien.');
+    const n=Math.max(5,Math.min(Number(examCount.value||40),100));
     examPool = pickN(pool,n); selections={}; examArea.innerHTML=''; ihkRunning=true; examSubmit.disabled=false;
 
     timeLeft=(Number(examMinutes.value||60))*60; renderMeta();
     if(timerId) clearInterval(timerId);
-    timerId=setInterval(function(){ timeLeft--; renderMeta(); if(timeLeft<=0){ clearInterval(timerId); finishExam(true); } },1000);
+    timerId=setInterval(()=>{ timeLeft--; renderMeta(); if(timeLeft<=0){ clearInterval(timerId); finishExam(true); } },1000);
 
-    examPool.forEach(function(q,idx){
-      var el=document.createElement('div'); el.className='card';
-      var opts=q.options.map(function(t,i){return {text:t,correct:i===q.correct_index};});
-      el.innerHTML='<div class="row" style="justify-content:space-between"><div><span class="chip">'+q.category+'</span></div><div class="muted">Frage '+(idx+1)+'/'+n+'</div></div>'
-        +'<div style="margin-top:4px"><b>'+q.question+'</b></div><div class="options"></div>';
-      var box=el.querySelector('.options');
-      opts.forEach(function(o,i){ 
-        var d=document.createElement('label'); d.className='option'; d.innerHTML='<input type="radio" name="q_'+q.id+'"/> <span>'+o.text+'</span>';
-        d.onclick=function(){ selections[q.id]=i; Array.prototype.forEach.call(box.children,function(c){ c.classList.remove('selected'); }); d.classList.add('selected'); renderMeta(); };
+    examPool.forEach((q,idx)=>{
+      const el=document.createElement('div'); el.className='card';
+      const opts=q.options.map((t,i)=>({text:t,correct:i===q.correct_index}));
+      el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${q.category}</span></div><div class="muted">Frage ${idx+1}/${n}</div></div>
+        <div style="margin-top:4px"><b>${q.question}</b></div><div class="options"></div>`;
+      const box=el.querySelector('.options');
+      opts.forEach((o,i)=>{ const d=document.createElement('label'); d.className='option'; d.innerHTML=`<input type="radio" name="q_${q.id}"/> <span>${o.text}</span>`;
+        d.onclick=()=>{ selections[q.id]=i; [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected'); renderMeta(); };
         box.appendChild(d);
       });
       examArea.appendChild(el);
     });
     session={items:[],total:n,correct:0,startedAt:new Date().toISOString()};
-    ensureStickySubmit(); 
+    ensureStickySubmit();
   };
 
-  examSubmit.onclick=function(){ if(!ihkRunning) return; finishExam(false); };
-  examReset.onclick=function(){ ihkRunning=false; clearInterval(timerId); examArea.innerHTML=''; examMeta.textContent=''; examSubmit.disabled=true; removeStickySubmit(); };
+  examSubmit.onclick=()=>{ if(!ihkRunning) return; finishExam(false); };
+  examReset.onclick=()=>{ ihkRunning=false; clearInterval(timerId); examArea.innerHTML=''; examMeta.textContent=''; examSubmit.disabled=true; removeStickySubmit(); };
 
-  async function finishExam(auto){
+  async function finishExam(auto=false){
     ihkRunning=false; clearInterval(timerId); examSubmit.disabled=true; removeStickySubmit();
-    session.items = examPool.map(function(q){
-      var chosenIndex=selections[q.id]; var correctIndex=q.correct_index; var correct=chosenIndex===correctIndex;
-      return { id:q.id, category:q.category, question:q.question, selectedText:(q.options[chosenIndex]||''), correctText:q.options[correctIndex], explanation:q.explanation||'', correct:correct };
-    });
-    session.correct = session.items.filter(function(x){return x.correct;}).length; session.finishedAt=new Date().toISOString();
+    session.items = examPool.map(q=>{ const chosenIndex=selections[q.id]; const correctIndex=q.correct_index; const correct=chosenIndex===correctIndex;
+      return { id:q.id, category:q.category, question:q.question, selectedText:(q.options[chosenIndex]??''), correctText:q.options[correctIndex], explanation:q.explanation||'', correct }; });
+    session.correct = session.items.filter(x=>x.correct).length; session.finishedAt=new Date().toISOString();
 
     try{
-      var rr=await supa.auth.getUser(); var user=rr&&rr.data?rr.data.user:null;
+      const {data:{user}}=await supa.auth.getUser();
       if(user){
         await supa.from('exam_sessions').insert({ user_id:user.id, total:session.total, correct:session.correct, detail:session.items });
-        for(var i=0;i<session.items.length;i++){ var it=session.items[i]; await supa.from('reviews').insert({user_id:user.id,question_id:it.id,correct:it.correct}); }
+        for(const it of session.items){ await supa.from('reviews').insert({user_id:user.id,question_id:it.id,correct:it.correct}); }
       }
     }catch(e){ console.warn('Ergebnis speichern (optional):', e); }
     showResult(session);
-    try{ if(supa){ await statsRefresh(); await archiveLoad(); } }catch(e){}
+    try{ if(supa){ await statsRefresh(); await archiveLoad(); } }catch{}
   }
+
+  refreshExamCategories();
 }
 
 /* ---------- Ergebnis-Panel + PDF ---------- */
 function showResult(session){
-  var modal=document.getElementById('result-modal');
-  document.getElementById('res-total').textContent = session.correct+' / '+session.total;
-  document.getElementById('res-quote').textContent = (session.total?Math.round(100*session.correct/session.total):0)+'%';
+  const modal=document.getElementById('result-modal');
+  document.getElementById('res-total').textContent = `${session.correct} / ${session.total}`;
+  document.getElementById('res-quote').textContent = `${session.total?Math.round(100*session.correct/session.total):0}%`;
   document.getElementById('res-date').textContent = new Date().toLocaleString();
-
-  var byCat={};
-  (session.items||[]).forEach(function(it){
-    var c=it.category||'–';
-    if(!byCat[c]) byCat[c]={total:0,correct:0};
-    byCat[c].total++; if(it.correct) byCat[c].correct++;
-  });
-  var catsHtml = Object.keys(byCat).map(function(c){
-    var s=byCat[c]; var pct=s.total?Math.round(100*s.correct/s.total):0;
-    return '<div class="row" style="justify-content:space-between;border-bottom:1px dashed var(--line);padding:6px 0"><div>'+c+'</div><div class="muted">'+s.correct+'/'+s.total+' ('+pct+'%)</div></div>';
-  }).join('');
-  document.getElementById('res-cats').innerHTML = catsHtml || '<div class="muted">Keine Daten.</div>';
-
-  var items=document.getElementById('res-items');
-  items.innerHTML = (session.items||[]).map(function(it,i){
-    return '<div class="card">'
-      +'<div class="row" style="justify-content:space-between"><div><span class="chip">'+(it.category||'')+'</span></div>'
-      +'<div class="chip" style="border-color:'+(it.correct?'#34d399':'#ef4444')+';color:'+(it.correct?'#34d399':'#ef4444')+'">'+(it.correct?'Richtig':'Falsch')+'</div></div>'
-      +'<div style="margin-top:6px"><b>'+(i+1)+'. '+it.question+'</b></div>'
-      +'<div style="margin-top:6px"><b>Deine Antwort:</b> '+(it.selectedText||'')+'</div>'
-      +'<div><b>Richtige Lösung:</b> '+(it.correctText||'')+'</div>'
-      +(it.explanation?('<div><b>Erklärung:</b> '+it.explanation+'</div>'):'')
-      +'</div>';
-  }).join('');
-
-  document.getElementById('res-new').onclick=function(){ modal.classList.remove('show'); document.getElementById('exam-reset').click(); };
-  document.getElementById('res-close').onclick=function(){ modal.classList.remove('show'); };
-  document.getElementById('result-pdf').onclick = async function () {
-    var r= supa ? await supa.auth.getUser() : null;
-    var user = r && r.data ? r.data.user : null;
-    var logo = localStorage.getItem(KEY_LOGO) || null;
-    await generateExamPDF({ session:session, userEmail: user ? (user.email||'') : '', logoUrlOrDataUri: logo });
+  const byCat={}; session.items.forEach(it=>{ const c=it.category||'–'; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0; });
+  document.getElementById('res-cats').innerHTML = Object.entries(byCat).map(([c,s])=>{
+    const pct = s.total? Math.round(100*s.correct/s.total):0;
+    return `<div class="row" style="justify-content:space-between;border-bottom:1px dashed var(--line);padding:6px 0"><div>${c}</div><div class="muted">${s.correct}/${s.total} (${pct}%)</div></div>`;
+  }).join('') || '<div class="muted">Keine Daten.</div>';
+  const items=document.getElementById('res-items');
+  items.innerHTML = session.items.map((it,i)=>`
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><span class="chip">${it.category||''}</span></div>
+        <div class="chip" style="border-color:${it.correct?'#34d399':'#ef4444'};color:${it.correct?'#34d399':'#ef4444'}">${it.correct?'Richtig':'Falsch'}</div>
+      </div>
+      <div style="margin-top:6px"><b>${i+1}. ${it.question}</b></div>
+      <div style="margin-top:6px"><b>Deine Antwort:</b> ${it.selectedText||''}</div>
+      <div><b>Richtige Lösung:</b> ${it.correctText||''}</div>
+      ${it.explanation?`<div><b>Erklärung:</b> ${it.explanation}</div>`:''}
+    </div>`).join('');
+  document.getElementById('res-new').onclick=()=>{ modal.classList.remove('show'); document.getElementById('exam-reset').click(); };
+  document.getElementById('res-close').onclick=()=> modal.classList.remove('show');
+  document.getElementById('result-pdf').onclick = async () => {
+    const { data:{user} = {} } = supa? (await supa.auth.getUser()) : {data:{}}; 
+    const logo = localStorage.getItem(KEY_LOGO) || null;
+    await generateExamPDF({ session, userEmail: user?.email || "", logoUrlOrDataUri: logo });
   };
   modal.classList.add('show');
 }
-
-async function generateExamPDF(opts) {
-  var session=opts.session||{items:[],total:0,correct:0};
-  var userEmail=opts.userEmail||'';
-  var logoUrlOrDataUri=opts.logoUrlOrDataUri||null;
-
-  var jsPDF = window.jspdf.jsPDF;
-  var doc = new jsPDF({ unit: "mm", format: "a4" });
-  var left = 20, right = 190; var y = 20;
-  function set(size,bold,color){ if(size===undefined) size=11; doc.setFont("helvetica", bold? "bold":"normal"); doc.setFontSize(size); doc.setTextColor(color||20); }
-  function addY(h){ y += h; if (y > 280){ doc.addPage(); y = 20; } }
-  function hr(){ doc.setDrawColor(220); doc.line(left, y, right, y); addY(4); }
-  function wrap(text){ return doc.splitTextToSize(text||"", right-left); }
-
-  try { 
-    if (logoUrlOrDataUri) { 
-      var blob = await fetch(logoUrlOrDataUri).then(function(r){return r.blob();});
-      var dataUrl = await new Promise(function(res){
-        var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.readAsDataURL(blob);
-      });
-      doc.addImage(dataUrl, 'PNG', right-36, 10, 16, 16);
-    } 
-  } catch(e){}
-
+async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const left = 20, right = 190; let y = 20;
+  const set = (size=11, bold=false, color=20) => { doc.setFont("helvetica", bold? "bold":"normal"); doc.setFontSize(size); doc.setTextColor(color); };
+  const addY = (h) => { y += h; if (y > 280){ doc.addPage(); y = 20; } };
+  const hr = () => { doc.setDrawColor(220); doc.line(left, y, right, y); addY(4); };
+  const wrap = (text) => doc.splitTextToSize(text||"", right-left);
+  try { if (logoUrlOrDataUri) { const img = await fetch(logoUrlOrDataUri).then(r=>r.blob()).then(b=>new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); })); doc.addImage(img, 'PNG', right-20-16, 10, 16, 16); } } catch(e){}
   set(18,true); doc.text("Prüfungsergebnis – Lernapp Lagerlogistik", left, y); addY(10);
-  var created = new Date().toLocaleString();
+  const created = new Date().toLocaleString();
   set(10,true,120); doc.text("Erstellt:", left, y); set(12,false,20); doc.text(created, left, y+6);
-  set(10,true,120); doc.text("Prüfling:", left+90, y); set(12,false,20); doc.text("E‑Mail: "+(userEmail||"-"), left+90, y+6);
+  set(10,true,120); doc.text("Prüfling:", left+90, y); set(12,false,20); doc.text(`E‑Mail: ${userEmail||"-"}`, left+90, y+6);
   addY(16); hr();
-  set(10,true,120); doc.text("Gesamt richtig:", left, y); set(12,false); doc.text(session.correct+" / "+session.total, left, y+6);
-  set(10,true,120); doc.text("Quote:", left+90, y); set(12,false); doc.text((session.total?Math.round(100*session.correct/session.total):0)+"%", left+90, y+6);
+  set(10,true,120); doc.text("Gesamt richtig:", left, y); set(12,false); doc.text(`${session.correct} / ${session.total}`, left, y+6);
+  set(10,true,120); doc.text("Quote:", left+90, y); set(12,false); doc.text(`${session.total?Math.round(100*session.correct/session.total):0}%`, left+90, y+6);
   addY(16); hr();
-
   set(13,true); doc.text("Nach Kategorie:", left, y); addY(7);
-  var byCat={}; (session.items||[]).forEach(function(it){ var c=it.category||"–"; if(!byCat[c]) byCat[c]={total:0,correct:0}; byCat[c].total++; if(it.correct) byCat[c].correct++; });
-  Object.keys(byCat).forEach(function(c){ var s=byCat[c]; var pct=s.total?Math.round(100*s.correct/s.total):0; set(12,false); doc.text("• "+c+": "+s.correct+"/"+s.total+" ("+pct+"%)", left, y); addY(6); });
+  const byCat={}; (session.items||[]).forEach(it=>{const c=it.category||"–"; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0;});
+  Object.entries(byCat).forEach(([c,s])=>{ const pct=s.total?Math.round(100*s.correct/s.total):0; set(12,false); doc.text(`• ${c}: ${s.correct}/${s.total} (${pct}%)`, left, y); addY(6); });
   addY(4); hr();
-
   set(13,true); doc.text("Einzelaufstellung (Fragen & Antworten)", left, y); addY(8);
-  (session.items||[]).forEach(function(it, idx){
-    set(12,true); doc.text((idx+1)+". "+(it.category||''), left, y); addY(6);
-    wrap(it.question).forEach(function(row){ set(12,false); doc.text(row,left,y); addY(5); });
+  (session.items||[]).forEach((it, idx) => {
+    set(12,true); doc.text(`${idx+1}. ${it.category||''}`, left, y); addY(6);
+    wrap(it.question).forEach(row=>{ set(12,false); doc.text(row,left,y); addY(5); });
     set(10,true,120); doc.text("Deine Antwort:", left, y); addY(5);
-    wrap(it.selectedText).forEach(function(row){ set(11,false); doc.text(row,left,y); addY(5); });
+    wrap(it.selectedText).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
     set(10,true,120); doc.text("Richtige Lösung:", left, y); addY(5);
-    wrap(it.correctText).forEach(function(row){ set(11,false); doc.text(row,left,y); addY(5); });
-    if (it.explanation){ set(10,true,120); doc.text("Erklärung:", left, y); addY(5); wrap(it.explanation).forEach(function(row){ set(11,false); doc.text(row,left,y); addY(5); }); }
-    set(11,true, it.correct?20:180); doc.text("Bewertung: "+(it.correct?'RICHTIG':'FALSCH'), left, y); addY(7); hr();
+    wrap(it.correctText).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
+    if (it.explanation){ set(10,true,120); doc.text("Erklärung:", left, y); addY(5); wrap(it.explanation).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); }); }
+    set(11,true, it.correct?20:180); doc.text(`Bewertung: ${it.correct?'RICHTIG':'FALSCH'}`, left, y); addY(7); hr();
   });
-  var stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); 
-  doc.save("pruefungsbericht_"+stamp+".pdf");
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); doc.save(`pruefungsbericht_${stamp}.pdf`);
 }
 
 /* ---------- Statistik ---------- */
-var chartAcc=null, chartDaily=null;
+let chartAcc=null, chartDaily=null;
 async function statsRefresh(){
   if(!supa){ alert('Supabase nicht konfiguriert.'); return; }
-  var r=await supa.auth.getUser(); var user=r&&r.data?r.data.user:null; if(!user) return alert('Bitte einloggen.');
-  var exams = (await supa.from('exam_sessions').select('id,started_at,total,correct,detail').eq('user_id',user.id).order('started_at',{ascending:true})).data;
-  var revs  = (await supa.from('reviews').select('ts,correct,question_id').eq('user_id',user.id).order('ts',{ascending:true})).data;
+  const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte einloggen.');
 
-  var catMap={}; (exams||[]).forEach(function(ex){ (ex.detail||[]).forEach(function(it){ var c=it.category||'–'; if(!catMap[c]) catMap[c]={t:0,c:0}; catMap[c].t++; if(it.correct) catMap[c].c++; }); });
-  var labelsCats=Object.keys(catMap); var dataCats=labelsCats.map(function(k){var v=catMap[k]; return Math.round(100*(v.c/v.t));});
-  var ctx1=document.getElementById('chart-accuracy').getContext('2d');
-  if(chartAcc) chartAcc.destroy();
-  chartAcc=new Chart(ctx1,{type:'bar',data:{labels:labelsCats,datasets:[{label:'Kategorie‑Quote (%)',data:dataCats}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{stepSize:20}}}});
+  const { data: exams } = await supa.from('exam_sessions')
+    .select('id,started_at,total,correct,detail')
+    .eq('user_id',user.id).order('started_at',{ascending:true});
 
+  const { data: revs }  = await supa.from('reviews')
+    .select('ts,correct,question_id')
+    .eq('user_id',user.id).order('ts',{ascending:true});
+
+  /* Kategorien-Quote */
+  var catMap={};
+  (exams||[]).forEach(function(ex){
+    (ex.detail||[]).forEach(function(it){
+      var c=it.category||'–';
+      if(!catMap[c]) catMap[c]={t:0,c:0};
+      catMap[c].t++;
+      if(it.correct) catMap[c].c++;
+    });
+  });
+  var labelsCats=Object.keys(catMap);
+  var dataCats=labelsCats.map(function(k){
+    var v=catMap[k]; return Math.round(100*(v.c/v.t));
+  });
+
+  var ca=document.getElementById('chart-accuracy');
+  if(ca){
+    var ctx1=ca.getContext('2d');
+    if(chartAcc) chartAcc.destroy();
+    chartAcc=new Chart(ctx1,{type:'bar',data:{labels:labelsCats,datasets:[{label:'Kategorie‑Quote (%)',data:dataCats}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{stepSize:20}}}});
+  }
+
+  /* Tagesquote */
   var range=document.getElementById('stats-range').value;
-  var byDay={}; (revs||[]).forEach(function(rv){ var key=new Date(rv.ts).toISOString().slice(0,10); if(!byDay[key]) byDay[key]={seen:0,ok:0}; byDay[key].seen++; if(rv.correct) byDay[key].ok++; });
-  var days=Object.keys(byDay).sort(); if(range!=='all'){ days=days.slice(-Number(range)); }
-  var dailyAcc=days.map(function(k){ var m=byDay[k]; return m.seen? Math.round(100*m.ok/m.seen):0; });
-  var ctx2=document.getElementById('chart-daily').getContext('2d');
-  if(chartDaily) chartDaily.destroy();
-  chartDaily=new Chart(ctx2,{type:'line',data:{labels:days,datasets:[{label:'Tages‑Quote (%)',data:dailyAcc,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{stepSize:20}}}});
+  var byDay={};
+  (revs||[]).forEach(function(rv){
+    var key=new Date(rv.ts).toISOString().slice(0,10);
+    if(!byDay[key]) byDay[key]={seen:0,ok:0};
+    byDay[key].seen++;
+    if(rv.correct) byDay[key].ok++;
+  });
+  var days=Object.keys(byDay).sort();
+  if(range!=='all'){ days=days.slice(-Number(range)); }
+  var dailyAcc=days.map(function(k){
+    var m=byDay[k]; return m.seen? Math.round(100*m.ok/m.seen):0;
+  });
 
+  var cd=document.getElementById('chart-daily');
+  if(cd){
+    var ctx2=cd.getContext('2d');
+    if(chartDaily) chartDaily.destroy();
+    chartDaily=new Chart(ctx2,{type:'line',data:{labels:days,datasets:[{label:'Tages‑Quote (%)',data:dailyAcc,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{stepSize:20}}}});
+  }
+
+  /* Top/Worst */
   var top = labelsCats.map(function(c,i){return {c:c,acc:dataCats[i]};}).sort(function(a,b){return b.acc-a.acc;});
   var worst = labelsCats.map(function(c,i){return {c:c,acc:dataCats[i]};}).sort(function(a,b){return a.acc-b.acc;});
-  document.getElementById('stats-topcats').innerHTML = '<div><b>Stärkste Bereiche</b></div><div>'+ (top.slice(0,3).map(function(t){return '• '+t.c+': '+t.acc+'%';}).join('<br/>')||'–') +'</div><div style="margin-top:8px"><b>Schwächste Bereiche</b></div><div>'+ (worst.slice(0,3).map(function(t){return '• '+t.c+': '+t.acc+'%';}).join('<br/>')||'–') +'</div>';
+  var box=document.getElementById('stats-topcats');
+  if(box){
+    box.innerHTML =
+      '<div><b>Stärkste Bereiche</b></div><div>' +
+      (top.slice(0,3).map(function(t){return '• '+t.c+': '+t.acc+'%';}).join('<br/>')||'–') +
+      '</div><div style="margin-top:8px"><b>Schwächste Bereiche</b></div><div>' +
+      (worst.slice(0,3).map(function(t){return '• '+t.c+': '+t.acc+'%';}).join('<br/>')||'–') +
+      '</div>';
+  }
 }
 document.getElementById('stats-refresh').onclick=statsRefresh;
 
 /* ---------- Archiv ---------- */
-var archList=document.getElementById('archive-list');
+const archList=document.getElementById('archive-list');
 async function archiveLoad(){
   if(!supa){ archList.innerHTML='<div class="card">Supabase nicht konfiguriert.</div>'; return; }
-  var r=await supa.auth.getUser(); var user=r&&r.data?r.data.user:null; if(!user){ archList.innerHTML='<div class="card">Bitte einloggen.</div>'; return; }
-  var from=document.getElementById('arch-from').value; var to=document.getElementById('arch-to').value;
-  var q = supa.from('exam_sessions').select('id, started_at, total, correct, detail').eq('user_id',user.id).order('started_at',{ascending:false}).limit(100);
+  const {data:{user}}=await supa.auth.getUser(); if(!user){ archList.innerHTML='<div class="card">Bitte einloggen.</div>'; return; }
+  const from=document.getElementById('arch-from').value; const to=document.getElementById('arch-to').value;
+  let q = supa.from('exam_sessions').select('id, started_at, total, correct, detail').eq('user_id',user.id).order('started_at',{ascending:false}).limit(100);
   if(from) q=q.gte('started_at', from+'T00:00:00'); if(to) q=q.lte('started_at', to+'T23:59:59');
-  var data = (await q).data;
+  const { data } = await q;
   if(!data || !data.length){ archList.innerHTML='<div class="card">Keine Prüfungen im Zeitraum.</div>'; return; }
-  archList.innerHTML = data.map(function(ex){
-    var qv = ex.total||0, c=ex.correct||0, pct=qv?Math.round(100*c/qv):0;
-    var d = ex.started_at? new Date(ex.started_at).toLocaleString() : '-';
-    return '<div class="card"><div class="row" style="justify-content:space-between"><div><b>'+d+'</b></div><div class="chip">'+c+'/'+qv+' ('+pct+'%)</div></div>'
-      +'<div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" class="btn" data-viewpdf="'+ex.id+'">PDF</button>'
-      +'<button type="button" class="btn" data-viewdetail="'+ex.id+'">Details</button></div></div>';
+  archList.innerHTML = data.map(ex=>{
+    const q = ex.total||0, c=ex.correct||0, pct=q?Math.round(100*c/q):0;
+    const d = ex.started_at? new Date(ex.started_at).toLocaleString() : '-';
+    return `<div class="card">
+      <div class="row" style="justify-content:space-between"><div><b>${d}</b></div><div class="chip">${c}/${q} (${pct}%)</div></div>
+      <div class="row" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn" data-viewpdf="${ex.id}">PDF</button>
+        <button class="btn" data-viewdetail="${ex.id}">Details</button>
+      </div></div>`;
   }).join('');
-  Array.prototype.forEach.call(archList.querySelectorAll('button[data-viewpdf]'),function(btn){
-    btn.onclick=async function(){
-      var id=btn.dataset.viewpdf;
-      var ex = data.find(function(x){return x.id===id;});
-      var r2=await supa.auth.getUser(); var user2=r2&&r2.data?r2.data.user:null;
-      var logo = localStorage.getItem(KEY_LOGO)||null;
-      await generateExamPDF({ session:{ total:ex.total, correct:ex.correct, items:ex.detail||[] }, userEmail:user2?user2.email:'', logoUrlOrDataUri:logo });
-    };
+  archList.querySelectorAll('button[data-viewpdf]').forEach(btn=>btn.onclick=async()=>{
+    const id=btn.dataset.viewpdf;
+    const ex = (data.find(x=>x.id===id));
+    const { data:{user} } = await supa.auth.getUser();
+    const logo = localStorage.getItem(KEY_LOGO)||null;
+    await generateExamPDF({ session:{ total:ex.total, correct:ex.correct, items:ex.detail||[] }, userEmail:user?.email||'', logoUrlOrDataUri:logo });
   });
-  Array.prototype.forEach.call(archList.querySelectorAll('button[data-viewdetail]'),function(btn){
-    btn.onclick=function(){
-      var id=btn.dataset.viewdetail;
-      var ex = data.find(function(x){return x.id===id;});
-      showResult({ total:ex.total, correct:ex.correct, items:ex.detail||[] });
-    };
+  archList.querySelectorAll('button[data-viewdetail]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.dataset.viewdetail;
+    const ex = (data.find(x=>x.id===id));
+    showResult({ total:ex.total, correct:ex.correct, items:ex.detail||[] });
   });
 }
 document.getElementById('arch-load').onclick=archiveLoad;
 
 /* ---------- Admin ---------- */
 function bindAdmin(){
-  var list=document.getElementById('admin-list');
-  async function render(){ var q=await fetchQuestions();
-    list.innerHTML=q.map(function(x){return '<div class="card"><div class="row" style="justify-content:space-between">'
-      +'<div><span class="chip">'+x.category+'</span></div><button type="button" data-del="'+x.id+'" class="btn">Löschen</button></div>'
-      +'<div><b>'+x.question+'</b></div></div>';}).join('');
-    Array.prototype.forEach.call(list.querySelectorAll('button[data-del]'),function(btn){
-      btn.onclick=async function(){
-        if(!supa) return alert('Supabase nicht konfiguriert.');
-        var id=btn.getAttribute('data-del'); var out=await supa.from('questions').delete().eq('id',id);
-        if(out.error) alert(out.error.message); else render();
-      };
+  const list=document.getElementById('admin-list');
+  async function render(){ const q=await fetchQuestions();
+    list.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between">
+      <div><span class="chip">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div>
+      <div><b>${x.question}</b></div></div>`).join('');
+    list.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{
+      if(!supa) return alert('Supabase nicht konfiguriert.');
+      const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id);
+      if(error) alert(error.message); else render();
     });
   }
-  document.getElementById('admin-export').onclick=async function(){var q=await fetchQuestions(); var blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='fragen_export_supabase.json'; a.click(); URL.revokeObjectURL(url);};
-  document.getElementById('admin-import').onchange=async function(e){
-    var files=[].slice.call(e.target.files||[]); if(!files.length) return;
-    var all=[]; 
-    for(var i=0;i<files.length;i++){ 
-      try{ var text=await files[i].text(); var arr=JSON.parse(text); if(Array.isArray(arr)) all=all.concat(arr); else if(arr&&typeof arr==='object') all.push(arr);}catch(err){ alert('Fehler in '+files[i].name+': '+err.message); } 
-    }
+  document.getElementById('admin-export').onclick=async()=>{const q=await fetchQuestions(); const blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fragen_export_supabase.json'; a.click(); URL.revokeObjectURL(url);};
+  document.getElementById('admin-import').onchange=async(e)=>{
+    const files=[...(e.target.files||[])]; if(!files.length) return;
+    const all=[]; for(const f of files){ try{ const text=await f.text(); const arr=JSON.parse(text); if(Array.isArray(arr)) all.push(...arr); else if(arr&&typeof arr==='object') all.push(arr);}catch(err){ alert(`Fehler in ${f.name}: ${err.message}`); } }
     if(!all.length) return alert('Keine gültigen Fragen gefunden.');
     if(!supa) return alert('Supabase nicht konfiguriert.');
-    var cleaned = all.map(function(x){ var deck=x?x.deck:undefined; var correctIndex=x?x.correctIndex:undefined; var rest={}; for(var k in x){ if(k!=='deck'&&k!=='correctIndex') rest[k]=x[k]; } rest.correct_index = (rest.correct_index!=null)?rest.correct_index:correctIndex; return rest; })
-      .filter(function(x){return x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index);});
-    var ok=0, bad=0;
-    for(var j=0;j<cleaned.length;j++){ var q2=cleaned[j]; var out2=await supa.from('questions').upsert(q2,{onConflict:'id'}); if(out2.error) bad++; else ok++; }
-    alert('Import: OK '+ok+', Fehler '+bad);
+    const cleaned = all.map(x=>{ const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex}; })
+      .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
+    let ok=0, bad=0;
+    for(const q of cleaned){ const {error}=await supa.from('questions').upsert(q,{onConflict:'id'}); if(error) bad++; else ok++; }
+    alert(`Import: OK ${ok}, Fehler ${bad}`);
     await render();
   };
-  async function fillCatSelect(){ var cats=await fetchCategories(); document.getElementById('admin-cat-old').innerHTML=cats.map(function(c){return '<option>'+c+'</option>';}).join(''); }
-  document.getElementById('admin-cat-apply').onclick=async function(){
+  async function fillCatSelect(){ const cats=await fetchCategories(); document.getElementById('admin-cat-old').innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
+  document.getElementById('admin-cat-apply').onclick=async()=>{
     if(!supa) return alert('Supabase nicht konfiguriert.');
-    var oldVal=document.getElementById('admin-cat-old').value;
-    var newVal=(document.getElementById('admin-cat-new').value||'').trim();
+    const oldVal=document.getElementById('admin-cat-old').value;
+    const newVal=(document.getElementById('admin-cat-new').value||'').trim();
     if(!oldVal||!newVal) return alert('Bitte alte & neue Kategorie befüllen.');
-    var out=await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
-    document.getElementById('admin-cat-state').textContent = out.error? ('Fehler: '+out.error.message) : ('Geändert: '+(out.count||0));
+    const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
+    document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
     await render(); await fillCatSelect();
   };
-  document.getElementById('admin-scan-dup').onclick=async function(){
-    var out=document.getElementById('admin-dup-list'); out.innerHTML='Suche…';
-    var q=await fetchQuestions(); if(!q.length){ out.innerHTML='<div class="card muted">Keine Fragen.</div>'; return; }
-    var byText={}; q.forEach(function(it){ var key=(it.question||'').trim().toLowerCase(); if(!byText[key]) byText[key]=[]; byText[key].push(it); });
-    var groups=Object.keys(byText).map(function(k){return byText[k];}).filter(function(arr){return arr.length>1;});
+  document.getElementById('admin-scan-dup').onclick=async()=>{
+    const out=document.getElementById('admin-dup-list'); out.innerHTML='Suche…';
+    const q=await fetchQuestions(); if(!q.length){ out.innerHTML='<div class="card muted">Keine Fragen.</div>'; return; }
+    const byText={}; for(const it of q){ const key=(it.question||'').trim().toLowerCase(); (byText[key] ||= []).push(it); }
+    const groups=Object.values(byText).filter(arr=>arr.length>1);
     if(!groups.length){ out.innerHTML='<div class="card">Keine Duplikate per Fragentext.</div>'; return; }
-    out.innerHTML = groups.map(function(arr){
-      var head=arr[0].question.slice(0,120);
-      var rows=arr.map(function(x){return '<div class="row" style="justify-content:space-between"><div><span class="chip">'+x.category+'</span></div><div class="muted">'+x.id+'</div></div>';}).join('');
-      return '<div class="card"><div><b>'+head+'</b></div>'+rows+'</div>';
+    out.innerHTML = groups.map(arr=>{
+      const head=arr[0].question.slice(0,120);
+      const rows=arr.map(x=>`<div class="row" style="justify-content:space-between"><div><span class="chip">${x.category}</span></div><div class="muted">${x.id}</div></div>`).join('');
+      return `<div class="card"><div><b>${head}</b></div>${rows}</div>`;
     }).join('');
+  };
+  document.getElementById('admin-save').onclick=async()=>{
+    if(!supa) return alert('Supabase nicht konfiguriert.');
+    const id='q_'+Math.random().toString(36).slice(2,10);
+    const category=document.getElementById('ad-category').value.trim();
+    const question=document.getElementById('ad-question').value.trim();
+    const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
+    const options=[], correctIndexRaw=lines.findIndex(l=>l.startsWith('***'));
+    lines.forEach(l=>options.push(l.replace(/^\*{3}\s?/,'')));
+    const correct_index = correctIndexRaw>=0 ? correctIndexRaw : 0;
+    const explanation=document.getElementById('ad-expl').value.trim();
+    const obj={id,category,question,options,correct_index,explanation};
+    const {error}=await supa.from('questions').upsert(obj,{onConflict:'id'});
+    if(error) alert(error.message); else { alert('Gespeichert.'); render(); }
   };
   render(); fillCatSelect();
 }
 
 /* ---------- DOM Ready ---------- */
-window.addEventListener('DOMContentLoaded', async function () {
+window.addEventListener('DOMContentLoaded', async () => {
   applyBranding();
   bindNavigation();
   bindSettings();
@@ -858,24 +864,9 @@ window.addEventListener('DOMContentLoaded', async function () {
   bindAdaptive();
   bindExam();
   bindAdmin();
-  bindAuth();   /* wichtig */
+  bindAuth();
 
-  try{
-    await initClientSafe();
-    await refreshAllSelectors();
-    try {
-      var qs = await fetchQuestions();
-      console.log('[Health] Fragen geladen:', qs.length);
-      if (!qs.length) {
-        var info=document.getElementById('login-empty-info');
-        if(info){ info.style.display='block'; info.textContent='Keine Fragen geladen. Prüfe: Einstellungen → URL/Key, Tabellen & Policies, Import.'; }
-      }
-    } catch(err) {
-      console.error('[Health] fetchQuestions Fehler:', err);
-    }
-  }catch(e){
-    console.warn('Supabase Init Fehler (nicht kritisch):', e);
-  }
+  try{ await initClientSafe(); }catch(e){ console.warn('Supabase Init Fehler:', e); }
 });
 </script>
 </body>
