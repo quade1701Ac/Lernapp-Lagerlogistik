@@ -405,7 +405,7 @@ async function fetchQuestions(){
 }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 
-/* >>> NEU: Alle Selects auf einmal aktualisieren */
+/* Alle Selects nach Supabase-Init aktualisieren */
 async function refreshAllSelectors(){
   const cats = await fetchCategories();
   const fcSel = document.getElementById('fc-category');
@@ -805,11 +805,23 @@ window.addEventListener('DOMContentLoaded', async () => {
   bindAdaptive();
   bindExam();
   bindAdmin();
+  bindAuth();   // <<< wichtig: Auth initialisieren
 
   try{
     await initClientSafe();
-    // >>> Selektoren NACH erfolgreichem Supabase-Init aktualisieren
     await refreshAllSelectors();
+
+    // Kleiner Health-Check (optional im Console-Log)
+    try {
+      const qs = await fetchQuestions();
+      console.log('[Health] Fragen geladen:', qs.length);
+      if (!qs.length) {
+        const info=document.getElementById('login-empty-info');
+        if(info){ info.style.display='block'; info.textContent='Keine Fragen geladen. Prüfe: Einstellungen → URL/Key, Tabellen & Policies, Import.'; }
+      }
+    } catch(err) {
+      console.error('[Health] fetchQuestions Fehler:', err);
+    }
   }catch(e){
     console.warn('Supabase Init Fehler (nicht kritisch):', e);
   }
