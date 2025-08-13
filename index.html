@@ -31,12 +31,13 @@
     .chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
     .option{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer}
     .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
+    .muted{color:var(--muted)}
 
     /* Modal (Einstellungen + Ergebnis) */
     .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
     .modal.show{display:flex}
     .modal .backdrop{position:absolute;inset:0;background:#0b1020e6;backdrop-filter:blur(6px)}
-    .modal .box{position:relative;width:min(920px,calc(100% - 32px));max-height:90vh;overflow:auto;background:#0f1427;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.55)}
+    .modal .box{position:relative;width:min(980px,calc(100% - 32px));max-height:90vh;overflow:auto;background:#0f1427;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.55)}
 
     .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:8px 0 10px}
     .stat{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03)}
@@ -45,18 +46,11 @@
 
     /* Sticky-Abgeben-Button (IHK-Modus) */
     #exam-submit-sticky{
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      padding: 12px 18px;
-      border-radius: 12px;
+      position: fixed; right: 20px; bottom: 20px;
+      padding: 12px 18px; border-radius: 12px;
       border: 1px solid var(--line);
-      background: #2563EB;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      z-index: 1000;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      background: #2563EB; color: #fff; font-weight: 600;
+      cursor: pointer; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,.35);
     }
     #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
   </style>
@@ -67,6 +61,7 @@
     <div class="nav">
       <button data-view="login">Login</button>
       <button data-view="flashcards">Lernkarten</button>
+      <button data-view="train">Adaptiv</button>
       <button data-view="exam">Prüfung</button>
       <button data-view="progress">Fortschritt</button>
       <button data-view="admin">Admin</button>
@@ -88,7 +83,7 @@
         <div class="row" style="margin-top:8px">
           <button id="cfg-save" class="btn primary">Speichern</button>
           <button id="cfg-close" class="btn">Schließen</button>
-          <span id="cfg-state" style="color:var(--muted)"></span>
+          <span id="cfg-state" class="muted"></span>
         </div>
       </div>
     </div>
@@ -103,14 +98,8 @@
           <div class="stat"><div>Quote</div><div class="val" id="res-quote">–</div></div>
           <div class="stat"><div>Erstellt</div><div class="val" id="res-date">–</div></div>
         </div>
-
-        <div class="card">
-          <div style="font-weight:700;margin-bottom:6px">Nach Kategorie</div>
-          <div id="res-cats"></div>
-        </div>
-
+        <div class="card"><div style="font-weight:700;margin-bottom:6px">Nach Kategorie</div><div id="res-cats"></div></div>
         <div class="cards" id="res-items" style="margin-top:10px"></div>
-
         <div class="row" style="justify-content:flex-end;margin-top:10px">
           <button id="res-new" class="btn">Neue Prüfung</button>
           <button id="res-close" class="btn">Schließen</button>
@@ -129,13 +118,13 @@
           <button id="btn-signup" class="btn">Registrieren</button>
           <button id="btn-login" class="btn primary">Einloggen</button>
           <button id="btn-logout" class="btn" disabled>Abmelden</button>
-          <span id="auth-state" style="color:var(--muted)"></span>
+          <span id="auth-state" class="muted"></span>
         </div>
         <div id="login-empty-info" class="alert" style="display:none;margin-top:10px"></div>
       </div>
     </section>
 
-    <!-- Lernkarten -->
+    <!-- Lernkarten (klassisch) -->
     <section id="view-flashcards" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -143,11 +132,33 @@
           <div class="row">
             <select id="fc-category"></select>
             <button id="fc-load" class="btn primary">Laden</button>
-            <span id="fc-stats" style="color:var(--muted)"></span>
+            <span id="fc-stats" class="muted"></span>
           </div>
         </div>
         <div id="fc-area" class="cards"></div>
         <div id="fc-empty" class="alert" style="display:none;margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- Adaptives Training -->
+    <section id="view-train" class="view">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;align-items:flex-end">
+          <div>
+            <h3>Adaptiv trainieren</h3>
+            <div class="muted" style="max-width:720px">
+              Wiederholt Fragen mit niedriger Quote häufiger. Ab 3× korrekt in Folge → „gelernt“ und ausgeblendet (mit Cooldown).
+            </div>
+          </div>
+          <div class="row">
+            <select id="train-category"><option value="">Alle Kategorien</option></select>
+            <label class="row"><input type="checkbox" id="train-weak"/> <span>Nur Schwächen</span></label>
+            <label class="row"><input type="checkbox" id="train-hide-learned" checked/> <span>Gelernt ausblenden</span></label>
+            <button id="train-next" class="btn primary">Nächste Karte</button>
+          </div>
+        </div>
+        <div id="train-area" class="cards" style="margin-top:10px"></div>
+        <div id="train-empty" class="alert" style="display:none;margin-top:10px"></div>
       </div>
     </section>
 
@@ -165,7 +176,7 @@
             <button id="exam-reset" class="btn">Reset</button>
           </div>
         </div>
-        <div id="exam-meta" style="margin:8px 0;color:var(--muted)"></div>
+        <div id="exam-meta" class="muted" style="margin:8px 0"></div>
         <div id="exam-area" class="cards"></div>
       </div>
     </section>
@@ -184,14 +195,34 @@
     <!-- Admin -->
     <section id="view-admin" class="view">
       <div class="panel">
-        <div class="row" style="justify-content:space-between">
+        <div class="row" style="justify-content:space-between;align-items:flex-end">
           <h3>Admin</h3>
           <div class="row">
             <button id="admin-export" class="btn">Export JSON</button>
-            <input type="file" id="admin-import" accept="application/json"/>
+            <input type="file" id="admin-import" accept="application/json" multiple/>
           </div>
         </div>
-        <form id="admin-form" onsubmit="return false;">
+
+        <div class="card">
+          <h4>Kategorie verwalten</h4>
+          <div class="row">
+            <select id="admin-cat-old"></select>
+            <input id="admin-cat-new" placeholder="Neue Kategorie (umbenennen/zusammenführen)"/>
+            <button id="admin-cat-apply" class="btn primary">Anwenden</button>
+            <span id="admin-cat-state" class="muted"></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4>Duplikate scannen</h4>
+          <div class="row">
+            <button id="admin-scan-dup" class="btn">Scan starten</button>
+            <span class="muted">Scannt gleiche <b>ID</b> oder sehr ähnliche <b>Fragentexte</b>.</span>
+          </div>
+          <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
+        </div>
+
+        <form id="admin-form" onsubmit="return false;" class="card">
           <h4>Neue Frage</h4>
           <input id="ad-category" placeholder="z.B. LL01/2 – Güter kontrollieren" required/>
           <textarea id="ad-question" rows="2" placeholder="Frage" required></textarea>
@@ -201,6 +232,7 @@ Falsch 2" required></textarea>
           <textarea id="ad-expl" rows="2" placeholder="Erklärung (optional)"></textarea>
           <div class="row"><button id="admin-save" class="btn primary">Speichern (DB)</button></div>
         </form>
+
         <div id="admin-list" class="cards"></div>
       </div>
     </section>
@@ -208,7 +240,7 @@ Falsch 2" required></textarea>
 
 <script>
 /* ====== Utilities / Setup ====== */
-const views=['login','flashcards','exam','progress','admin'];
+const views=['login','flashcards','train','exam','progress','admin'];
 document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view)));
 const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 
@@ -244,7 +276,7 @@ async function initClient(){
   supa = supabase.createClient(url, anon);
   applyBranding();
   renderProgress();
-  refreshAuthUI(); await refreshSelectors(); await refreshExamCategories(); await renderAdminList(); await showEmptyHints();
+  refreshAuthUI(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await renderAdminList(); await showEmptyHints(); await fillAdminCatSelect();
 }
 
 /* ====== Auth ====== */
@@ -263,7 +295,7 @@ btnLogout.onclick=async()=>{await supa.auth.signOut(); await refreshAuthUI();};
 async function fetchQuestions(){ if(!supa) return []; const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true}); if(error){alert(error.message); return [];} return data||[]; }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 
-/* ====== Lernkarten ====== */
+/* ====== Lernkarten (klassisch) ====== */
 const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
 document.getElementById('fc-load').onclick=loadFlashcards;
 async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
@@ -271,9 +303,9 @@ async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcC
   fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
   let n=0; cards.forEach(card=>{ const wrap=document.createElement('div'); wrap.className='card';
     const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
-    wrap.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${card.category}</span></div><div style="color:var(--muted)">ID: ${card.id}</div></div>
+    wrap.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${card.category}</span></div><div class="muted">ID: ${card.id}</div></div>
       <div><b>${card.question}</b></div><div class="options"></div>
-      <div class="row" style="margin-top:8px"><span style="color:var(--muted)">Klick zum Markieren, Lösung wird angezeigt.</span></div>
+      <div class="row" style="margin-top:8px"><span class="muted">Klick zum Markieren, Lösung wird angezeigt.</span></div>
       <div class="reveal" style="display:none"></div>`;
     const box=wrap.querySelector('.options'); let selected=-1;
     opts.forEach((o,i)=>{ const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/><span>${o.text}</span>`;
@@ -289,7 +321,122 @@ async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcC
   }); fcStats.textContent=`${n} Karten`;
 }
 
-/* ====== IHK-Prüfungsmodus 2.0 ====== */
+/* ====== Adaptives Training ====== */
+const trCategory=document.getElementById('train-category'), trWeak=document.getElementById('train-weak'), trHideLearned=document.getElementById('train-hide-learned');
+const trNext=document.getElementById('train-next'), trArea=document.getElementById('train-area'), trEmpty=document.getElementById('train-empty');
+
+async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option>${c}</option>`).join(''); }
+
+async function getUser(){ try{ const {data:{user}}=await supa.auth.getUser(); return user||null; }catch{return null;} }
+
+async function fetchStatsMap(userId){
+  // Hol dir alle Reviews für den User und baue eine Map: qid -> { seen, correct, last, streak }
+  const map={};
+  if(!userId) return map;
+  let from = supa.from('reviews').select('question_id,ts,correct').eq('user_id',userId).order('ts',{ascending:true});
+  const { data, error } = await from;
+  if(error || !data) return map;
+  for(const r of data){
+    const m = map[r.question_id] ||= { seen:0, correct:0, streak:0, last:false, lastTs:null };
+    m.seen++; if(r.correct){ m.correct++; m.streak = (m.last===true)?(m.streak+1):1; } else { m.streak = 0; }
+    m.last = r.correct; m.lastTs = r.ts;
+  }
+  return map;
+}
+function cooldownDaysForStreak(streak){
+  // Einfacher Cooldown: 0, 1, 3, 7 Tage…
+  if(streak>=5) return 14;
+  if(streak>=4) return 7;
+  if(streak>=3) return 3;
+  if(streak>=2) return 1;
+  return 0;
+}
+function isInCooldown(entry){
+  if(!entry || !entry.lastTs) return false;
+  const days = cooldownDaysForStreak(entry.streak||0);
+  if(days<=0) return false;
+  const next = new Date(entry.lastTs); next.setDate(next.getDate()+days);
+  return (new Date()<next);
+}
+
+async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
+  const all=await fetchQuestions();
+  const user=await getUser();
+  const stats = await fetchStatsMap(user?.id);
+  // Score bilden: hohe Priorität für wenig korrekte Quote, zuletzt falsch, keine/kurze Cooldowns
+  let pool = all.filter(q => !categoryFilter || q.category===categoryFilter).map(q=>{
+    const s = stats[q.id] || { seen:0, correct:0, last:false, streak:0, lastTs:null };
+    const acc = s.seen ? s.correct/s.seen : 0;         // 0..1
+    const wrongBias = (s.last===false) ? 0.2 : 0;      // zuletzt falsch → push
+    const seenPenalty = Math.min(s.seen*0.02, 0.2);    // viel gesehen → leicht runter
+    const streak = s.streak||0;
+    const learned = (streak>=3);
+    const cooldown = isInCooldown(s);
+    // Basisgewicht: je schlechter die Quote, desto höher
+    let weight = (1-acc) + wrongBias - seenPenalty;
+    if(learned && hideLearned) weight -= 1.5;
+    if(cooldown) weight -= 0.8;
+    return { q, s, acc, learned, cooldown, weight };
+  });
+
+  if(onlyWeak){
+    // nur solche, deren Accuracy < 0.7 oder zuletzt falsch
+    pool = pool.filter(x => (x.acc < 0.7) || (x.s.last===false));
+  }
+  // Filter raus, die stark negativ sind (z.B. gelernt+cooldown)
+  pool = pool.filter(x=>x.weight> -0.3);
+
+  if(pool.length===0) return null;
+  // Roulette-Wheel Auswahl
+  const minW = Math.min(...pool.map(x=>x.weight));
+  const normalized = pool.map(p=>({ ...p, w: p.weight - minW + 0.001 }));
+  const sum = normalized.reduce((a,b)=>a+b.w,0);
+  let r = Math.random()*sum;
+  for(const p of normalized){ r-=p.w; if(r<=0) return p.q; }
+  return normalized[normalized.length-1].q;
+}
+
+function renderTrainCard(card){
+  trArea.innerHTML='';
+  if(!card){ trEmpty.style.display='block'; trEmpty.textContent='Keine geeignete Karte gefunden. Passe Filter an (z. B. „Gelernt ausblenden“ deaktivieren).'; return; }
+  trEmpty.style.display='none';
+
+  const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
+  const wrap=document.createElement('div'); wrap.className='card';
+  wrap.innerHTML = `
+    <div class="row" style="justify-content:space-between">
+      <div><span class="chip">${card.category}</span></div>
+      <div class="muted">ID: ${card.id}</div>
+    </div>
+    <div style="margin-top:6px"><b>${card.question}</b></div>
+    <div class="options" style="margin-top:6px"></div>
+    <div class="reveal" style="display:none;margin-top:8px"></div>
+  `;
+  const box=wrap.querySelector('.options');
+  opts.forEach((o,i)=>{
+    const d=document.createElement('div'); d.className='option';
+    d.innerHTML=`<input type="radio"/> <span>${o.text}</span>`;
+    d.onclick=async()=>{
+      [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
+      const ok = (i===opts.findIndex(z=>z.correct));
+      const reveal=wrap.querySelector('.reveal');
+      reveal.style.display='block';
+      reveal.textContent = ok? '✅ Richtig!' : `❌ Falsch. Richtig: ${opts.find(o=>o.correct)?.text}`;
+      bumpProgress(1, ok?1:0);
+      const {data:{user}}=await supa.auth.getUser();
+      if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok});
+    };
+    box.appendChild(d);
+  });
+  trArea.appendChild(wrap);
+}
+
+trNext.onclick=async()=>{
+  const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked);
+  renderTrainCard(card);
+};
+
+/* ====== IHK-Prüfungsmodus 2.0 (mit Sticky-Abgeben) ====== */
 const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count'), examMinutes=document.getElementById('exam-minutes');
 const examStart=document.getElementById('exam-start'), examSubmit=document.getElementById('exam-submit'), examReset=document.getElementById('exam-reset');
 const examArea=document.getElementById('exam-area'), examMeta=document.getElementById('exam-meta');
@@ -333,7 +480,7 @@ function renderMeta(){
   const mm = String(Math.max(0, Math.floor(timeLeft/60))).padStart(2,'0');
   const ss = String(Math.max(0, timeLeft%60)).padStart(2,'0');
   examMeta.textContent = `Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`;
-  updateStickySubmitLabel(); // ⬅️ wichtig
+  updateStickySubmitLabel();
 }
 
 examStart.onclick=async()=>{
@@ -344,17 +491,15 @@ examStart.onclick=async()=>{
   examPool = pickN(pool,n); selections={}; examArea.innerHTML=''; ihkRunning=true;
   examSubmit.disabled=false;
 
-  // Timer
   timeLeft = (Number(examMinutes.value||60))*60;
   renderMeta();
   if(timerId) clearInterval(timerId);
   timerId=setInterval(()=>{ timeLeft--; renderMeta(); if(timeLeft<=0){ clearInterval(timerId); finishExam(true); } },1000);
 
-  // Render Fragen (OHNE Feedback)
   examPool.forEach((q,idx)=>{
     const el=document.createElement('div'); el.className='card';
     const opts = q.options.map((t,i)=>({text:t,correct:i===q.correct_index}));
-    el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${q.category}</span></div><div style="color:var(--muted)">Frage ${idx+1}/${n}</div></div>
+    el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${q.category}</span></div><div class="muted">Frage ${idx+1}/${n}</div></div>
       <div style="margin-top:4px"><b>${q.question}</b></div>
       <div class="options"></div>`;
     const box=el.querySelector('.options');
@@ -367,10 +512,7 @@ examStart.onclick=async()=>{
     examArea.appendChild(el);
   });
 
-  // Session für Ergebnis & PDF
   session = { items:[], total:n, correct:0, startedAt:new Date().toISOString() };
-
-  // Sticky Abgeben-Button einblenden
   ensureStickySubmit();
 };
 
@@ -380,7 +522,6 @@ examReset.onclick=()=>{ ihkRunning=false; clearInterval(timerId); examArea.inner
 async function finishExam(auto=false){
   ihkRunning=false; clearInterval(timerId); examSubmit.disabled=true; removeStickySubmit();
 
-  // Auswertung
   session.items = examPool.map(q=>{
     const chosenIndex = selections[q.id];
     const correctIndex = q.correct_index;
@@ -396,22 +537,15 @@ async function finishExam(auto=false){
   session.correct = session.items.filter(x=>x.correct).length;
   session.finishedAt = new Date().toISOString();
 
-  // DB: exam_sessions
   const {data:{user}}=await supa.auth.getUser();
   if(user){
     try { await supa.from('exam_sessions').insert({ user_id:user.id, total:session.total, correct:session.correct, detail:session.items }); }
     catch(e){ console.warn('exam_sessions insert', e); }
-  }
-
-  // reviews: pro Antwort protokollieren
-  if(user){
-    try{
+    try {
       const rows = session.items.map(it=>({user_id:user.id,question_id:it.id,correct:it.correct}));
       for(const r of rows){ await supa.from('reviews').insert(r); }
-    }catch(e){ console.warn('reviews insert', e); }
+    } catch(e){ console.warn('reviews insert', e); }
   }
-
-  // Ergebnis anzeigen
   showResult(session, auto);
 }
 
@@ -422,17 +556,14 @@ function showResult(session, autoTrigger){
   document.getElementById('res-quote').textContent = `${session.total?Math.round(100*session.correct/session.total):0}%`;
   document.getElementById('res-date').textContent = new Date().toLocaleString();
 
-  // Kategorien
-  const byCat={};
-  session.items.forEach(it=>{ const c=it.category||'–'; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0; });
+  const byCat={}; session.items.forEach(it=>{ const c=it.category||'–'; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0; });
   const cats = Object.entries(byCat).map(([c,s])=>{
     const pct = s.total? Math.round(100*s.correct/s.total):0;
     return `<div class="row" style="justify-content:space-between;border-bottom:1px dashed var(--line);padding:6px 0">
-      <div>${c}</div><div style="color:var(--muted)">${s.correct}/${s.total} (${pct}%)</div></div>`;
+      <div>${c}</div><div class="muted">${s.correct}/${s.total} (${pct}%)</div></div>`;
   }).join('');
-  document.getElementById('res-cats').innerHTML=cats||'<div style="color:var(--muted)">Keine Daten.</div>';
+  document.getElementById('res-cats').innerHTML=cats||'<div class="muted">Keine Daten.</div>';
 
-  // Einzelaufstellung
   const items=document.getElementById('res-items');
   items.innerHTML = session.items.map((it,i)=>`
     <div class="card">
@@ -447,7 +578,6 @@ function showResult(session, autoTrigger){
     </div>
   `).join('');
 
-  // Buttons
   document.getElementById('res-new').onclick=()=>{ modal.classList.remove('show'); examReset.click(); };
   document.getElementById('res-close').onclick=()=> modal.classList.remove('show');
   document.getElementById('result-pdf').onclick = async () => {
@@ -483,12 +613,93 @@ async function renderAdminList(){ const q=await fetchQuestions();
   <div><b>${x.question}</b></div></div>`).join('');
   adminList.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id); if(error) alert(error.message); else renderAdminList();});
 }
+
 document.getElementById('admin-export').onclick=async()=>{const q=await fetchQuestions(); const blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fragen_export_supabase.json'; a.click(); URL.revokeObjectURL(url);};
-document.getElementById('admin-import').onchange=async(e)=>{const f=e.target.files?.[0]; if(!f) return; const text=await f.text(); try{const data=JSON.parse(text); if(!Array.isArray(data)) throw new Error('Erwarte Array');
-  const cleaned=data.map(x=>{const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex};});
-  for(const item of cleaned){const {error}=await supa.from('questions').upsert(item,{onConflict:'id'}); if(error) console.warn('Fehler',item.id,error.message);}
-  alert('Import abgeschlossen'); renderAdminList(); await refreshSelectors(); await refreshExamCategories();
-}catch(err){alert('Import fehlgeschlagen: '+err.message);}};
+
+document.getElementById('admin-import').onchange=async(e)=>{
+  const files=[...(e.target.files||[])]; if(!files.length) return;
+  const allItems=[];
+  for(const f of files){
+    try{
+      const text=await f.text(); const arr=JSON.parse(text);
+      if(Array.isArray(arr)) allItems.push(...arr);
+      else if(arr && typeof arr==='object') allItems.push(arr);
+    }catch(err){ alert(`Fehler in ${f.name}: ${err.message}`); }
+  }
+  if(!allItems.length){ alert('Keine gültigen Fragen gefunden.'); return; }
+
+  // Duplikat-Check (ID & Question-Text)
+  const seenId=new Set(), seenText=new Set(), dup=[];
+  const cleaned = allItems.map(x=>{ const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex}; })
+    .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
+
+  const unique=[];
+  for(const q of cleaned){
+    const keyText=(q.question||'').trim().toLowerCase();
+    const idDup = seenId.has(q.id); const textDup = seenText.has(keyText);
+    if(idDup || textDup){ dup.push(q); continue; }
+    seenId.add(q.id); seenText.add(keyText); unique.push(q);
+  }
+
+  if(dup.length){
+    const ok=confirm(`${dup.length} Duplikate erkannt (ID oder gleicher Fragentext). Diese werden per upsert überschrieben. Fortfahren?`);
+    if(!ok) return;
+  }
+
+  // Upsert in Batches
+  let okCount=0, errCount=0;
+  for(const item of unique){
+    const {error}=await supa.from('questions').upsert(item,{onConflict:'id'});
+    if(error){ errCount++; console.warn('Fehler',item.id,error.message); } else okCount++;
+  }
+  alert(`Import fertig. Erfolgreich: ${okCount} • Fehler: ${errCount} • Duplikate erkannt: ${dup.length}`);
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await showEmptyHints(); await fillAdminCatSelect();
+};
+
+async function fillAdminCatSelect(){
+  const cats=await fetchCategories();
+  document.getElementById('admin-cat-old').innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+}
+document.getElementById('admin-cat-apply').onclick=async()=>{
+  const oldVal=document.getElementById('admin-cat-old').value;
+  const newVal=(document.getElementById('admin-cat-new').value||'').trim();
+  if(!oldVal || !newVal) return alert('Bitte alte Kategorie wählen und neue Kategorie eintragen.');
+  const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
+  document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
+};
+
+document.getElementById('admin-scan-dup').onclick=async()=>{
+  const list=document.getElementById('admin-dup-list'); list.innerHTML='Suche…';
+  const q=await fetchQuestions(); if(!q.length){ list.innerHTML='<div class="card muted">Keine Fragen.</div>'; return; }
+  const byText={};
+  for(const it of q){
+    const key=(it.question||'').trim().toLowerCase();
+    (byText[key] ||= []).push(it);
+  }
+  const groups=Object.values(byText).filter(arr=>arr.length>1);
+  if(!groups.length){ list.innerHTML='<div class="card">Keine Duplikate per Fragentext gefunden.</div>'; return; }
+  list.innerHTML = groups.map(arr=>{
+    const head=arr[0].question.slice(0,120);
+    const rows=arr.map(x=>`<div class="row" style="justify-content:space-between"><div><span class="chip">${x.category}</span></div><div class="muted">${x.id}</div></div>`).join('');
+    return `<div class="card"><div><b>${head}</b></div>${rows}</div>`;
+  }).join('');
+};
+
+document.getElementById('admin-save').onclick=async()=>{
+  const id='q_'+Math.random().toString(36).slice(2,10);
+  const category=document.getElementById('ad-category').value.trim();
+  const question=document.getElementById('ad-question').value.trim();
+  const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
+  const options=[], correctIndexRaw=lines.findIndex(l=>l.startsWith('***'));
+  lines.forEach(l=>options.push(l.replace(/^\*{3}\s?/,'')));
+  const correct_index = correctIndexRaw>=0 ? correctIndexRaw : 0;
+  const explanation=document.getElementById('ad-expl').value.trim();
+  const obj={id,category,question,options,correct_index,explanation};
+  const {error}=await supa.from('questions').upsert(obj,{onConflict:'id'});
+  if(error) alert(error.message); else { alert('Gespeichert.'); renderAdminList(); }
+};
 
 /* ====== Empty DB Hinweis ====== */
 async function showEmptyHints(){ const all=await fetchQuestions(); const hint=document.getElementById('login-empty-info'); if(!all.length){ hint.style.display='block'; hint.innerHTML='Noch keine Fragen in der Datenbank. Admin → Import nutzen.'; } else hint.style.display='none'; }
@@ -508,9 +719,8 @@ async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
   };
   const addY = (h) => { y += h; if (y > 280){ doc.addPage(); y = 20; } };
   const hr = () => { doc.setDrawColor(220); doc.line(left, y, right, y); addY(4); };
-  const wrap = (text, size=11) => doc.splitTextToSize(text||"", right-left);
+  const wrap = (text) => doc.splitTextToSize(text||"", right-left);
 
-  // Logo nur Seite 1 (optional)
   try {
     if (logoUrlOrDataUri) {
       const img = await fetch(logoUrlOrDataUri).then(r=>r.blob()).then(b=>new Promise((res) => {
@@ -543,17 +753,17 @@ async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
   set(13,true); doc.text("Einzelaufstellung (Fragen & Antworten)", left, y); addY(8);
   (session.items||[]).forEach((it, idx) => {
     set(12,true); doc.text(`${idx+1}. ${it.category||''}`, left, y); addY(6);
-    wrap(it.question,12).forEach(row=>{ set(12,false); doc.text(row,left,y); addY(5); });
+    wrap(it.question).forEach(row=>{ set(12,false); doc.text(row,left,y); addY(5); });
 
     set(10,true,120); doc.text("Deine Antwort:", left, y); addY(5);
-    wrap(it.selectedText,11).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
+    wrap(it.selectedText).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
 
     set(10,true,120); doc.text("Richtige Lösung:", left, y); addY(5);
-    wrap(it.correctText,11).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
+    wrap(it.correctText).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
 
     if (it.explanation){
       set(10,true,120); doc.text("Erklärung:", left, y); addY(5);
-      wrap(it.explanation,11).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
+      wrap(it.explanation).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); });
     }
 
     set(11,true, it.correct?20:180); doc.text(`Bewertung: ${it.correct?'RICHTIG':'FALSCH'}`, left, y); addY(7);
