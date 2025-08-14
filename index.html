@@ -330,11 +330,9 @@ async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCa
 async function getUser(){ try{ const {data:{user}}=await supa.auth.getUser(); return user||null; }catch{return null;} }
 
 async function fetchStatsMap(userId){
-  // Hol dir alle Reviews für den User und baue eine Map: qid -> { seen, correct, last, streak }
   const map={};
   if(!userId) return map;
-  let from = supa.from('reviews').select('question_id,ts,correct').eq('user_id',userId).order('ts',{ascending:true});
-  const { data, error } = await from;
+  const { data, error } = await supa.from('reviews').select('question_id,ts,correct').eq('user_id',userId).order('ts',{ascending:true});
   if(error || !data) return map;
   for(const r of data){
     const m = map[r.question_id] ||= { seen:0, correct:0, streak:0, last:false, lastTs:null };
@@ -344,7 +342,6 @@ async function fetchStatsMap(userId){
   return map;
 }
 function cooldownDaysForStreak(streak){
-  // Einfacher Cooldown: 0, 1, 3, 7 Tage…
   if(streak>=5) return 14;
   if(streak>=4) return 7;
   if(streak>=3) return 3;
@@ -363,16 +360,14 @@ async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
   const all=await fetchQuestions();
   const user=await getUser();
   const stats = await fetchStatsMap(user?.id);
-  // Score bilden: hohe Priorität für wenig korrekte Quote, zuletzt falsch, keine/kurze Cooldowns
   let pool = all.filter(q => !categoryFilter || q.category===categoryFilter).map(q=>{
     const s = stats[q.id] || { seen:0, correct:0, last:false, streak:0, lastTs:null };
-    const acc = s.seen ? s.correct/s.seen : 0;         // 0..1
-    const wrongBias = (s.last===false) ? 0.2 : 0;      // zuletzt falsch → push
-    const seenPenalty = Math.min(s.seen*0.02, 0.2);    // viel gesehen → leicht runter
+    const acc = s.seen ? s.correct/s.seen : 0;
+    const wrongBias = (s.last===false) ? 0.2 : 0;
+    const seenPenalty = Math.min(s.seen*0.02, 0.2);
     const streak = s.streak||0;
     const learned = (streak>=3);
     const cooldown = isInCooldown(s);
-    // Basisgewicht: je schlechter die Quote, desto höher
     let weight = (1-acc) + wrongBias - seenPenalty;
     if(learned && hideLearned) weight -= 1.5;
     if(cooldown) weight -= 0.8;
@@ -380,14 +375,11 @@ async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
   });
 
   if(onlyWeak){
-    // nur solche, deren Accuracy < 0.7 oder zuletzt falsch
     pool = pool.filter(x => (x.acc < 0.7) || (x.s.last===false));
   }
-  // Filter raus, die stark negativ sind (z.B. gelernt+cooldown)
   pool = pool.filter(x=>x.weight> -0.3);
 
   if(pool.length===0) return null;
-  // Roulette-Wheel Auswahl
   const minW = Math.min(...pool.map(x=>x.weight));
   const normalized = pool.map(p=>({ ...p, w: p.weight - minW + 0.001 }));
   const sum = normalized.reduce((a,b)=>a+b.w,0);
@@ -436,7 +428,7 @@ trNext.onclick=async()=>{
   renderTrainCard(card);
 };
 
-/* ====== IHK-Prüfungsmodus 2.0 (mit Sticky-Abgeben) ====== */
+/* ====== IHK-Prüfungsmodus 2.0 (mit Sticky-Abgeben + Auto‑Abgabe) ====== */
 const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count'), examMinutes=document.getElementById('exam-minutes');
 const examStart=document.getElementById('exam-start'), examSubmit=document.getElementById('exam-submit'), examReset=document.getElementById('exam-reset');
 const examArea=document.getElementById('exam-area'), examMeta=document.getElementById('exam-meta');
@@ -472,7 +464,7 @@ function updateStickySubmitLabel(){
 }
 
 async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
-function pickN(a,n){ const b=shuffle(a); return b.slice(0,Math.max(0,Math.min(n,b.length))); }
+function pickN(a,n){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b.slice(0,Math.max(0,Math.min(n,b.length))); }
 
 function renderMeta(){
   const total = examPool.length;
@@ -481,6 +473,11 @@ function renderMeta(){
   const ss = String(Math.max(0, timeLeft%60)).padStart(2,'0');
   examMeta.textContent = `Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`;
   updateStickySubmitLabel();
+
+  // Auto‑Abgabe: wenn alle Fragen beantwortet sind
+  if (ihkRunning && total>0 && answered===total) {
+    finishExam(false);
+  }
 }
 
 examStart.onclick=async()=>{
@@ -628,7 +625,6 @@ document.getElementById('admin-import').onchange=async(e)=>{
   }
   if(!allItems.length){ alert('Keine gültigen Fragen gefunden.'); return; }
 
-  // Duplikat-Check (ID & Question-Text)
   const seenId=new Set(), seenText=new Set(), dup=[];
   const cleaned = allItems.map(x=>{ const {deck,correctIndex,...rest}=x||{}; return {...rest, correct_index: rest.correct_index ?? correctIndex}; })
     .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
@@ -646,7 +642,6 @@ document.getElementById('admin-import').onchange=async(e)=>{
     if(!ok) return;
   }
 
-  // Upsert in Batches
   let okCount=0, errCount=0;
   for(const item of unique){
     const {error}=await supa.from('questions').upsert(item,{onConflict:'id'});
