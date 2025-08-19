@@ -127,7 +127,7 @@
     }
     #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
 
-    /* --- BESSERE LESBARKEIT: Dropdowns (auch geöffnete Liste) --- */
+    /* --- LESBARKEIT: Dropdowns (auch geöffnete Liste) --- */
     select, option {
       background-color: #1e1e1e !important;
       color: #ffffff !important;
@@ -369,36 +369,40 @@ function applyBranding(){
   if (logo && el){ el.style.background='none'; el.style.backgroundImage=`url(${logo})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.border='1px solid var(--line)'; }
 }
 
-/* ====== Kategorie-Normalizer (robust + LL02 tolerant) ====== */
-function normalizeCategory(cat) {
+/* ====== Normalisierung: safe & aggressiv ====== */
+function normalizeBasic(cat){
   if (!cat) return '';
-  let s = String(cat)
+  return String(cat)
     .normalize('NFKC')
     .replace(/[\u200B-\u200D\uFEFF\u2060]/g,'')
-    .replace(/\u00A0/g, ' ');
+    .replace(/\u00A0/g,' ')
+    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g,'-')
+    .replace(/\s*\/\s*/g,'/')
+    .replace(/\s*-\s*/g,' - ')
+    .replace(/\s*:\s*/g,': ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+// Aggressive Variante mit tolerantem LL02‑Mapping (Default überall, außer Admin‑Rename)
+function normalizeCategory(cat, { aggressive = true } = {}){
+  let s = normalizeBasic(cat);
+  if (!aggressive) return s;
 
   const m = s.match(/^LL0?2\/([1-3])(?:\s*[-–:]?\s*)?(?:G[üu]ter\s+lagern)?(?:\s*[-–:]?\s*)?(?:Teil\s*(\d))?(?:\s*[-–:]\s*)?(.*)$/i);
-  if (m) {
+  if (m){
     const teilFromCode = m[1];
     const teilFromText = m[2] || teilFromCode;
     const tail = (m[3] || '').toLowerCase().trim();
     let title = '';
-    if (tail.includes('grundlagen')) title = 'Grundlagen';
-    else if (tail.includes('lagereinrichtungen')) title = 'Lagereinrichtungen';
-    else if (tail.includes('gefähr') || tail.includes('gefaehr')) title = 'Gefährliche Stoffe';
-    else if (teilFromText === '1') title = 'Grundlagen';
-    else if (teilFromText === '2') title = 'Lagereinrichtungen';
-    else if (teilFromText === '3') title = 'Gefährliche Stoffe';
+    if (tail.includes('grundlagen')) title='Grundlagen';
+    else if (tail.includes('lagereinrichtungen')) title='Lagereinrichtungen';
+    else if (tail.includes('gefähr') || tail.includes('gefaehr')) title='Gefährliche Stoffe';
+    else if (teilFromText==='1') title='Grundlagen';
+    else if (teilFromText==='2') title='Lagereinrichtungen';
+    else if (teilFromText==='3') title='Gefährliche Stoffe';
     s = `LL02/${teilFromCode} Güter lagern - Teil ${teilFromText}: ${title}`;
   }
-
-  return s
-    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
-    .replace(/\s*\/\s*/g, '/')
-    .replace(/\s*-\s*/g, ' - ')
-    .replace(/\s*:\s*/g, ': ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return s;
 }
 
 /* Short labels + Sortierung */
@@ -462,7 +466,7 @@ async function initClient(){
   await showEmptyHints();
   await fillAdminCatSelect();
 
-  // Auto-Migration anschalten/abschalten
+  // Auto-Migration (aggressiv normalisieren)
   const AUTO_FIX_KNOWN_CATEGORIES = true;
   if (AUTO_FIX_KNOWN_CATEGORIES) { try { await autoFixKnownCats(); } catch {} }
 }
@@ -484,7 +488,7 @@ async function fetchQuestions(){
   if(!supa) return [];
   const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
   if(error){console.warn(error); return [];}
-  return (data||[]).map(q => ({ ...q, category: normalizeCategory(q.category) }));
+  return (data||[]).map(q => ({ ...q, category: normalizeCategory(q.category) })); // aggressiv
 }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(compareCategoryCode); }
 async function fetchCategoriesWithCounts(){
@@ -729,7 +733,7 @@ document.getElementById('admin-import').onchange=async(e)=>{
   const cleaned = allItems
     .map(x=>{
       const { deck, correctIndex, ...rest } = x || {};
-      const cat = normalizeCategory(rest.category || rest.category_name || '');
+      const cat = normalizeCategory(rest.category || rest.category_name || ''); // aggressiv
       return { ...rest, category: cat, correct_index: rest.correct_index ?? correctIndex };
     })
     .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
@@ -749,7 +753,9 @@ async function fillAdminCatSelect(){
 }
 document.getElementById('admin-cat-apply').onclick=async()=>{
   const oldVal=document.getElementById('admin-cat-old').value;
-  const newVal=normalizeCategory((document.getElementById('admin-cat-new').value||'').trim());
+  const newRaw=(document.getElementById('admin-cat-new').value||'').trim();
+  const newVal=normalizeCategory(newRaw,{aggressive:false}); // SAFE: keine LL02-Autoumformung
+
   if(!oldVal || !newVal) return alert('Bitte alte Kategorie wählen und neue Kategorie eintragen.');
   const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
   document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
@@ -783,7 +789,7 @@ document.getElementById('admin-fix-dups').onclick = async () => {
   const groups = {}; // canon -> Set(raw)
   for (const row of (data||[])) {
     const raw = row.category || '';
-    const canon = normalizeCategory(raw);
+    const canon = normalizeCategory(raw); // aggressiv
     (groups[canon] ||= new Set()).add(raw);
   }
   const dups = Object.entries(groups).filter(([, raws]) => raws.size > 1);
@@ -800,7 +806,7 @@ document.getElementById('admin-fix-dups').onclick = async () => {
     if (targets.length) {
       const { error: updErr, count } = await supa
         .from('questions')
-        .update({ category: normalizeCategory(canonicalRaw) })
+        .update({ category: normalizeCategory(canonicalRaw) }) // aggressiv
         .in('category', targets)
         .select('id', { count: 'exact' });
       if (!updErr) totalChanged += (count||0);
@@ -811,7 +817,7 @@ document.getElementById('admin-fix-dups').onclick = async () => {
   await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
 };
 
-/* Vollmigration: alle Kategorien normalisieren */
+/* Vollmigration: alle Kategorien aggressiv normalisieren */
 async function autoFixKnownCats(){
   const { data, error } = await supa.from('questions').select('id, category');
   if (error) return;
@@ -821,7 +827,7 @@ async function autoFixKnownCats(){
   const toUpdate = [];
 
   for (const row of data || []) {
-    const canon = normalizeCategory(row.category || '');
+    const canon = normalizeCategory(row.category || ''); // aggressiv
     if (canon && canon !== row.category) {
       toUpdate.push({ id: row.id, category: canon });
     }
@@ -842,7 +848,7 @@ document.getElementById('admin-migrate-cats').onclick = autoFixKnownCats;
 document.getElementById('admin-save').onclick=async()=>{
   const id='q_'+Math.random().toString(36).slice(2,10);
   const categoryRaw=document.getElementById('ad-category').value.trim();
-  const category=normalizeCategory(categoryRaw);
+  const category=normalizeCategory(categoryRaw); // aggressiv (gewollt)
   const question=document.getElementById('ad-question').value.trim();
   const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
