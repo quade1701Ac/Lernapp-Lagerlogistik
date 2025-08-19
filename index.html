@@ -23,6 +23,7 @@
     .brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
     .nav{display:flex;gap:8px;flex-wrap:wrap}
     .nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
+    .nav button.active{outline:2px solid var(--primary)}
     .nav button[hidden]{display:none !important}
     .container{max-width:1000px;margin:0 auto;padding:20px}
     .view{display:none}.view.active{display:block}
@@ -31,23 +32,17 @@
     .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-
-    /* NEW: bessere Lesbarkeit der Dropdowns */
-    select{opacity:1!important;background:var(--bg-2)!important;color:var(--text)!important}
-    select option{background:var(--bg-2);color:var(--text)}
-    #exam-categories{min-width:320px;max-height:220px}
-    #exam-categories option{padding:4px}
-
     .btn{border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--text)}
     .btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
-    .btn.ghost{background:transparent;border-color:var(--line)}
-    .btn.xs{padding:3px 8px;font-size:12px;border-radius:8px}
-
     .chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
     .option{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer}
     .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
     .muted{color:var(--muted)}
     .alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
+
+    /* Besser lesbare Selects */
+    select{appearance:auto;background:#111827;color:#F9FAFB;border-color:#4B5563}
+    select option{background:#0B1020;color:#E5E7EB}
 
     /* Modal */
     .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
@@ -70,9 +65,9 @@
     #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
 
     /* Fortschritt-Balken */
-    .progress-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
-    .progress-meta{min-width:170px}
-    .progress-bar{flex:1;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid var(--line)}
+    .progress-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+    .progress-meta{min-width:200px}
+    .progress-bar{flex:1;height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid var(--line)}
     .progress-fill{height:100%;width:0%}
     .progress-fill.ok{background:var(--ok)}
     .progress-fill.mid{background:var(--mid)}
@@ -90,7 +85,7 @@
       </div>
     </div>
     <div class="nav">
-      <button data-view="login" id="nav-login">Login</button>
+      <button data-view="login" id="nav-login" class="active">Login</button>
       <button data-view="flashcards" id="nav-flash" hidden>Lernkarten</button>
       <button data-view="train" id="nav-train" hidden>Adaptiv</button>
       <button data-view="exam" id="nav-exam" hidden>Prüfung</button>
@@ -217,9 +212,7 @@
       <div class="panel">
         <div class="row" style="justify-content:space-between">
           <h3>Dein Fortschritt</h3>
-          <div class="row">
-            <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
-          </div>
+          <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
         </div>
         <!-- Gesamt lokal -->
         <div id="progress-summary" class="cards" style="margin-bottom:10px"></div>
@@ -230,7 +223,6 @@
             <b>Nach Kategorie (dein Account)</b>
             <span id="progress-user-label" class="muted">Nicht eingeloggt</span>
           </div>
-          <!-- NEW: Event-Delegation greift hier für Reset je Kategorie -->
           <div id="progress-cats" style="margin-top:8px"></div>
         </div>
       </div>
@@ -253,8 +245,11 @@
             <select id="admin-cat-old"></select>
             <input id="admin-cat-new" placeholder="Neue Kategorie (umbenennen/zusammenführen)"/>
             <button id="admin-cat-apply" class="btn primary">Anwenden</button>
-            <button id="admin-cat-autoclean" class="btn ghost">Kategorien bereinigen (Auto)</button> <!-- NEW -->
             <span id="admin-cat-state" class="muted"></span>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="admin-canon-all" class="btn">Alle Kategorien automatisch kanonisieren</button>
+            <span class="muted">Versucht, alle Varianten (–, —, :, Leerzeichen) auf die Canon-Bezeichnungen zu setzen.</span>
           </div>
         </div>
 
@@ -262,7 +257,7 @@
           <h4>Duplikate scannen</h4>
           <div class="row">
             <button id="admin-scan-dup" class="btn">Scan starten</button>
-            <span class="muted">Scannt gleiche <b>ID</b> oder sehr ähnliche <b>Fragentexte</b>.</span>
+            <span class="muted">Scannt gleiche <b>ID</b> oder sehr ähnliche <b>Fragentexte</b>. Direkt-Löschen möglich.</span>
           </div>
           <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
         </div>
@@ -316,24 +311,32 @@ function applyBranding(){
   }
 }
 
-/* Kategorie-Normalizer (defensiv) */
+/* ====== Kategorie-Normalizer & Kanonisierung ====== */
 function normalizeCategory(cat) {
   if (!cat) return '';
   return String(cat)
-    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Unicode Striche → '-'
-    .replace(/\s+/g, ' ') // Mehrfach-Spaces
+    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // exotische Striche -> '-'
+    .replace(/[–—]/g, '-')                                    // Gedankenstriche -> '-'
+    .replace(/\s*-\s*/g, ' - ')                               // Bindestriche spacing
+    .replace(/\s*:\s*/g, ': ')                                // Doppelpunkte spacing
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
-/* NEW: stärkere Kanonisierung zur Dublettenvermeidung */
-function canonCat(cat){
-  let c = normalizeCategory(cat);
-  c = c.replace(/\s*[–—-]\s*/g,' - ')   // alle Striche vereinheitlichen
-       .replace(/\s{2,}/g,' ')
-       .trim();
-  // Optionale Heuristik: typische Schreibweisen angleichen
-  c = c.replace(/^ll/,'LL');
-  return c;
+const CATEGORY_CANON = {
+  'LL01/1': 'LL01/1 – Güter annehmen',
+  'LL01/2': 'LL01/2 – Güter kontrollieren',
+  'LL01/3': 'LL01/3 – Sicherheit im Lager',
+  'LL02/1': 'LL02/1 – Güter lagern Teil 1 – Grundlagen',
+  'LL02/2': 'LL02/2 – Lagereinrichtungen',
+  'LL02/3': 'LL02/3 – Umgang mit gefährlichen Stoffen',
+};
+
+function canonicalizeCategory(catRaw) {
+  const cat = normalizeCategory(catRaw);
+  const m = cat.match(/^(LL\d{2}\/\d)/i);
+  if (m && CATEGORY_CANON[m[1].toUpperCase()]) return CATEGORY_CANON[m[1].toUpperCase()];
+  return cat;
 }
 
 /* ====== Einstellungen (nur Admin) ====== */
@@ -359,7 +362,6 @@ function isAdminEmail(email){ return !!email && ADMINS.includes(String(email).to
 
 function gateNavFor(user){
   const logged = !!user;
-  // Sichtbarkeit
   document.getElementById('nav-flash').hidden = !logged;
   document.getElementById('nav-train').hidden = !logged;
   document.getElementById('nav-exam').hidden  = !logged;
@@ -369,16 +371,17 @@ function gateNavFor(user){
   document.getElementById('nav-admin').hidden = !isAdmin;
   document.getElementById('btn-settings').hidden = !isAdmin;
 
-  // View setzen
   const current = document.querySelector('.view.active');
   if(!logged){
     views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v==='login'));
+    document.getElementById('nav-login').classList.add('active');
     document.getElementById('login-empty-info').style.display='block';
     document.getElementById('login-empty-info').textContent='Bitte zuerst einloggen.';
   }else{
     if(current && current.id==='view-login'){
       views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v==='flashcards'));
       document.getElementById('nav-flash').classList.add('active');
+      document.getElementById('nav-login').classList.remove('active');
     }
   }
 }
@@ -424,31 +427,21 @@ btnLogin.onclick=async()=>{
 };
 btnLogout.onclick=async()=>{ await supa.auth.signOut(); await refreshAuthUI(); };
 
-/* ====== Data helpers ====== */
+/* ====== Data helpers (mit Kanonisierung) ====== */
 async function fetchQuestions(){
   if(!supa) return [];
-  const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
+  const {data,error}=await supa.from('questions').select('*');
   if(error){console.warn(error); return [];}
-  return (data||[]).map(q => ({ ...q, category: canonCat(q.category) })); // NEW: kanonisieren
+  return (data||[]).map(q => ({ ...q, category: canonicalizeCategory(q.category) }));
 }
-
-/* NEW: „echte“ deduplizierte Kategorien */
-async function fetchCategories(){
-  const q=await fetchQuestions();
-  const map = new Map();
-  q.forEach(x=>{
-    const k = canonCat(x.category);
-    if(!map.has(k)) map.set(k,k);
-  });
-  return [...map.values()].sort((a,b)=>a.localeCompare(b,'de'));
-}
+async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 
 /* ====== Lernkarten ====== */
 const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
 document.getElementById('fc-load').onclick=loadFlashcards;
 async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
 async function loadFlashcards(){
-  const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>canonCat(x.category)===canonCat(cat));
+  const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
   fcArea.innerHTML='';
   if(cards.length===0){
     fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;
@@ -503,7 +496,7 @@ async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
   const all=await fetchQuestions();
   const user=await getUser();
   const stats = await fetchStatsMap(user?.id);
-  let pool = all.filter(q => !categoryFilter || canonCat(q.category)===canonCat(categoryFilter)).map(q=>{
+  let pool = all.filter(q => !categoryFilter || q.category===categoryFilter).map(q=>{
     const s = stats[q.id] || { seen:0, correct:0, last:false, streak:0, lastTs:null };
     const acc = s.seen ? s.correct/s.seen : 0;
     const wrongBias = (s.last===false) ? 0.2 : 0;
@@ -573,7 +566,7 @@ function renderMeta(){ const total=examPool.length; const answered=Object.values
 examStart.onclick=async()=>{
   const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte zuerst einloggen.');
   const all=await fetchQuestions(); const chosen=[...examCategories.selectedOptions].map(o=>o.value);
-  const pool=all.filter(q=>chosen.includes(canonCat(q.category))); if(!pool.length) return alert('Keine Fragen in den gewählten Kategorien.');
+  const pool=all.filter(q=>chosen.includes(q.category)); if(!pool.length) return alert('Keine Fragen in den gewählten Kategorien.');
   const n=Math.max(5,Math.min(Number(examCount.value||40),100));
   examPool = pickN(pool,n); selections={}; examArea.innerHTML=''; ihkRunning=true; examSubmit.disabled=false;
   timeLeft = (Number(examMinutes.value||60))*60; renderMeta();
@@ -654,7 +647,6 @@ function bumpProgress(seenDelta, correctDelta){
   renderProgress();
 }
 
-// Helfer
 function pct(n,d){ return d? Math.round((n/d)*100):0; }
 function barClass(p){ if(p>=80) return 'ok'; if(p>=50) return 'mid'; return 'low'; }
 
@@ -664,42 +656,34 @@ async function computeCategoryStats(){
   try { const r=await supa.auth.getUser(); user=r?.data?.user||null; } catch{}
   if(!user) return { user:null, rows:[] };
 
+  // Fragen (kanonisiert)
   const qs = await fetchQuestions();
+
+  // totalQuestions je kanonischer Kategorie
   const byCat = {};
   qs.forEach(q=>{
-    const c=canonCat(q.category||'–');
-    (byCat[c] ||= { cat:c, totalQuestions:0, seen:0, correct:0, ids:[] });
+    const c=q.category;
+    (byCat[c] ||= { cat:c, totalQuestions:0, seen:0, correct:0 });
     byCat[c].totalQuestions++;
-    byCat[c].ids.push(q.id);
   });
 
-  const { data:revs } = await supa.from('reviews').select('question_id, correct').eq('user_id', user.id);
+  // Reviews des Users (letztes Ergebnis pro Frage)
+  const { data:revs } = await supa.from('reviews').select('question_id, correct, ts').eq('user_id', user.id).order('ts',{ascending:true});
+  const lastByQ = new Map();
+  (revs||[]).forEach(r=>{ lastByQ.set(r.question_id, r.correct); });
+
   const qById = Object.fromEntries(qs.map(q=>[q.id,q]));
-  (revs||[]).forEach(r=>{
-    const q = qById[r.question_id];
+  lastByQ.forEach((lastCorrect, qid)=>{
+    const q = qById[qid];
     if(!q) return;
-    const c = canonCat(q.category||'–');
-    const row = byCat[c] ||= { cat:c, totalQuestions:0, seen:0, correct:0, ids:[] };
+    const cat = q.category;
+    const row = byCat[cat] ||= { cat:cat, totalQuestions:0, seen:0, correct:0 };
     row.seen++;
-    if(r.correct) row.correct++;
+    if(lastCorrect) row.correct++;
   });
 
-  const rows = Object.values(byCat).sort((a,b)=> a.cat.localeCompare(b.cat,'de'));
+  const rows = Object.values(byCat).sort((a,b)=> a.cat.localeCompare(b.cat));
   return { user, rows };
-}
-
-/* NEW: Reset einer Kategorie (löscht alle Reviews des Users zu den Fragen dieser Kategorie) */
-async function resetUserCategory(cat){
-  const { data:{user} } = await supa.auth.getUser();
-  if(!user) return alert('Bitte zuerst einloggen.');
-  const { data:qIds } = await supa.from('questions').select('id').eq('category', canonCat(cat));
-  const ids = (qIds||[]).map(x=>x.id);
-  if(!ids.length) { alert('Keine Fragen zu dieser Kategorie.'); return; }
-  try{
-    await supa.from('reviews').delete().eq('user_id', user.id).in('question_id', ids);
-    await renderProgress();
-    alert(`Fortschritt für "${cat}" zurückgesetzt.`);
-  }catch(e){ alert('Fehler beim Zurücksetzen: '+e.message); }
 }
 
 async function renderProgress(){
@@ -724,7 +708,7 @@ async function renderProgress(){
         <div class="progress-meta">
           <div style="display:flex;align-items:center;gap:8px">
             <b>${r.cat}</b>
-            <button class="btn xs ghost" data-reset-cat="${r.cat}">Zurücksetzen</button> <!-- NEW -->
+            <button class="btn" data-reset-cat="${r.cat}" title="Alle Antworten dieser Kategorie aus deinem Account-Fortschritt löschen">Zurücksetzen</button>
           </div>
           <div class="muted" style="font-size:12px">
             Gesehen: ${r.seen}/${r.totalQuestions} • Quote: ${a}% • Abdeckung: ${cov}%
@@ -736,24 +720,38 @@ async function renderProgress(){
         <div class="progress-pill">${a}%</div>
       </div>`;
   }).join('');
+
+  // Reset-Buttons (pro Kategorie)
+  document.querySelectorAll('button[data-reset-cat]').forEach(btn=>{
+    btn.onclick = async () => {
+      const cat = btn.getAttribute('data-reset-cat');
+      if(!confirm(`Alle gespeicherten Antworten in "${cat}" für deinen Account löschen?`)) return;
+      const qs = await fetchQuestions();
+      const ids = qs.filter(q=>q.category===cat).map(q=>q.id);
+      if(!ids.length) return;
+      const { data:{user} } = await supa.auth.getUser();
+      if(!user) return;
+      // reviews löschen
+      await supa.from('reviews').delete().eq('user_id', user.id).in('question_id', ids);
+      renderProgress();
+    };
+  });
 }
 document.getElementById('reset-progress').onclick=()=>{localStorage.removeItem('progress_local'); renderProgress();};
-
-/* NEW: Event-Delegation für Kategorie-Reset */
-document.getElementById('progress-cats').addEventListener('click', (e)=>{
-  const btn = e.target.closest('button[data-reset-cat]');
-  if(!btn) return;
-  const cat = btn.getAttribute('data-reset-cat');
-  if(confirm(`Fortschritt für „${cat}“ wirklich zurücksetzen?`)) resetUserCategory(cat);
-});
 
 /* ====== Admin ====== */
 const adminList=document.getElementById('admin-list');
 async function renderAdminList(){
   const q=await fetchQuestions();
-  adminList.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between">
-  <div><span class="chip">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div>
-  <div><b>${x.question}</b></div></div>`).join('');
+  adminList.innerHTML=q.map(x=>`<div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div><span class="chip">${x.category}</span></div>
+      <div class="row">
+        <button data-del="${x.id}" class="btn">Löschen</button>
+      </div>
+    </div>
+    <div><b>${x.question}</b></div>
+  </div>`).join('');
   adminList.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{
     const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id);
     if(error) alert(error.message); else renderAdminList();
@@ -781,7 +779,7 @@ document.getElementById('admin-import').onchange=async(e)=>{
   const cleaned = allItems
     .map(x=>{
       const { deck, correctIndex, ...rest } = x || {};
-      const cat = canonCat(rest.category || rest.category_name || '');
+      const cat = canonicalizeCategory(rest.category || rest.category_name || '');
       return { ...rest, category: cat, correct_index: rest.correct_index ?? correctIndex };
     })
     .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
@@ -801,32 +799,33 @@ async function fillAdminCatSelect(){
 }
 document.getElementById('admin-cat-apply').onclick=async()=>{
   const oldVal=document.getElementById('admin-cat-old').value;
-  const newVal=canonCat((document.getElementById('admin-cat-new').value||'').trim());
+  const newVal=canonicalizeCategory((document.getElementById('admin-cat-new').value||'').trim());
   if(!oldVal || !newVal) return alert('Bitte alte Kategorie wählen und neue Kategorie eintragen.');
-  const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',canonCat(oldVal)).select('id',{count:'exact'});
+  const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
   document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
   await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
 };
 
-/* NEW: Auto-Clean aller Kategorien (Normalisierung) */
-document.getElementById('admin-cat-autoclean').onclick=async()=>{
-  const q=await fetchQuestions(); let changed=0;
-  for(const it of q){
-    const canon=canonCat(it.category);
-    if(canon!==it.category){
-      const { error } = await supa.from('questions').update({category:canon}).eq('id', it.id);
-      if(!error) changed++;
+document.getElementById('admin-canon-all').onclick=async()=>{
+  if(!confirm('Alle Kategorien automatisch kanonisieren?')) return;
+  const qs = await fetchQuestions(); // bereits kanonisiert
+  // hole alle Originale direkt aus DB (ohne Map), damit wir auch Varianten erwischen
+  const { data:raw } = await supa.from('questions').select('id, category');
+  let changed = 0;
+  for(const r of (raw||[])){
+    const canon = canonicalizeCategory(r.category);
+    if(canon !== r.category){
+      await supa.from('questions').update({category:canon}).eq('id', r.id);
+      changed++;
     }
   }
-  alert(`Auto-Fix ausgeführt: ${changed} aktualisiert`);
-  await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect(); await renderAdminList();
+  alert(`Kanonisierung fertig. Geändert: ${changed}`);
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
 };
 
-/* NEW: Duplikate scannen + direkte Löschbuttons */
 document.getElementById('admin-scan-dup').onclick=async()=>{
   const list=document.getElementById('admin-dup-list'); list.innerHTML='Suche…';
   const q=await fetchQuestions(); if(!q.length){ list.innerHTML='<div class="card muted">Keine Fragen.</div>'; return; }
-
   const byText={};
   for(const it of q){
     const key=(it.question||'').trim().toLowerCase();
@@ -834,54 +833,26 @@ document.getElementById('admin-scan-dup').onclick=async()=>{
   }
   const groups=Object.values(byText).filter(arr=>arr.length>1);
   if(!groups.length){ list.innerHTML='<div class="card">Keine Duplikate per Fragentext gefunden.</div>'; return; }
-
   list.innerHTML = groups.map(arr=>{
-    const keepId = arr[0].id;
     const head=arr[0].question.slice(0,160);
     const rows=arr.map(x=>`
-      <div class="row" style="justify-content:space-between">
-        <div>
-          <span class="chip">${x.category}</span>
-          <span class="muted" style="margin-left:6px">${x.id}</span>
-        </div>
-        <div>
-          <button class="btn xs ghost" data-del-one="${x.id}">Löschen</button>
-        </div>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div><span class="chip">${x.category}</span> <span class="muted">${x.id}</span></div>
+        <button class="btn" data-delid="${x.id}">Löschen</button>
       </div>`).join('');
     return `<div class="card">
-      <div style="margin-bottom:8px"><b>${head}</b></div>
-      <div class="cards">${rows}</div>
-      <div class="row" style="justify-content:flex-end;margin-top:10px">
-        <button class="btn xs" data-del-group-keep="${keepId}">Alle außer erster löschen</button>
-      </div>
+      <div style="font-weight:700;margin-bottom:6px">${head}</div>
+      ${rows}
     </div>`;
   }).join('');
 
-  // Einzel-Löschbuttons verdrahten
-  list.querySelectorAll('[data-del-one]').forEach(btn=>{
-    btn.onclick=async()=>{
-      const id=btn.getAttribute('data-del-one');
+  // Direkt löschen
+  list.querySelectorAll('button[data-delid]').forEach(btn=>{
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-delid');
       if(!confirm(`Frage ${id} wirklich löschen?`)) return;
-      const { error } = await supa.from('questions').delete().eq('id', id);
-      if(error) return alert(error.message);
-      document.getElementById('admin-scan-dup').click(); // neu scannen
-      await renderAdminList();
-    };
-  });
-
-  // Gruppen-Löschbutton: alle außer „keepId“
-  list.querySelectorAll('[data-del-group-keep]').forEach(btn=>{
-    btn.onclick=async()=>{
-      const keepId = btn.getAttribute('data-del-group-keep');
-      const card = btn.closest('.card');
-      const ids = [...card.querySelectorAll('[data-del-one]')].map(b=>b.getAttribute('data-del-one')).filter(id=>id!==keepId);
-      if(!ids.length) return;
-      if(!confirm(`Alle ${ids.length} Duplikate (außer ${keepId}) löschen?`)) return;
-      for(const id of ids){
-        await supa.from('questions').delete().eq('id', id);
-      }
-      document.getElementById('admin-scan-dup').click();
-      await renderAdminList();
+      await supa.from('questions').delete().eq('id', id);
+      document.getElementById('admin-scan-dup').click(); // neu scannen/anzeigen
     };
   });
 };
@@ -889,7 +860,7 @@ document.getElementById('admin-scan-dup').onclick=async()=>{
 document.getElementById('admin-save').onclick=async()=>{
   const id='q_'+Math.random().toString(36).slice(2,10);
   const categoryRaw=document.getElementById('ad-category').value.trim();
-  const category=canonCat(categoryRaw); // NEW
+  const category=canonicalizeCategory(categoryRaw);
   const question=document.getElementById('ad-question').value.trim();
   const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
