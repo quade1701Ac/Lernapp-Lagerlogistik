@@ -33,13 +33,18 @@
     .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
     .muted{color:var(--muted)}
     .alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
+
+    /* Modal (Einstellungen + Ergebnis) */
     .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
     .modal.show{display:flex}
     .modal .backdrop{position:absolute;inset:0;background:#0b1020e6;backdrop-filter:blur(6px)}
     .modal .box{position:relative;width:min(980px,calc(100% - 32px));max-height:90vh;overflow:auto;background:#0f1427;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.55)}
+
     .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:8px 0 10px}
     .stat{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03)}
     .stat .val{font-size:22px;font-weight:800;margin-top:4px}
+
+    /* Sticky-Abgeben-Button (IHK-Modus) */
     #exam-submit-sticky{
       position: fixed; right: 20px; bottom: 20px;
       padding: 12px 18px; border-radius: 12px;
@@ -48,6 +53,9 @@
       cursor: pointer; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,.35);
     }
     #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
+
+    /* Lesbarkeit der Selects */
+    select#fc-category, select#train-category, select#exam-categories { min-width: 420px; }
   </style>
 </head>
 <body>
@@ -80,7 +88,7 @@
           <label style="flex:1">Project URL<br/><input id="cfg-url" /></label>
           <label style="flex:1">Anon public key<br/><input id="cfg-key" /></label>
         </div>
-        <label>Logo URL / Data-URI<br/><input id="cfg-logo" placeholder="https://... oder data:image/png;base64,..."/></label>
+        <label>Logo URL / Data‑URI<br/><input id="cfg-logo" placeholder="https://... oder data:image/png;base64,..."/></label>
         <div class="row" style="margin-top:8px">
           <button id="cfg-save" class="btn primary">Speichern</button>
           <button id="cfg-close" class="btn">Schließen</button>
@@ -125,7 +133,7 @@
       </div>
     </section>
 
-    <!-- Lernkarten -->
+    <!-- Lernkarten (klassisch) -->
     <section id="view-flashcards" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -163,13 +171,13 @@
       </div>
     </section>
 
-    <!-- Prüfung -->
+    <!-- Prüfung (IHK 2.0) -->
     <section id="view-exam" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
-          <h3>Prüfungssimulation (IHK-Stil)</h3>
+          <h3>Prüfungssimulation (IHK‑Stil)</h3>
           <div class="row">
-            <select id="exam-categories" multiple></select>
+            <select id="exam-categories" multiple size="10"></select>
             <input id="exam-count" type="number" value="40" min="5" max="100" style="width:90px"/>
             <input id="exam-minutes" type="number" value="60" min="5" max="180" style="width:90px"/>
             <button id="exam-start" class="btn primary">Start</button>
@@ -223,6 +231,16 @@
           <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
         </div>
 
+        <div class="card">
+          <h4>Automatische Korrekturen</h4>
+          <div class="row" style="gap:8px">
+            <button id="admin-fix-dups" class="btn">Duplikate fixen (Auto)</button>
+            <button id="admin-migrate-cats" class="btn">Kategorien bereinigen (Auto)</button>
+            <span id="admin-fix-state" class="muted"></span>
+            <span id="admin-migrate-state" class="muted"></span>
+          </div>
+        </div>
+
         <form id="admin-form" onsubmit="return false;" class="card">
           <h4>Neue Frage</h4>
           <input id="ad-category" placeholder="z.B. LL01/2 – Güter kontrollieren" required/>
@@ -238,6 +256,7 @@ Falsch 2" required></textarea>
       </div>
     </section>
   </div>
+
 <script>
 /* ====== Utilities / Setup ====== */
 const views=['login','flashcards','train','exam','progress','admin'];
@@ -247,7 +266,7 @@ const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.f
 const KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
 let supa=null;
 
-// ✅ Feste Defaults – werden auf jedem Gerät geladen
+// ✅ Defaults – überall sofort nutzbar
 window.__APP_CONFIG__ = {
   SUPABASE_URL: "https://ebqfupcivmkbuadbbnwg.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicWZ1cGNpdm1rYnVhZGJibndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MDA5ODIsImV4cCI6MjA3MDQ3Njk4Mn0.P6IiwjFSpqVmObRbvxvY46l6vJlPsxPAc-wbr15Dhl0",
@@ -261,22 +280,42 @@ function applyBranding(){
   if (logo && el){ el.style.background='none'; el.style.backgroundImage=`url(${logo})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.border='1px solid var(--line)'; }
 }
 
-/* Kategorie-Normalizer */
+/* Kategorie-Normalizer (robust + LL02-Mapping) */
 function normalizeCategory(cat) {
   if (!cat) return '';
-  return String(cat)
-    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Unicode Striche
-    .replace(/\s*-\s*/g, ' - ')                               // genau 1 Space um '-'
-    .replace(/\s+/g, ' ')                                     // Mehrfach-Spaces
+  let s = String(cat)
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF\u2060]/g,'') // Zero‑Width & BOM
+    .replace(/\u00A0/g, ' ');                   // NBSP → Space
+
+  // Spezifische Fixes LL02
+  s = s.replace(/^LL0?2\/1\s*-\s*G[üu]ter\s+lagern\s+Teil\s*1\s*-\s*Grundlagen$/i,
+                'LL02/1 Güter lagern - Teil 1: Grundlagen');
+  s = s.replace(/^LL0?2\/2\s*-\s*G[üu]ter\s+lagern\s+Teil\s*2\s*-\s*Lagereinrichtungen$/i,
+                'LL02/2 Güter lagern - Teil 2: Lagereinrichtungen');
+  s = s.replace(/^LL0?2\/3\s*-\s*G[üu]ter\s+lagern\s+Teil\s*3\s*-\s*(?:Umgang\s+mit\s+)?gefährlichen\s+Stoffen$/i,
+                'LL02/3 Güter lagern - Teil 3: Gefährliche Stoffe');
+
+  // Generisches Muster
+  s = s.replace(/^(LL\d{2}\/\d)\s*-\s*(G[üu]ter\s+lagern)\s*Teil\s*(\d)\s*-\s*(.+)$/i,
+                '$1 $2 - Teil $3: $4');
+
+  return s
+    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Gedankenstrich → '-'
+    .replace(/\s*\/\s*/g, '/')                                // Slash eng
+    .replace(/\s*-\s*/g, ' - ')                               // Spacing '-'
+    .replace(/\s*:\s*/g, ': ')                                // Spacing ':'
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
-/* ====== Einstellungen (Modal) ====== */
-document.getElementById('btn-settings').onclick=()=>{document.getElementById('settings-modal').classList.add('show');
+/* ====== Einstellungen ====== */
+document.getElementById('btn-settings')?.addEventListener('click', ()=>{
+  document.getElementById('settings-modal').classList.add('show');
   document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||'';
   document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'';
   document.getElementById('cfg-logo').value=localStorage.getItem(KEY_LOGO)||'';
-};
+});
 document.getElementById('cfg-close').onclick=()=>document.getElementById('settings-modal').classList.remove('show');
 document.getElementById('cfg-save').onclick=()=>{localStorage.setItem(KEY_URL, document.getElementById('cfg-url').value.trim());
   localStorage.setItem(KEY_ANON, document.getElementById('cfg-key').value.trim());
@@ -286,38 +325,30 @@ document.getElementById('cfg-save').onclick=()=>{localStorage.setItem(KEY_URL, d
   setTimeout(()=>location.reload(),400);
 };
 
-/* ====== Supabase Init (neu mit Defaults & URL-Param-Fallback) ====== */
+/* ====== Supabase Init (mit Defaults & URL-Param) ====== */
 async function initClient(){
   const params = new URLSearchParams(location.search);
   const cfg = window.__APP_CONFIG__ || {};
 
-  // Reihenfolge: localStorage → feste Defaults → URL-Parameter
   const url  = localStorage.getItem(KEY_URL)  || cfg.SUPABASE_URL      || params.get('url')  || '';
   const anon = localStorage.getItem(KEY_ANON) || cfg.SUPABASE_ANON_KEY || params.get('key')  || '';
   const logo = localStorage.getItem(KEY_LOGO) || cfg.LOGO_URL          || params.get('logo') || '';
 
-  // Erststart: in localStorage spiegeln
   if (!localStorage.getItem(KEY_URL)  && url)  localStorage.setItem(KEY_URL,  url);
   if (!localStorage.getItem(KEY_ANON) && anon) localStorage.setItem(KEY_ANON, anon);
   if (!localStorage.getItem(KEY_LOGO) && logo) localStorage.setItem(KEY_LOGO, logo);
 
   if(!url || !anon){
     const i=document.getElementById('login-empty-info');
-    if(i){ i.style.display='block'; i.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.'; }
+    i.style.display='block';
+    i.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.';
     applyBranding();
     return;
   }
   supa = supabase.createClient(url, anon);
   applyBranding();
-
   renderProgress();
-  refreshAuthUI();
-  await refreshSelectors();
-  await refreshTrainSelectors();
-  await refreshExamCategories();
-  await renderAdminList();
-  await showEmptyHints();
-  await fillAdminCatSelect();
+  refreshAuthUI(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await renderAdminList(); await showEmptyHints(); await fillAdminCatSelect();
 }
 
 /* ====== Auth ====== */
@@ -340,11 +371,17 @@ async function fetchQuestions(){
   return (data||[]).map(q => ({ ...q, category: normalizeCategory(q.category) }));
 }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
+async function fetchCategoriesWithCounts(){
+  const all=await fetchQuestions();
+  const map={};
+  for(const q of all) map[q.category]=(map[q.category]||0)+1;
+  return Object.entries(map).map(([name,count])=>({name,count})).sort((a,b)=>a.name.localeCompare(b.name,'de'));
+}
 
 /* ====== Lernkarten (klassisch) ====== */
 const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
 document.getElementById('fc-load').onclick=loadFlashcards;
-async function refreshSelectors(){ const cats=await fetchCategories(); fcCategory.innerHTML=cats.map(c=>`<option>${c}</option>`).join(''); }
+async function refreshSelectors(){ const cats=await fetchCategoriesWithCounts(); fcCategory.innerHTML=cats.map(c=>`<option value="${c.name}">${c.name} (${c.count})</option>`).join(''); }
 async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
   fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
   let n=0; cards.forEach(card=>{ const wrap=document.createElement('div'); wrap.className='card';
@@ -371,7 +408,7 @@ async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcC
 const trCategory=document.getElementById('train-category'), trWeak=document.getElementById('train-weak'), trHideLearned=document.getElementById('train-hide-learned');
 const trNext=document.getElementById('train-next'), trArea=document.getElementById('train-area'), trEmpty=document.getElementById('train-empty');
 
-async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option>${c}</option>`).join(''); }
+async function refreshTrainSelectors(){ const cats=await fetchCategoriesWithCounts(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option value="${c.name}">${c.name} (${c.count})</option>`).join(''); }
 async function getUser(){ try{ const {data:{user}}=await supa.auth.getUser(); return user||null; }catch{return null;} }
 
 async function fetchStatsMap(userId){
@@ -441,7 +478,7 @@ function renderTrainCard(card){
 }
 trNext.onclick=async()=>{ const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked); renderTrainCard(card); };
 
-/* ====== IHK-Prüfungsmodus 2.0 (mit Sticky-Abgeben) ====== */
+/* ====== IHK-Prüfungsmodus 2.0 ====== */
 const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count'), examMinutes=document.getElementById('exam-minutes');
 const examStart=document.getElementById('exam-start'), examSubmit=document.getElementById('exam-submit'), examReset=document.getElementById('exam-reset');
 const examArea=document.getElementById('exam-area'), examMeta=document.getElementById('exam-meta');
@@ -453,7 +490,7 @@ function ensureStickySubmit(){ let b=document.getElementById('exam-submit-sticky
 function removeStickySubmit(){ const b=document.getElementById('exam-submit-sticky'); if(b) b.remove(); }
 function updateStickySubmitLabel(){ const b=document.getElementById('exam-submit-sticky'); if(!b) return; const total=examPool.length||0; const answered=Object.values(selections).filter(v=>v!=null).length; b.textContent = total? `Abgeben (${answered}/${total})`:'Abgeben'; b.disabled=!ihkRunning; }
 
-async function refreshExamCategories(){ const cats=await fetchCategories(); examCategories.innerHTML=cats.map(c=>`<option value="${c}" selected>${c}</option>`).join(''); }
+async function refreshExamCategories(){ const cats=await fetchCategoriesWithCounts(); examCategories.innerHTML=cats.map(c=>`<option value="${c.name}" selected>${c.name} (${c.count})</option>`).join(''); }
 function pickN(a,n){ const b=shuffle(a); return b.slice(0,Math.max(0,Math.min(n,b.length))); }
 function renderMeta(){ const total=examPool.length; const answered=Object.values(selections).filter(v=>v!=null).length; const mm = String(Math.max(0, Math.floor(timeLeft/60))).padStart(2,'0'); const ss = String(Math.max(0, timeLeft%60)).padStart(2,'0'); examMeta.textContent=`Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`; updateStickySubmitLabel(); }
 
@@ -571,7 +608,6 @@ document.getElementById('admin-import').onchange=async(e)=>{
   }
   if(!allItems.length){ alert('Keine gültigen Fragen gefunden.'); return; }
 
-  // >>> Normalisierung der Kategorien beim Import <<<
   const cleaned = allItems
     .map(x=>{
       const { deck, correctIndex, ...rest } = x || {};
@@ -619,10 +655,75 @@ document.getElementById('admin-scan-dup').onclick=async()=>{
   }).join('');
 };
 
+/* === NEU: Auto-Fix für Kategorien, die nach Normalisierung gleich sind === */
+document.getElementById('admin-fix-dups').onclick = async () => {
+  const state = document.getElementById('admin-fix-state');
+  state.textContent = 'Suche Duplikate…';
+  const { data, error } = await supa.from('questions').select('id,category');
+  if (error) { state.textContent = 'Fehler: '+error.message; return; }
+
+  const groups = {}; // canon -> Set(raw)
+  for (const row of (data||[])) {
+    const raw = row.category || '';
+    const canon = normalizeCategory(raw);
+    (groups[canon] ||= new Set()).add(raw);
+  }
+  const dups = Object.entries(groups).filter(([, raws]) => raws.size > 1);
+  if (!dups.length) { state.textContent = 'Keine Duplikate gefunden.'; return; }
+
+  let totalChanged = 0;
+  for (const [canon, raws] of dups) {
+    const counts = {};
+    for (const row of data) if (raws.has(row.category)) counts[row.category] = (counts[row.category]||0) + 1;
+    const canonicalRaw = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0] || canon;
+    const targets = [...raws].filter(r => r !== canonicalRaw);
+    if (targets.length) {
+      const { error: updErr, count } = await supa
+        .from('questions').update({ category: normalizeCategory(canonicalRaw) })
+        .in('category', targets).select('id', { count: 'exact' });
+      if (!updErr) totalChanged += (count||0);
+    }
+  }
+  state.textContent = `Fertig. Geändert: ${totalChanged}`;
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
+};
+
+/* === NEU: Alle Kategorien nachträglich normalisieren (Migration) === */
+document.getElementById('admin-migrate-cats').onclick = async () => {
+  const out = document.getElementById('admin-migrate-state');
+  out.textContent = 'Bereinige Kategorien…';
+  try {
+    const { data, error } = await supa.from('questions').select('id, category');
+    if (error) throw error;
+
+    let changed = 0;
+    const batchSize = 500, toUpdate = [];
+
+    for (const row of data || []) {
+      const canon = normalizeCategory(row.category || '');
+      if (canon && canon !== row.category) toUpdate.push({ id: row.id, category: canon });
+    }
+
+    for (let i = 0; i < toUpdate.length; i += batchSize) {
+      const chunk = toUpdate.slice(i, i + batchSize);
+      const { error: updErr, count } = await supa.from('questions')
+        .upsert(chunk, { onConflict: 'id' })
+        .select('id', { count: 'exact' });
+      if (updErr) throw updErr;
+      changed += (count || 0);
+    }
+
+    out.textContent = `Fertig. Aktualisiert: ${changed}`;
+    await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
+  } catch (e) {
+    out.textContent = 'Fehler: ' + (e?.message || e);
+  }
+};
+
 document.getElementById('admin-save').onclick=async()=>{
   const id='q_'+Math.random().toString(36).slice(2,10);
   const categoryRaw=document.getElementById('ad-category').value.trim();
-  const category=normalizeCategory(categoryRaw); // Normalisierung vor Speichern
+  const category=normalizeCategory(categoryRaw);
   const question=document.getElementById('ad-question').value.trim();
   const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
