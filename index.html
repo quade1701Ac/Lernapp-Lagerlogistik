@@ -302,13 +302,34 @@ function applyBranding(){
   }
 }
 
-/* Kategorie-Normalizer (defensiv) */
+/* ---- Kategoriensynchronisierung (Fix) ---- */
+// Kanonische Namen – alle Varianten werden darauf gemappt.
+const CANON_CATEGORIES = [
+  { re: /^ll01\/1/i, name: 'LL01/1 – Güter annehmen' },
+  { re: /^ll01\/2/i, name: 'LL01/2 – Güter kontrollieren' },
+  { re: /^ll01\/3/i, name: 'LL01/3 – Sicherheit im Lager' },
+  { re: /^ll02\/1/i, name: 'LL02/1 – Grundlagen' },
+  { re: /^ll02\/2/i, name: 'LL02/2 – Lagereinrichtungen' },
+  { re: /^ll02\/3/i, name: 'LL02/3 – Umgang mit gefährlichen Stoffen' },
+];
+
+// robuste Normalisierung (Striche, Spaces, Groß/Klein) + Mapping auf Kanon
 function normalizeCategory(cat) {
   if (!cat) return '';
-  return String(cat)
-    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Unicode Striche → '-'
-    .replace(/\s+/g, ' ') // Mehrfach-Spaces
+  let s = String(cat)
+    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')   // exotische Striche -> '-'
+    .replace(/\s*-\s*/g, ' – ')                                // " - " in " – "
+    .replace(/\s*–\s*/g, ' – ')
+    .replace(/\s+/g, ' ')
     .trim();
+
+  const m = s.match(/^(LL\d{2}\/\d)/i);
+  if (m) {
+    const key = m[1].toLowerCase();
+    const hit = CANON_CATEGORIES.find(e => e.re.test(key));
+    if (hit) return hit.name;
+  }
+  return s;
 }
 
 /* ====== Einstellungen (nur Admin) ====== */
@@ -404,9 +425,13 @@ async function fetchQuestions(){
   if(!supa) return [];
   const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
   if(error){console.warn(error); return [];}
+  // ACHTUNG: gleich hier normalisieren
   return (data||[]).map(q => ({ ...q, category: normalizeCategory(q.category) }));
 }
-async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
+async function fetchCategories(){
+  const q = await fetchQuestions();
+  return [...new Set(q.map(x => normalizeCategory(x.category)))].sort((a,b)=>a.localeCompare(b,'de'));
+}
 
 /* ====== Lernkarten ====== */
 const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
@@ -618,31 +643,31 @@ function bumpProgress(seenDelta, correctDelta){
   localStorage.setItem('progress_local', JSON.stringify(p));
   renderProgress();
 }
-
 // Helfer
 function pct(n,d){ return d? Math.round((n/d)*100):0; }
 function barClass(p){ if(p>=80) return 'ok'; if(p>=50) return 'mid'; return 'low'; }
 
+// FIX: Fortschritt strikt mit normalisierten Kategorien berechnen
 async function computeCategoryStats(){
   if(!supa) return { user:null, rows:[] };
   let user=null;
   try { const r=await supa.auth.getUser(); user=r?.data?.user||null; } catch{}
-  if(!user) return { user:null, rows:[] };
-
-  const qs = await fetchQuestions();
+  const qs = await fetchQuestions(); // bereits normalisiert
   const byCat = {};
   qs.forEach(q=>{
-    const c=q.category||'–';
+    const c = normalizeCategory(q.category) || '–';
     (byCat[c] ||= { cat:c, totalQuestions:0, seen:0, correct:0 });
     byCat[c].totalQuestions++;
   });
+
+  if(!user) return { user:null, rows:Object.values(byCat) };
 
   const { data:revs } = await supa.from('reviews').select('question_id, correct').eq('user_id', user.id);
   const qById = Object.fromEntries(qs.map(q=>[q.id,q]));
   (revs||[]).forEach(r=>{
     const q = qById[r.question_id];
     if(!q) return;
-    const c = q.category||'–';
+    const c = normalizeCategory(q.category) || '–';
     const row = byCat[c] ||= { cat:c, totalQuestions:0, seen:0, correct:0 };
     row.seen++;
     if(r.correct) row.correct++;
