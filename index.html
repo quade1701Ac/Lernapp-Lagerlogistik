@@ -21,6 +21,7 @@
       --panel-hover:rgba(255,255,255,.08);
       --danger:#ef4444;
       --success:#34d399;
+      --badge:#1f2a44;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b1020;color:var(--text)}
@@ -34,8 +35,9 @@
     }
     .brand{display:flex;gap:10px;align-items:center}
     .brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
-    .nav{display:flex;gap:8px;flex-wrap:wrap}
+    .nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
+    .nav .badge{margin-left:6px;border:1px solid var(--line);background:var(--badge);padding:4px 8px;border-radius:999px;font-size:12px;color:#cfe1ff;white-space:nowrap;max-width:52vw;overflow:hidden;text-overflow:ellipsis}
 
     /* Layout */
     .container{max-width:1000px;margin:0 auto;padding:20px}
@@ -105,6 +107,7 @@
       <button data-view="login" id="tab-login">Login</button>
       <button data-view="flashcards" id="tab-flash" class="hide">Lernkarten</button>
       <button data-view="train" id="tab-train" class="hide">Adaptiv</button>
+      <span id="train-badge" class="badge hide" title="Aktive Filter für Adaptiv"></span>
       <button data-view="exam" id="tab-exam" class="hide">Prüfung</button>
       <button data-view="progress" id="tab-progress" class="hide">Fortschritt</button>
       <!-- Admin/Settings standardmäßig versteckt; JS blendet für Admins ein -->
@@ -205,6 +208,8 @@
           </div>
         </div>
         <div id="train-area" class="cards" style="margin-top:10px"></div>
+        <!-- WICHTIG: Placeholder, damit renderTrainCard sicher läuft -->
+        <div id="train-empty" class="alert" style="display:none;margin-top:10px"></div>
       </div>
     </section>
 
@@ -292,13 +297,22 @@ Falsch 2" required></textarea>
 <script>
 /* ====== Utilities / Setup ====== */
 const views=['login','flashcards','train','exam','progress','admin'];
-document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>{
+document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=async()=>{
   const v=b.dataset.view;
   // Blocke Navigation, wenn nicht eingeloggt
   if (!window.__IS_LOGGED_IN__ && v!=='login') return;
   // Blocke Admin-View, wenn kein Admin
   if (v==='admin' && !window.__IS_ADMIN__) return;
+
   views.forEach(x=>document.getElementById('view-'+x).classList.toggle('active',x===v));
+
+  // Adaptiv: Beim Öffnen sofort Karte laden + Badge updaten
+  if (v==='train'){
+    await ensureTrainCard();
+    updateTrainBadge();
+  }
+  // Badge nur im Adaptiv-Tab sichtbar
+  document.getElementById('train-badge').classList.toggle('hide', v!=='train');
 });
 const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 
@@ -325,7 +339,6 @@ function isAdmin(user){
   const email = (user.email || "").toLowerCase().trim();
   const wl = ADMIN_EMAILS.map(e => e.toLowerCase().trim());
   const domain = (ADMIN_DOMAIN || "").toLowerCase().trim();
-  // Supabase Metadaten berücksichtigen (optional)
   const app = user.app_metadata || {};
   const um  = user.user_metadata || {};
   const rolesStr = (
@@ -349,23 +362,19 @@ function setNavVisibility({loggedIn, admin}){
     exam: document.getElementById('tab-exam'),
     progress: document.getElementById('tab-progress'),
     admin: document.getElementById('tab-admin'),
-    settings: document.getElementById('btn-settings')
+    settings: document.getElementById('btn-settings'),
+    trainBadge: document.getElementById('train-badge')
   };
   // alles verstecken außer Login
-  if (ids.flash) ids.flash.classList.add('hide');
-  if (ids.train) ids.train.classList.add('hide');
-  if (ids.exam) ids.exam.classList.add('hide');
-  if (ids.progress) ids.progress.classList.add('hide');
-  if (ids.admin) ids.admin.classList.add('hide');
-  if (ids.settings) ids.settings.classList.add('hide');
+  ['flash','train','exam','progress','admin','settings','trainBadge'].forEach(k=>ids[k]?.classList.add('hide'));
   if (loggedIn){
-    if (ids.flash) ids.flash.classList.remove('hide');
-    if (ids.train) ids.train.classList.remove('hide');
-    if (ids.exam) ids.exam.classList.remove('hide');
-    if (ids.progress) ids.progress.classList.remove('hide');
+    ids.flash?.classList.remove('hide');
+    ids.train?.classList.remove('hide');
+    ids.exam?.classList.remove('hide');
+    ids.progress?.classList.remove('hide');
     if (admin){
-      if (ids.admin) ids.admin.classList.remove('hide');
-      if (ids.settings) ids.settings.classList.remove('hide');
+      ids.admin?.classList.remove('hide');
+      ids.settings?.classList.remove('hide');
     }
   }
 }
@@ -505,6 +514,9 @@ async function initClient(){
 
   const AUTO_FIX_KNOWN_CATEGORIES = true;
   if (AUTO_FIX_KNOWN_CATEGORIES) { try { await autoFixKnownCats(); } catch {} }
+
+  // Badge initial verstecken
+  document.getElementById('train-badge').classList.add('hide');
 }
 
 /* ====== Auth ====== */
@@ -618,6 +630,7 @@ async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
   let r = Math.random()*sum; for(const p of normalized){ r-=p.w; if(r<=0) return p.q; }
   return normalized[normalized.length-1].q;
 }
+
 function renderTrainCard(card){
   trArea.innerHTML=''; if(!card){ trEmpty.style.display='block'; trEmpty.textContent='Keine geeignete Karte gefunden. Passe Filter an (z. B. „Gelernt ausblenden“ deaktivieren).'; return; }
   trEmpty.style.display='none';
@@ -644,7 +657,41 @@ function renderTrainCard(card){
   });
   trArea.appendChild(wrap);
 }
-trNext.onclick=async()=>{ if(!window.__IS_LOGGED_IN__) return; const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked); renderTrainCard(card); };
+
+trNext.onclick=async()=>{ if(!window.__IS_LOGGED_IN__) return; const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked); renderTrainCard(card); updateTrainBadge(); };
+
+/* Neu: Beim Öffnen von "Adaptiv" direkt laden */
+async function ensureTrainCard(){
+  const card = await pickAdaptiveCard(
+    trCategory.value || null,
+    trWeak.checked,
+    trHideLearned.checked
+  );
+  renderTrainCard(card);
+}
+
+/* Neu: Live-Badge oben in der Topbar zu den Train-Filtern */
+function updateTrainBadge(){
+  const badge = document.getElementById('train-badge');
+  if (!window.__IS_LOGGED_IN__){ badge.classList.add('hide'); return; }
+  const catOpt = trCategory.options[trCategory.selectedIndex];
+  const catText = catOpt ? (catOpt.textContent || '').replace(/\s*\(\d+\)\s*$/,'') : 'Alle Kategorien';
+  const parts = [];
+  parts.push(catText || 'Alle Kategorien');
+  if (trWeak.checked) parts.push('Nur Schwächen');
+  if (trHideLearned.checked) parts.push('Gelernt ausblenden');
+  badge.textContent = parts.join(' • ');
+  // Nur sichtbar im Adaptiv-Tab
+  const isTrainActive = document.getElementById('view-train').classList.contains('active');
+  badge.classList.toggle('hide', !isTrainActive);
+}
+
+// Filter-Änderungen -> Badge aktualisieren
+['change','input','click'].forEach(ev=>{
+  trCategory.addEventListener(ev, updateTrainBadge);
+  trWeak.addEventListener(ev, updateTrainBadge);
+  trHideLearned.addEventListener(ev, updateTrainBadge);
+});
 
 /* ====== IHK-Prüfungsmodus ====== */
 const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count'), examMinutes=document.getElementById('exam-minutes');
