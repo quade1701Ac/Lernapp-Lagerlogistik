@@ -156,6 +156,9 @@
     <section id="view-login" class="view active">
       <div class="panel">
         <h3>Anmelden</h3>
+        <div class="muted" style="margin-bottom:8px">
+          Du bist nicht eingeloggt. Bitte melde dich an, um Lernkarten, Training und Prüfungen zu nutzen.
+        </div>
         <div class="row">
           <input id="email" type="email" placeholder="dein.name@example.com"/>
           <input id="password" type="password" placeholder="••••••••"/>
@@ -168,7 +171,7 @@
       </div>
     </section>
 
-    <!-- Lernkarten -->
+    <!-- Lernkarten (klassisch) -->
     <section id="view-flashcards" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -205,7 +208,7 @@
       </div>
     </section>
 
-    <!-- Prüfung -->
+    <!-- Prüfung (IHK 2.0) -->
     <section id="view-exam" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -309,18 +312,35 @@ window.__APP_CONFIG__ = {
   LOGO_URL: "https://ebqfupcivmkbuadbbnwg.supabase.co/storage/v1/object/public/app-assets/logo.png"
 };
 
-/* --- Admin-Definition (mit deiner Mail) --- */
-const ADMIN_EMAILS = ["Mario1986Ac@hotmail.de"];
-const ADMIN_DOMAIN = ""; // z.B. "firma.de" wenn du Domain-basiert erlauben willst
+/* --- Admin-Definition (Whitelist) --- */
+const ADMIN_EMAILS = ["mario1986ac@hotmail.de"]; // lowercase
+const ADMIN_DOMAIN = ""; // leer lassen
+
+/* ====== Rollen-/UI-Flags ====== */
+window.__IS_ADMIN__ = false;
+window.__IS_LOGGED_IN__ = false;
 
 function isAdmin(user){
-  if(!user?.email) return false;
-  if (ADMIN_EMAILS.includes(user.email)) return true;
-  if (ADMIN_DOMAIN && user.email.toLowerCase().endsWith('@'+ADMIN_DOMAIN.toLowerCase())) return true;
+  if(!user) return false;
+  const email = (user.email || "").toLowerCase().trim();
+  const wl = ADMIN_EMAILS.map(e => e.toLowerCase().trim());
+  const domain = (ADMIN_DOMAIN || "").toLowerCase().trim();
+  // Supabase Metadaten berücksichtigen (optional)
+  const app = user.app_metadata || {};
+  const um  = user.user_metadata || {};
+  const rolesStr = (
+    Array.isArray(app.roles) ? app.roles.join(",") :
+    app.roles || app.role || um.roles || um.role || ""
+  ).toString().toLowerCase();
+  const metaFlag = app.is_admin ?? app.admin ?? um.is_admin ?? um.admin;
+
+  if (email && wl.includes(email)) return true;
+  if (email && domain && email.endsWith('@'+domain)) return true;
+  if (rolesStr.includes('admin')) return true;
+  if (metaFlag === true || String(metaFlag).toLowerCase()==='true') return true;
   return false;
 }
 
-/* Sichtbarkeit aller Tabs zentral steuern */
 function setNavVisibility({loggedIn, admin}){
   const ids = {
     login: document.getElementById('tab-login'),
@@ -331,14 +351,13 @@ function setNavVisibility({loggedIn, admin}){
     admin: document.getElementById('tab-admin'),
     settings: document.getElementById('btn-settings')
   };
-  // Erst alles verstecken außer Login
+  // alles verstecken außer Login
   if (ids.flash) ids.flash.classList.add('hide');
   if (ids.train) ids.train.classList.add('hide');
   if (ids.exam) ids.exam.classList.add('hide');
   if (ids.progress) ids.progress.classList.add('hide');
   if (ids.admin) ids.admin.classList.add('hide');
   if (ids.settings) ids.settings.classList.add('hide');
-
   if (loggedIn){
     if (ids.flash) ids.flash.classList.remove('hide');
     if (ids.train) ids.train.classList.remove('hide');
@@ -351,24 +370,25 @@ function setNavVisibility({loggedIn, admin}){
   }
 }
 
-/* Erzwinge, dass Unauth nur Login-View sieht */
 function enforceViewForAuth(){
   const loginView = document.getElementById('view-login');
   const active = document.querySelector('.view.active');
   if (!window.__IS_LOGGED_IN__){
-    // Immer zurück auf Login
     views.forEach(x=>document.getElementById('view-'+x).classList.remove('active'));
     if (loginView) loginView.classList.add('active');
   } else if (!active || active.id==='view-login'){
-    // Standard-Start auf Lernkarten für eingeloggte
     const first = document.getElementById('view-flashcards');
     if (first){ first.classList.add('active'); }
   }
 }
 
-/* Globale Flags */
-window.__IS_ADMIN__ = false;
-window.__IS_LOGGED_IN__ = false;
+function updateRoleFlagsAndUI(user){
+  window.__IS_LOGGED_IN__ = !!user;
+  window.__IS_ADMIN__ = isAdmin(user);
+  setNavVisibility({loggedIn: window.__IS_LOGGED_IN__, admin: window.__IS_ADMIN__});
+  enforceViewForAuth();
+  console.log("[auth] loggedIn:", !!user, "admin:", window.__IS_ADMIN__, "email:", (user?.email||""));
+}
 
 /* Logo */
 function applyBranding(){
@@ -394,6 +414,7 @@ function normalizeBasic(cat){
 function normalizeCategory(cat, { aggressive = true } = {}){
   let s = normalizeBasic(cat);
   if (!aggressive) return s;
+  // Spezielle Heuristik für LL02/1-3
   const m = s.match(/^LL0?2\/([1-3])(?:\s*[-–:]?\s*)?(?:G[üu]ter\s+lagern)?(?:\s*[-–:]?\s*)?(?:Teil\s*(\d))?(?:\s*[-–:]\s*)?(.*)$/i);
   if (m){
     const k = m[1]; const t = m[2] || k; const tail = (m[3]||'').toLowerCase().trim();
@@ -453,41 +474,37 @@ async function initClient(){
   if (!localStorage.getItem(KEY_ANON) && anon) localStorage.setItem(KEY_ANON, anon);
   if (!localStorage.getItem(KEY_LOGO) && logo) localStorage.setItem(KEY_LOGO, logo);
 
-  supa = (url && anon) ? supabase.createClient(url, anon) : null;
+  if(!url || !anon){
+    const i=document.getElementById('login-empty-info');
+    if(i){ i.style.display='block'; i.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.'; }
+    applyBranding();
+    updateRoleFlagsAndUI(null);
+    return;
+  }
+
+  supa = supabase.createClient(url, anon);
   applyBranding();
 
-  // Auth-Status initial laden & reagieren
-  let user = null;
-  if (supa){
-    try { const r = await supa.auth.getUser(); user = r?.data?.user || null; } catch {}
-    supa.auth.onAuthStateChange((_e, session) => {
-      const u = session?.user || null;
-      updateRoleFlagsAndUI(u);
-    });
+  // Auth-Status
+  try {
+    const { data:{ user } = {} } = await supa.auth.getUser();
+    updateRoleFlagsAndUI(user);
+  } catch {
+    updateRoleFlagsAndUI(null);
   }
-  updateRoleFlagsAndUI(user);
+  supa.auth.onAuthStateChange((_e, session) => updateRoleFlagsAndUI(session?.user || null));
 
   renderProgress();
   await refreshAuthUI();
-  if (supa){
-    await refreshSelectors();
-    await refreshTrainSelectors();
-    await refreshExamCategories();
-    await renderAdminList();
-    await showEmptyHints();
-    await fillAdminCatSelect();
+  await refreshSelectors();
+  await refreshTrainSelectors();
+  await refreshExamCategories();
+  await renderAdminList();
+  await showEmptyHints();
+  await fillAdminCatSelect();
 
-    const AUTO_FIX_KNOWN_CATEGORIES = true;
-    if (AUTO_FIX_KNOWN_CATEGORIES) { try { await autoFixKnownCats(); } catch {} }
-  }
-}
-
-/* Flags setzen, Tabs/Views erzwingen */
-function updateRoleFlagsAndUI(user){
-  window.__IS_LOGGED_IN__ = !!user;
-  window.__IS_ADMIN__ = isAdmin(user);
-  setNavVisibility({loggedIn: window.__IS_LOGGED_IN__, admin: window.__IS_ADMIN__});
-  enforceViewForAuth();
+  const AUTO_FIX_KNOWN_CATEGORIES = true;
+  if (AUTO_FIX_KNOWN_CATEGORIES) { try { await autoFixKnownCats(); } catch {} }
 }
 
 /* ====== Auth ====== */
@@ -529,7 +546,7 @@ async function refreshSelectors(){
   fcCategory.innerHTML=cats.map(c=>`<option value="${c.name}" title="${c.name}">${prettyCategory(c.name)} (${c.count})</option>`).join('');
 }
 async function loadFlashcards(){
-  if(!window.__IS_LOGGED_IN__) return; // Safety
+  if(!window.__IS_LOGGED_IN__) return;
   const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
   fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
   let n=0; cards.forEach(card=>{ const wrap=document.createElement('div'); wrap.className='card';
