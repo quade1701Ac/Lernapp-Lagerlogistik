@@ -54,7 +54,7 @@
     }
     #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
 
-    /* Lesbarkeit der Selects */
+    /* Lesbarere Selects */
     select#fc-category, select#train-category, select#exam-categories { min-width: 420px; }
   </style>
 </head>
@@ -226,15 +226,11 @@
           <h4>Duplikate scannen</h4>
           <div class="row">
             <button id="admin-scan-dup" class="btn">Scan starten</button>
+            <button id="admin-fix-dups" class="btn">Duplikate fixen (Auto)</button>
             <span class="muted">Scannt gleiche <b>ID</b> oder sehr ähnliche <b>Fragentexte</b>.</span>
           </div>
           <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
-        </div>
-
-        <div class="card">
-          <h4>Automatische Korrekturen</h4>
-          <div class="row" style="gap:8px">
-            <button id="admin-fix-dups" class="btn">Duplikate fixen (Auto)</button>
+          <div class="row" style="margin-top:10px">
             <button id="admin-migrate-cats" class="btn">Kategorien bereinigen (Auto)</button>
             <span id="admin-fix-state" class="muted"></span>
             <span id="admin-migrate-state" class="muted"></span>
@@ -266,7 +262,7 @@ const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.f
 const KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
 let supa=null;
 
-// ✅ Defaults – überall sofort nutzbar
+// ✅ Defaults fest eingebaut
 window.__APP_CONFIG__ = {
   SUPABASE_URL: "https://ebqfupcivmkbuadbbnwg.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicWZ1cGNpdm1rYnVhZGJibndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MDA5ODIsImV4cCI6MjA3MDQ3Njk4Mn0.P6IiwjFSpqVmObRbvxvY46l6vJlPsxPAc-wbr15Dhl0",
@@ -280,15 +276,16 @@ function applyBranding(){
   if (logo && el){ el.style.background='none'; el.style.backgroundImage=`url(${logo})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.border='1px solid var(--line)'; }
 }
 
-/* Kategorie-Normalizer (robust + LL02-Mapping) */
+/* Kategorie-Normalizer (robust + Spezialregeln LL02) */
 function normalizeCategory(cat) {
   if (!cat) return '';
+
   let s = String(cat)
     .normalize('NFKC')
-    .replace(/[\u200B-\u200D\uFEFF\u2060]/g,'') // Zero‑Width & BOM
+    .replace(/[\u200B-\u200D\uFEFF\u2060]/g,'') // Zero‑Width/BOM
     .replace(/\u00A0/g, ' ');                   // NBSP → Space
 
-  // Spezifische Fixes LL02
+  // Spezifische Korrekturen für LL02
   s = s.replace(/^LL0?2\/1\s*-\s*G[üu]ter\s+lagern\s+Teil\s*1\s*-\s*Grundlagen$/i,
                 'LL02/1 Güter lagern - Teil 1: Grundlagen');
   s = s.replace(/^LL0?2\/2\s*-\s*G[üu]ter\s+lagern\s+Teil\s*2\s*-\s*Lagereinrichtungen$/i,
@@ -296,26 +293,25 @@ function normalizeCategory(cat) {
   s = s.replace(/^LL0?2\/3\s*-\s*G[üu]ter\s+lagern\s+Teil\s*3\s*-\s*(?:Umgang\s+mit\s+)?gefährlichen\s+Stoffen$/i,
                 'LL02/3 Güter lagern - Teil 3: Gefährliche Stoffe');
 
-  // Generisches Muster
+  // Generische Umformung ähnlich strukturierter Bezeichnungen
   s = s.replace(/^(LL\d{2}\/\d)\s*-\s*(G[üu]ter\s+lagern)\s*Teil\s*(\d)\s*-\s*(.+)$/i,
                 '$1 $2 - Teil $3: $4');
 
   return s
-    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Gedankenstrich → '-'
+    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Strich‑Varianten
     .replace(/\s*\/\s*/g, '/')                                // Slash eng
-    .replace(/\s*-\s*/g, ' - ')                               // Spacing '-'
-    .replace(/\s*:\s*/g, ': ')                                // Spacing ':'
-    .replace(/\s+/g, ' ')
+    .replace(/\s*-\s*/g, ' - ')                               // Spaces um '-'
+    .replace(/\s*:\s*/g, ': ')                                // Spaces um ':'
+    .replace(/\s+/g, ' ')                                     // Mehrfach‑Spaces
     .trim();
 }
 
 /* ====== Einstellungen ====== */
-document.getElementById('btn-settings')?.addEventListener('click', ()=>{
-  document.getElementById('settings-modal').classList.add('show');
+document.getElementById('btn-settings').onclick=()=>{document.getElementById('settings-modal').classList.add('show');
   document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||'';
   document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'';
   document.getElementById('cfg-logo').value=localStorage.getItem(KEY_LOGO)||'';
-});
+};
 document.getElementById('cfg-close').onclick=()=>document.getElementById('settings-modal').classList.remove('show');
 document.getElementById('cfg-save').onclick=()=>{localStorage.setItem(KEY_URL, document.getElementById('cfg-url').value.trim());
   localStorage.setItem(KEY_ANON, document.getElementById('cfg-key').value.trim());
@@ -325,26 +321,28 @@ document.getElementById('cfg-save').onclick=()=>{localStorage.setItem(KEY_URL, d
   setTimeout(()=>location.reload(),400);
 };
 
-/* ====== Supabase Init (mit Defaults & URL-Param) ====== */
+/* ====== Supabase Init ====== */
 async function initClient(){
   const params = new URLSearchParams(location.search);
   const cfg = window.__APP_CONFIG__ || {};
 
+  // Reihenfolge: localStorage → Defaults → URL-Parameter
   const url  = localStorage.getItem(KEY_URL)  || cfg.SUPABASE_URL      || params.get('url')  || '';
   const anon = localStorage.getItem(KEY_ANON) || cfg.SUPABASE_ANON_KEY || params.get('key')  || '';
   const logo = localStorage.getItem(KEY_LOGO) || cfg.LOGO_URL          || params.get('logo') || '';
 
+  // Erststart spiegeln
   if (!localStorage.getItem(KEY_URL)  && url)  localStorage.setItem(KEY_URL,  url);
   if (!localStorage.getItem(KEY_ANON) && anon) localStorage.setItem(KEY_ANON, anon);
   if (!localStorage.getItem(KEY_LOGO) && logo) localStorage.setItem(KEY_LOGO, logo);
 
   if(!url || !anon){
     const i=document.getElementById('login-empty-info');
-    i.style.display='block';
-    i.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.';
+    if(i){ i.style.display='block'; i.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.'; }
     applyBranding();
     return;
   }
+
   supa = supabase.createClient(url, anon);
   applyBranding();
   renderProgress();
@@ -363,7 +361,7 @@ btnSignup.onclick=async()=>{const {error}=await supa.auth.signUp({email:email.va
 btnLogin.onclick=async()=>{const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value}); if(error) alert(error.message); await refreshAuthUI();};
 btnLogout.onclick=async()=>{await supa.auth.signOut(); await refreshAuthUI();};
 
-/* ====== Data helpers (mit Normalisierung) ====== */
+/* ====== Data helpers ====== */
 async function fetchQuestions(){
   if(!supa) return [];
   const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
@@ -372,13 +370,13 @@ async function fetchQuestions(){
 }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 async function fetchCategoriesWithCounts(){
-  const all=await fetchQuestions();
-  const map={};
-  for(const q of all) map[q.category]=(map[q.category]||0)+1;
+  const all = await fetchQuestions();
+  const map = {};
+  for (const q of all) map[q.category] = (map[q.category]||0) + 1;
   return Object.entries(map).map(([name,count])=>({name,count})).sort((a,b)=>a.name.localeCompare(b.name,'de'));
 }
 
-/* ====== Lernkarten (klassisch) ====== */
+/* ====== Lernkarten ====== */
 const fcCategory=document.getElementById('fc-category'), fcArea=document.getElementById('fc-area'), fcStats=document.getElementById('fc-stats'), fcEmpty=document.getElementById('fc-empty');
 document.getElementById('fc-load').onclick=loadFlashcards;
 async function refreshSelectors(){ const cats=await fetchCategoriesWithCounts(); fcCategory.innerHTML=cats.map(c=>`<option value="${c.name}">${c.name} (${c.count})</option>`).join(''); }
@@ -655,7 +653,7 @@ document.getElementById('admin-scan-dup').onclick=async()=>{
   }).join('');
 };
 
-/* === NEU: Auto-Fix für Kategorien, die nach Normalisierung gleich sind === */
+/* Auto-Fix: Kategorien zusammenführen, wenn Normalisierung gleich ist */
 document.getElementById('admin-fix-dups').onclick = async () => {
   const state = document.getElementById('admin-fix-state');
   state.textContent = 'Suche Duplikate…';
@@ -673,22 +671,28 @@ document.getElementById('admin-fix-dups').onclick = async () => {
 
   let totalChanged = 0;
   for (const [canon, raws] of dups) {
+    const rawList = [...raws];
+    // häufigste Schreibweise ermitteln
     const counts = {};
     for (const row of data) if (raws.has(row.category)) counts[row.category] = (counts[row.category]||0) + 1;
     const canonicalRaw = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0] || canon;
-    const targets = [...raws].filter(r => r !== canonicalRaw);
+
+    const targets = rawList.filter(r => r !== canonicalRaw);
     if (targets.length) {
       const { error: updErr, count } = await supa
-        .from('questions').update({ category: normalizeCategory(canonicalRaw) })
-        .in('category', targets).select('id', { count: 'exact' });
+        .from('questions')
+        .update({ category: normalizeCategory(canonicalRaw) })
+        .in('category', targets)
+        .select('id', { count: 'exact' });
       if (!updErr) totalChanged += (count||0);
     }
   }
-  state.textContent = `Fertig. Geändert: ${totalChanged}`;
+
+  state.textContent = `Fertig. Geänderte Einträge: ${totalChanged}`;
   await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
 };
 
-/* === NEU: Alle Kategorien nachträglich normalisieren (Migration) === */
+/* Vollmigration: jede Kategorie durch Normalizer jagen */
 document.getElementById('admin-migrate-cats').onclick = async () => {
   const out = document.getElementById('admin-migrate-state');
   out.textContent = 'Bereinige Kategorien…';
@@ -697,11 +701,14 @@ document.getElementById('admin-migrate-cats').onclick = async () => {
     if (error) throw error;
 
     let changed = 0;
-    const batchSize = 500, toUpdate = [];
+    const batchSize = 500;
+    const toUpdate = [];
 
     for (const row of data || []) {
       const canon = normalizeCategory(row.category || '');
-      if (canon && canon !== row.category) toUpdate.push({ id: row.id, category: canon });
+      if (canon && canon !== row.category) {
+        toUpdate.push({ id: row.id, category: canon });
+      }
     }
 
     for (let i = 0; i < toUpdate.length; i += batchSize) {
@@ -739,7 +746,7 @@ document.getElementById('admin-save').onclick=async()=>{
 /* ====== Empty DB Hinweis ====== */
 async function showEmptyHints(){ const all=await fetchQuestions(); const hint=document.getElementById('login-empty-info'); if(!all.length){ hint.style.display='block'; hint.innerHTML='Noch keine Fragen in der Datenbank. Admin → Import nutzen.'; } else hint.style.display='none'; }
 
-/* ====== PDF (ausführlich, mit Logo auf Seite 1) ====== */
+/* ====== PDF (ausführlich, mit Logo) ====== */
 async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
