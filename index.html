@@ -22,84 +22,40 @@
       --danger:#ef4444;
       --success:#34d399;
     }
-
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:system-ui,Segoe UI,Roboto,Arial;
-      background:#0b1020;
-      color:var(--text)
-    }
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b1020;color:var(--text)}
+    .hide{ display:none !important; }
 
     /* Topbar */
     .topbar{
-      position:sticky;top:0;
-      display:flex;justify-content:space-between;align-items:center;
-      padding:12px 16px;
-      border-bottom:1px solid var(--line);
-      background:rgba(10,14,28,.85);
-      backdrop-filter:blur(8px);
-      z-index:5
+      position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;
+      padding:12px 16px;border-bottom:1px solid var(--line);
+      background:rgba(10,14,28,.85);backdrop-filter:blur(8px);z-index:5
     }
     .brand{display:flex;gap:10px;align-items:center}
-    .brand .logo{
-      height:36px;width:36px;border-radius:8px;
-      background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)
-    }
+    .brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
     .nav{display:flex;gap:8px;flex-wrap:wrap}
-    .nav button{
-      background:transparent;color:var(--text);
-      border:1px solid var(--line);
-      padding:6px 10px;border-radius:10px;cursor:pointer
-    }
+    .nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
 
     /* Layout */
     .container{max-width:1000px;margin:0 auto;padding:20px}
     .view{display:none}.view.active{display:block}
-    .panel{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:14px
-    }
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
     .panel:hover{ background:var(--panel-hover); }
     .cards{display:grid;gap:14px}
-    .card{
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:12px;
-      background:rgba(255,255,255,.04)
-    }
+    .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
     /* Inputs */
     input,select,textarea{
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-      border:1px solid var(--line);
-      border-radius:10px;
-      padding:8px 10px;
-      outline:none;
+      background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;outline:none;
     }
-    input:focus,select:focus,textarea:focus{
-      border-color:#3b82f6;
-      box-shadow:0 0 0 3px rgba(59,130,246,.25);
-    }
-
-    /* Buttons */
-    .btn{
-      border-radius:10px;padding:8px 12px;cursor:pointer;
-      border:1px solid var(--line);background:transparent;color:var(--text)
-    }
+    input:focus,select:focus,textarea:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+    .btn{border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--text)}
     .btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
     .btn:disabled{opacity:.6;cursor:not-allowed}
-
-    /* Chips/Options */
     .chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
-    .option{
-      display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px;
-      border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer
-    }
+    .option{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer}
     .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
     .muted{color:var(--muted)}
     .alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
@@ -108,48 +64,32 @@
     .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
     .modal.show{display:flex}
     .modal .backdrop{position:absolute;inset:0;background:#0b1020e6;backdrop-filter:blur(6px)}
-    .modal .box{
-      position:relative;width:min(980px,calc(100% - 32px));max-height:90vh;overflow:auto;
-      background:#0f1427;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.55)
-    }
+    .modal .box{position:relative;width:min(980px,calc(100% - 32px));max-height:90vh;overflow:auto;background:#0f1427;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 22px 70px rgba(0,0,0,.55)}
 
     .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:8px 0 10px}
     .stat{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03)}
     .stat .val{font-size:22px;font-weight:800;margin-top:4px}
 
     /* Sticky-Abgeben-Button */
-    #exam-submit-sticky{
-      position: fixed; right: 20px; bottom: 20px;
-      padding: 12px 18px; border-radius: 12px;
-      border: 1px solid var(--line);
-      background: #2563EB; color: #fff; font-weight: 600;
-      cursor: pointer; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
+    #exam-submit-sticky{position:fixed;right:20px;bottom:20px;padding:12px 18px;border-radius:12px;border:1px solid var(--line);background:#2563EB;color:#fff;font-weight:600;cursor:pointer;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    #exam-submit-sticky[disabled]{opacity:.6;cursor:not-allowed}
 
-    /* --- LESBARKEIT: Dropdowns (auch geöffnete Liste) --- */
-    select, option {
-      background-color: #1e1e1e !important;
-      color: #ffffff !important;
-      border: 1px solid #444;
-      padding: 6px 10px;
-      font-size: 14px;
-      border-radius: 8px;
-    }
-    select:hover, option:hover { background-color: #2a2a2a !important; }
-    select[multiple]{ min-height: 260px; }
-    select[multiple] option:checked { background-color: #2563EB !important; color: #fff !important; }
+    /* Dropdown-Readability */
+    select, option {background-color:#1e1e1e !important;color:#fff !important;border:1px solid #444;padding:6px 10px;font-size:14px;border-radius:8px}
+    select:hover, option:hover { background-color:#2a2a2a !important }
+    select[multiple]{ min-height:260px }
+    select[multiple] option:checked{ background-color:#2563EB !important;color:#fff !important }
     select::-webkit-scrollbar{width:10px}
     select::-webkit-scrollbar-thumb{background:#2a2f45;border-radius:8px}
     select::-webkit-scrollbar-thumb:hover{background:#3a4161}
 
     /* Admin Area polish */
-    #view-admin .panel{ background:var(--panel-strong); }
-    #view-admin h4{ margin:0 0 8px; font-size:16px }
+    #view-admin .panel{ background:var(--panel-strong) }
+    #view-admin h4{ margin:0 0 8px;font-size:16px }
     #view-admin .card{ background:rgba(255,255,255,.03) }
-    #admin-cat-old{ min-width: 420px; }
-    #admin-cat-new{ min-width: 320px; }
-    .admin-section{ margin-bottom:14px; }
+    #admin-cat-old{ min-width:420px }
+    #admin-cat-new{ min-width:320px }
+    .admin-section{ margin-bottom:14px }
   </style>
 </head>
 <body>
@@ -162,13 +102,14 @@
       </div>
     </div>
     <div class="nav">
-      <button data-view="login">Login</button>
-      <button data-view="flashcards">Lernkarten</button>
-      <button data-view="train">Adaptiv</button>
-      <button data-view="exam">Prüfung</button>
-      <button data-view="progress">Fortschritt</button>
-      <button data-view="admin">Admin</button>
-      <button id="btn-settings">Einstellungen</button>
+      <button data-view="login" id="tab-login">Login</button>
+      <button data-view="flashcards" id="tab-flash" class="hide">Lernkarten</button>
+      <button data-view="train" id="tab-train" class="hide">Adaptiv</button>
+      <button data-view="exam" id="tab-exam" class="hide">Prüfung</button>
+      <button data-view="progress" id="tab-progress" class="hide">Fortschritt</button>
+      <!-- Admin/Settings standardmäßig versteckt; JS blendet für Admins ein -->
+      <button data-view="admin" id="tab-admin" class="hide">Admin</button>
+      <button id="btn-settings" class="hide">Einstellungen</button>
     </div>
   </header>
 
@@ -348,7 +289,14 @@ Falsch 2" required></textarea>
 <script>
 /* ====== Utilities / Setup ====== */
 const views=['login','flashcards','train','exam','progress','admin'];
-document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view)));
+document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>{
+  const v=b.dataset.view;
+  // Blocke Navigation, wenn nicht eingeloggt
+  if (!window.__IS_LOGGED_IN__ && v!=='login') return;
+  // Blocke Admin-View, wenn kein Admin
+  if (v==='admin' && !window.__IS_ADMIN__) return;
+  views.forEach(x=>document.getElementById('view-'+x).classList.toggle('active',x===v));
+});
 const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 
 const KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
@@ -361,6 +309,67 @@ window.__APP_CONFIG__ = {
   LOGO_URL: "https://ebqfupcivmkbuadbbnwg.supabase.co/storage/v1/object/public/app-assets/logo.png"
 };
 
+/* --- Admin-Definition (mit deiner Mail) --- */
+const ADMIN_EMAILS = ["Mario1986Ac@hotmail.de"];
+const ADMIN_DOMAIN = ""; // z.B. "firma.de" wenn du Domain-basiert erlauben willst
+
+function isAdmin(user){
+  if(!user?.email) return false;
+  if (ADMIN_EMAILS.includes(user.email)) return true;
+  if (ADMIN_DOMAIN && user.email.toLowerCase().endsWith('@'+ADMIN_DOMAIN.toLowerCase())) return true;
+  return false;
+}
+
+/* Sichtbarkeit aller Tabs zentral steuern */
+function setNavVisibility({loggedIn, admin}){
+  const ids = {
+    login: document.getElementById('tab-login'),
+    flash: document.getElementById('tab-flash'),
+    train: document.getElementById('tab-train'),
+    exam: document.getElementById('tab-exam'),
+    progress: document.getElementById('tab-progress'),
+    admin: document.getElementById('tab-admin'),
+    settings: document.getElementById('btn-settings')
+  };
+  // Erst alles verstecken außer Login
+  if (ids.flash) ids.flash.classList.add('hide');
+  if (ids.train) ids.train.classList.add('hide');
+  if (ids.exam) ids.exam.classList.add('hide');
+  if (ids.progress) ids.progress.classList.add('hide');
+  if (ids.admin) ids.admin.classList.add('hide');
+  if (ids.settings) ids.settings.classList.add('hide');
+
+  if (loggedIn){
+    if (ids.flash) ids.flash.classList.remove('hide');
+    if (ids.train) ids.train.classList.remove('hide');
+    if (ids.exam) ids.exam.classList.remove('hide');
+    if (ids.progress) ids.progress.classList.remove('hide');
+    if (admin){
+      if (ids.admin) ids.admin.classList.remove('hide');
+      if (ids.settings) ids.settings.classList.remove('hide');
+    }
+  }
+}
+
+/* Erzwinge, dass Unauth nur Login-View sieht */
+function enforceViewForAuth(){
+  const loginView = document.getElementById('view-login');
+  const active = document.querySelector('.view.active');
+  if (!window.__IS_LOGGED_IN__){
+    // Immer zurück auf Login
+    views.forEach(x=>document.getElementById('view-'+x).classList.remove('active'));
+    if (loginView) loginView.classList.add('active');
+  } else if (!active || active.id==='view-login'){
+    // Standard-Start auf Lernkarten für eingeloggte
+    const first = document.getElementById('view-flashcards');
+    if (first){ first.classList.add('active'); }
+  }
+}
+
+/* Globale Flags */
+window.__IS_ADMIN__ = false;
+window.__IS_LOGGED_IN__ = false;
+
 /* Logo */
 function applyBranding(){
   const logo = localStorage.getItem(KEY_LOGO);
@@ -368,7 +377,7 @@ function applyBranding(){
   if (logo && el){ el.style.background='none'; el.style.backgroundImage=`url(${logo})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.border='1px solid var(--line)'; }
 }
 
-/* ====== Normalisierung: safe & aggressiv ====== */
+/* ====== Normalisierung & Darstellung ====== */
 function normalizeBasic(cat){
   if (!cat) return '';
   return String(cat)
@@ -382,29 +391,23 @@ function normalizeBasic(cat){
     .replace(/\s+/g,' ')
     .trim();
 }
-// Aggressive Variante mit tolerantem LL02‑Mapping (Default überall, außer Admin‑Rename)
 function normalizeCategory(cat, { aggressive = true } = {}){
   let s = normalizeBasic(cat);
   if (!aggressive) return s;
-
   const m = s.match(/^LL0?2\/([1-3])(?:\s*[-–:]?\s*)?(?:G[üu]ter\s+lagern)?(?:\s*[-–:]?\s*)?(?:Teil\s*(\d))?(?:\s*[-–:]\s*)?(.*)$/i);
   if (m){
-    const teilFromCode = m[1];
-    const teilFromText = m[2] || teilFromCode;
-    const tail = (m[3] || '').toLowerCase().trim();
+    const k = m[1]; const t = m[2] || k; const tail = (m[3]||'').toLowerCase().trim();
     let title = '';
     if (tail.includes('grundlagen')) title='Grundlagen';
     else if (tail.includes('lagereinrichtungen')) title='Lagereinrichtungen';
     else if (tail.includes('gefähr') || tail.includes('gefaehr')) title='Gefährliche Stoffe';
-    else if (teilFromText==='1') title='Grundlagen';
-    else if (teilFromText==='2') title='Lagereinrichtungen';
-    else if (teilFromText==='3') title='Gefährliche Stoffe';
-    s = `LL02/${teilFromCode} Güter lagern - Teil ${teilFromText}: ${title}`;
+    else if (t==='1') title='Grundlagen';
+    else if (t==='2') title='Lagereinrichtungen';
+    else if (t==='3') title='Gefährliche Stoffe';
+    s = `LL02/${k} Güter lagern - Teil ${t}: ${title}`;
   }
   return s;
 }
-
-/* Nur Anzeige hübsch formatieren: "LL02/1 - Güter lagern Teil 1: …" */
 function prettyCategory(name){
   const s = normalizeBasic(name || '');
   const m = s.match(/^LL0?2\/([1-3])\s+G[üu]ter\s+lagern\s*-\s*Teil\s*(\d)\s*:\s*(.+)$/i);
@@ -414,20 +417,18 @@ function prettyCategory(name){
   }
   return s;
 }
-
-/* Sortierung */
 function compareCategoryCode(aName, bName){
   const a = aName.match(/^LL(\d{2})\/(\d)/i);
   const b = bName.match(/^LL(\d{2})\/(\d)/i);
-  if (a && b){
-    if (a[1] !== b[1]) return Number(a[1]) - Number(b[1]);
-    return Number(a[2]) - Number(b[2]);
-  }
-  return aName.localeCompare(bName, 'de');
+  if (a && b){ if (a[1]!==b[1]) return +a[1]-+b[1]; return +a[2]-+b[2]; }
+  return aName.localeCompare(bName,'de');
 }
 
 /* ====== Einstellungen ====== */
-document.getElementById('btn-settings').onclick=()=>{document.getElementById('settings-modal').classList.add('show');
+document.getElementById('btn-settings').onclick=()=>{
+  if(!window.__IS_ADMIN__) return; // Schutz
+  const modal=document.getElementById('settings-modal');
+  modal.classList.add('show');
   document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||'';
   document.getElementById('cfg-key').value=localStorage.getItem(KEY_ANON)||'';
   document.getElementById('cfg-logo').value=localStorage.getItem(KEY_LOGO)||'';
@@ -452,28 +453,41 @@ async function initClient(){
   if (!localStorage.getItem(KEY_ANON) && anon) localStorage.setItem(KEY_ANON, anon);
   if (!localStorage.getItem(KEY_LOGO) && logo) localStorage.setItem(KEY_LOGO, logo);
 
-  if(!url || !anon){
-    const i=document.getElementById('login-empty-info');
-    if(i){ i.style.display='block'; i.textContent='Bitte unter Einstellungen Project URL & Anon Key eintragen.'; }
-    applyBranding();
-    return;
-  }
-
-  supa = supabase.createClient(url, anon);
+  supa = (url && anon) ? supabase.createClient(url, anon) : null;
   applyBranding();
 
-  renderProgress();
-  refreshAuthUI();
-  await refreshSelectors();
-  await refreshTrainSelectors();
-  await refreshExamCategories();
-  await renderAdminList();
-  await showEmptyHints();
-  await fillAdminCatSelect();
+  // Auth-Status initial laden & reagieren
+  let user = null;
+  if (supa){
+    try { const r = await supa.auth.getUser(); user = r?.data?.user || null; } catch {}
+    supa.auth.onAuthStateChange((_e, session) => {
+      const u = session?.user || null;
+      updateRoleFlagsAndUI(u);
+    });
+  }
+  updateRoleFlagsAndUI(user);
 
-  // Auto-Migration (aggressiv normalisieren)
-  const AUTO_FIX_KNOWN_CATEGORIES = true;
-  if (AUTO_FIX_KNOWN_CATEGORIES) { try { await autoFixKnownCats(); } catch {} }
+  renderProgress();
+  await refreshAuthUI();
+  if (supa){
+    await refreshSelectors();
+    await refreshTrainSelectors();
+    await refreshExamCategories();
+    await renderAdminList();
+    await showEmptyHints();
+    await fillAdminCatSelect();
+
+    const AUTO_FIX_KNOWN_CATEGORIES = true;
+    if (AUTO_FIX_KNOWN_CATEGORIES) { try { await autoFixKnownCats(); } catch {} }
+  }
+}
+
+/* Flags setzen, Tabs/Views erzwingen */
+function updateRoleFlagsAndUI(user){
+  window.__IS_LOGGED_IN__ = !!user;
+  window.__IS_ADMIN__ = isAdmin(user);
+  setNavVisibility({loggedIn: window.__IS_LOGGED_IN__, admin: window.__IS_ADMIN__});
+  enforceViewForAuth();
 }
 
 /* ====== Auth ====== */
@@ -481,12 +495,16 @@ const email=document.getElementById('email'), password=document.getElementById('
 const btnSignup=document.getElementById('btn-signup'), btnLogin=document.getElementById('btn-login'), btnLogout=document.getElementById('btn-logout');
 const authState=document.getElementById('auth-state');
 
-async function refreshAuthUI(){ if(!supa) return; const {data:{user}}=await supa.auth.getUser();
-  if(user){btnLogout.disabled=false;btnLogin.disabled=true;btnSignup.disabled=true;authState.textContent=`Eingeloggt: ${user.email}`;} else {
-    btnLogout.disabled=true;btnLogin.disabled=false;btnSignup.disabled=false;authState.textContent='Nicht eingeloggt';} }
-btnSignup.onclick=async()=>{const {error}=await supa.auth.signUp({email:email.value,password:password.value}); if(error) alert(error.message); else alert('Registriert. Prüfe dein Postfach.'); refreshAuthUI();};
-btnLogin.onclick=async()=>{const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value}); if(error) alert(error.message); await refreshAuthUI();};
-btnLogout.onclick=async()=>{await supa.auth.signOut(); await refreshAuthUI();};
+async function refreshAuthUI(){
+  if(!supa){ authState.textContent='Konfiguration fehlt'; updateRoleFlagsAndUI(null); return; }
+  const {data:{user}}=await supa.auth.getUser();
+  if(user){btnLogout.disabled=false;btnLogin.disabled=true;btnSignup.disabled=true;authState.textContent=`Eingeloggt: ${user.email}`;}
+  else {btnLogout.disabled=true;btnLogin.disabled=false;btnSignup.disabled=false;authState.textContent='Nicht eingeloggt';}
+  updateRoleFlagsAndUI(user);
+}
+btnSignup.onclick=async()=>{if(!supa) return; const {error}=await supa.auth.signUp({email:email.value,password:password.value}); if(error) alert(error.message); else alert('Registriert. Prüfe dein Postfach.'); refreshAuthUI();};
+btnLogin.onclick=async()=>{if(!supa) return; const {error}=await supa.auth.signInWithPassword({email:email.value,password:password.value}); if(error) alert(error.message); await refreshAuthUI();};
+btnLogout.onclick=async()=>{if(!supa) return; await supa.auth.signOut(); await refreshAuthUI();};
 
 /* ====== Data helpers ====== */
 async function fetchQuestions(){
@@ -500,9 +518,7 @@ async function fetchCategoriesWithCounts(){
   const all = await fetchQuestions();
   const map = {};
   for (const q of all) map[q.category] = (map[q.category]||0) + 1;
-  return Object.entries(map)
-    .map(([name,count]) => ({ name, count }))
-    .sort((a,b)=> compareCategoryCode(a.name, b.name));
+  return Object.entries(map).map(([name,count])=>({name,count})).sort((a,b)=>compareCategoryCode(a.name,b.name));
 }
 
 /* ====== Lernkarten ====== */
@@ -512,7 +528,9 @@ async function refreshSelectors(){
   const cats=await fetchCategoriesWithCounts();
   fcCategory.innerHTML=cats.map(c=>`<option value="${c.name}" title="${c.name}">${prettyCategory(c.name)} (${c.count})</option>`).join('');
 }
-async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
+async function loadFlashcards(){
+  if(!window.__IS_LOGGED_IN__) return; // Safety
+  const all=await fetchQuestions(); const cat=fcCategory.value; const cards=all.filter(x=>x.category===cat);
   fcArea.innerHTML=''; if(cards.length===0){ fcEmpty.style.display='block'; fcEmpty.textContent='Keine Fragen in dieser Kategorie. Admin → Import nutzen.'; fcStats.textContent='0 Karten'; return;} else fcEmpty.style.display='none';
   let n=0; cards.forEach(card=>{ const wrap=document.createElement('div'); wrap.className='card';
     const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
@@ -523,10 +541,10 @@ async function loadFlashcards(){ const all=await fetchQuestions(); const cat=fcC
     const box=wrap.querySelector('.options');
     opts.forEach((o,i)=>{ const d=document.createElement('div'); d.className='option'; d.innerHTML=`<input type="radio"/><span>${o.text}</span>`;
       d.onclick=async()=>{ [...box.children].forEach(c=>c.classList.remove('selected')); d.classList.add('selected');
-        const solution=opts.find(o=>o.correct)?.text; const reveal=wrap.querySelector('.reveal');
-        reveal.style.display='block'; reveal.textContent = (i===opts.findIndex(z=>z.correct)) ? '✅ Richtig!' : `❌ Falsch. Richtig: ${solution}`;
-        bumpProgress(1, i===opts.findIndex(z=>z.correct)?1:0);
-        const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:i===opts.findIndex(z=>z.correct)});
+        const ok=(i===opts.findIndex(z=>z.correct)); const rev=wrap.querySelector('.reveal'); rev.style.display='block';
+        rev.textContent = ok? '✅ Richtig!' : `❌ Falsch. Richtig: ${opts.find(o=>o.correct)?.text}`;
+        bumpProgress(1, ok?1:0);
+        const {data:{user}}=await supa.auth.getUser(); if(user) await supa.from('reviews').insert({user_id:user.id,question_id:card.id,correct:ok});
       };
       box.appendChild(d);
     });
@@ -609,9 +627,9 @@ function renderTrainCard(card){
   });
   trArea.appendChild(wrap);
 }
-trNext.onclick=async()=>{ const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked); renderTrainCard(card); };
+trNext.onclick=async()=>{ if(!window.__IS_LOGGED_IN__) return; const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked); renderTrainCard(card); };
 
-/* ====== IHK-Prüfungsmodus 2.0 ====== */
+/* ====== IHK-Prüfungsmodus ====== */
 const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count'), examMinutes=document.getElementById('exam-minutes');
 const examStart=document.getElementById('exam-start'), examSubmit=document.getElementById('exam-submit'), examReset=document.getElementById('exam-reset');
 const examArea=document.getElementById('exam-area'), examMeta=document.getElementById('exam-meta');
@@ -628,18 +646,18 @@ async function refreshExamCategories(){
   examCategories.innerHTML=cats.map(c=>`<option value="${c.name}" selected title="${c.name}">${prettyCategory(c.name)} (${c.count})</option>`).join('');
 }
 function pickN(a,n){ const b=shuffle(a); return b.slice(0,Math.max(0,Math.min(n,b.length))); }
-function renderMeta(){ const total=examPool.length; const answered=Object.values(selections).filter(v=>v!=null).length; const mm = String(Math.max(0, Math.floor(timeLeft/60))).padStart(2,'0'); const ss = String(Math.max(0, timeLeft%60)).padStart(2,'0'); examMeta.textContent=`Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`; updateStickySubmitLabel(); }
+function renderMeta(){ const total=examPool.length; const answered=Object.values(selections).filter(v=>v!=null).length; const mm=String(Math.max(0,Math.floor(timeLeft/60))).padStart(2,'0'); const ss=String(Math.max(0,timeLeft%60)).padStart(2,'0'); examMeta.textContent=`Fragen: ${answered}/${total} • Restzeit ${mm}:${ss}`; updateStickySubmitLabel(); }
 
-examStart.onclick=async()=>{ const {data:{user}}=await supa.auth.getUser(); if(!user) return alert('Bitte zuerst einloggen.');
+examStart.onclick=async()=>{ if(!window.__IS_LOGGED_IN__) return alert('Bitte zuerst einloggen.');
   const all=await fetchQuestions(); const chosen=[...examCategories.selectedOptions].map(o=>o.value);
   const pool=all.filter(q=>chosen.includes(q.category)); if(!pool.length) return alert('Keine Fragen in den gewählten Kategorien.');
   const n=Math.max(5,Math.min(Number(examCount.value||40),100));
   examPool = pickN(pool,n); selections={}; examArea.innerHTML=''; ihkRunning=true; examSubmit.disabled=false;
-  timeLeft = (Number(examMinutes.value||60))*60; renderMeta();
+  timeLeft=(Number(examMinutes.value||60))*60; renderMeta();
   if(timerId) clearInterval(timerId);
   timerId=setInterval(()=>{ timeLeft--; renderMeta(); if(timeLeft<=0){ clearInterval(timerId); finishExam(true); } },1000);
   examPool.forEach((q,idx)=>{ const el=document.createElement('div'); el.className='card';
-    const opts = q.options.map((t,i)=>({text:t,correct:i===q.correct_index}));
+    const opts=q.options.map((t,i)=>({text:t,correct:i===q.correct_index}));
     el.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="chip">${prettyCategory(q.category)}</span></div><div class="muted">Frage ${idx+1}/${n}</div></div>
       <div style="margin-top:4px"><b>${q.question}</b></div><div class="options"></div>`;
     const box=el.querySelector('.options');
@@ -657,7 +675,7 @@ examReset.onclick=()=>{ ihkRunning=false; clearInterval(timerId); examArea.inner
 
 async function finishExam(auto=false){
   ihkRunning=false; clearInterval(timerId); examSubmit.disabled=true; removeStickySubmit();
-  session.items = examPool.map(q=>{ const chosenIndex = selections[q.id]; const correctIndex = q.correct_index; const correct = chosenIndex===correctIndex;
+  session.items = examPool.map(q=>{ const chosenIndex=selections[q.id]; const correctIndex=q.correct_index; const correct=chosenIndex===correctIndex;
     return { id:q.id, category:q.category, question:q.question, selectedText:(q.options[chosenIndex]??''), correctText:q.options[correctIndex], explanation:q.explanation||'', correct }; });
   session.correct = session.items.filter(x=>x.correct).length; session.finishedAt=new Date().toISOString();
 
@@ -677,7 +695,7 @@ function showResult(session){
   document.getElementById('res-date').textContent = new Date().toLocaleString();
 
   const byCat={}; session.items.forEach(it=>{ const c=it.category||'–'; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0; });
-  const cats = Object.entries(byCat).map(([c,s])=>{ const pct = s.total? Math.round(100*s.correct/s.total):0;
+  const cats = Object.entries(byCat).map(([c,s])=>{ const pct=s.total? Math.round(100*s.correct/s.total):0;
     return `<div class="row" style="justify-content:space-between;border-bottom:1px dashed var(--line);padding:6px 0"><div>${prettyCategory(c)}</div><div class="muted">${s.correct}/${s.total} (${pct}%)</div></div>`; }).join('');
   document.getElementById('res-cats').innerHTML=cats||'<div class="muted">Keine Daten.</div>';
 
@@ -820,7 +838,7 @@ document.getElementById('admin-fix-dups').onclick = async () => {
     if (targets.length) {
       const { error: updErr, count } = await supa
         .from('questions')
-        .update({ category: normalizeCategory(canonicalRaw) }) // aggressiv
+        .update({ category: normalizeCategory(canonicalRaw) })
         .in('category', targets)
         .select('id', { count: 'exact' });
       if (!updErr) totalChanged += (count||0);
@@ -831,38 +849,31 @@ document.getElementById('admin-fix-dups').onclick = async () => {
   await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
 };
 
-/* Vollmigration: alle Kategorien aggressiv normalisieren */
+/* Vollmigration */
 async function autoFixKnownCats(){
   const { data, error } = await supa.from('questions').select('id, category');
   if (error) return;
-
-  let changed = 0;
-  const batchSize = 500;
-  const toUpdate = [];
-
+  const toUpdate=[];
   for (const row of data || []) {
-    const canon = normalizeCategory(row.category || ''); // aggressiv
-    if (canon && canon !== row.category) {
-      toUpdate.push({ id: row.id, category: canon });
-    }
+    const canon = normalizeCategory(row.category || '');
+    if (canon && canon !== row.category) toUpdate.push({ id: row.id, category: canon });
   }
-
-  for (let i = 0; i < toUpdate.length; i += batchSize) {
-    const chunk = toUpdate.slice(i, i + batchSize);
-    const { error: updErr, count } = await supa.from('questions')
-      .upsert(chunk, { onConflict: 'id' })
-      .select('id', { count: 'exact' });
-    if (!updErr) changed += (count || 0);
+  let changed=0; const batchSize=500;
+  for (let i=0; i<toUpdate.length; i+=batchSize){
+    const chunk=toUpdate.slice(i,i+batchSize);
+    const { error:updErr, count } = await supa.from('questions').upsert(chunk,{onConflict:'id'}).select('id',{count:'exact'});
+    if (!updErr) changed += (count||0);
   }
-  const el = document.getElementById('admin-migrate-state');
-  if (el) el.textContent = `Auto-Fix ausgeführt: ${changed} aktualisiert`;
+  const el=document.getElementById('admin-migrate-state');
+  if (el) el.textContent=`Auto-Fix ausgeführt: ${changed} aktualisiert`;
 }
 document.getElementById('admin-migrate-cats').onclick = autoFixKnownCats;
 
 document.getElementById('admin-save').onclick=async()=>{
+  if(!window.__IS_ADMIN__) return;
   const id='q_'+Math.random().toString(36).slice(2,10);
   const categoryRaw=document.getElementById('ad-category').value.trim();
-  const category=normalizeCategory(categoryRaw); // aggressiv (gewollt)
+  const category=normalizeCategory(categoryRaw);
   const question=document.getElementById('ad-question').value.trim();
   const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
@@ -878,47 +889,32 @@ document.getElementById('admin-save').onclick=async()=>{
 /* ====== Empty DB Hinweis ====== */
 async function showEmptyHints(){ const all=await fetchQuestions(); const hint=document.getElementById('login-empty-info'); if(!all.length){ hint.style.display='block'; hint.innerHTML='Noch keine Fragen in der Datenbank. Admin → Import nutzen.'; } else hint.style.display='none'; }
 
-/* ====== PDF (ausführlich, mit Logo) ====== */
+/* ====== PDF ====== */
 async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const left = 20, right = 190; let y = 20;
-
-  const set = (size=11, bold=false, color=20) => {
-    doc.setFont("helvetica", bold? "bold":"normal");
-    doc.setFontSize(size);
-    doc.setTextColor(color);
-  };
-  const addY = (h) => { y += h; if (y > 280){ doc.addPage(); y = 20; } };
-  const hr = () => { doc.setDrawColor(220); doc.line(left, y, right, y); addY(4); };
-  const wrap = (text) => doc.splitTextToSize(text||"", right-left);
-
-  try {
-    if (logoUrlOrDataUri) {
-      const img = await fetch(logoUrlOrDataUri).then(r=>r.blob()).then(b=>new Promise((res) => {
-        const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b);
-      }));
-      doc.addImage(img, 'PNG', right-20-16, 10, 16, 16);
+  const set=(size=11,bold=false,color=20)=>{doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(size);doc.setTextColor(color)};
+  const addY=h=>{y+=h;if(y>280){doc.addPage();y=20}}
+  const hr=()=>{doc.setDrawColor(220);doc.line(left,y,right,y);addY(4)}
+  const wrap=t=>doc.splitTextToSize(t||"", right-left)
+  try{
+    if (logoUrlOrDataUri){
+      const img=await fetch(logoUrlOrDataUri).then(r=>r.blob()).then(b=>new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b)}));
+      doc.addImage(img,'PNG', right-20-16, 10, 16, 16);
     }
-  } catch(e) {}
-
+  }catch(e){}
   set(18,true); doc.text("Prüfungsergebnis – Lernapp Lagerlogistik", left, y); addY(10);
-
-  const created = new Date().toLocaleString();
+  const created=new Date().toLocaleString();
   set(10,true,120); doc.text("Erstellt:", left, y); set(12,false,20); doc.text(created, left, y+6);
-  set(10,true,120); doc.text("Prüfling:", left+90, y); set(12,false,20); doc.text(`E‑Mail: ${userEmail||"-"}`, left+90, y+6);
-  addY(16);
-
+  set(10,true,120); doc.text("Prüfling:", left+90, y); set(12,false,20); doc.text(`E‑Mail: ${userEmail||"-"}`, left+90, y+6); addY(16);
   hr();
   set(10,true,120); doc.text("Gesamt richtig:", left, y); set(12,false); doc.text(`${session.correct} / ${session.total}`, left, y+6);
-  set(10,true,120); doc.text("Quote:", left+90, y); set(12,false); doc.text(`${session.total?Math.round(100*session.correct/session.total):0}%`, left+90, y+6);
-  addY(16); hr();
-
+  set(10,true,120); doc.text("Quote:", left+90, y); set(12,false); doc.text(`${session.total?Math.round(100*session.correct/session.total):0}%`, left+90, y+6); addY(16); hr();
   set(13,true); doc.text("Nach Kategorie:", left, y); addY(7);
   const byCat={}; (session.items||[]).forEach(it=>{const c=it.category||"–"; byCat[c]=byCat[c]||{total:0,correct:0}; byCat[c].total++; byCat[c].correct+=it.correct?1:0;});
   Object.entries(byCat).forEach(([c,s])=>{ const pct=s.total?Math.round(100*s.correct/s.total):0; set(12,false); doc.text(`• ${prettyCategory(c)}: ${s.correct}/${s.total} (${pct}%)`, left, y); addY(6); });
   addY(4); hr();
-
   set(13,true); doc.text("Einzelaufstellung (Fragen & Antworten)", left, y); addY(8);
   (session.items||[]).forEach((it, idx) => {
     set(12,true); doc.text(`${idx+1}. ${prettyCategory(it.category||'')}`, left, y); addY(6);
@@ -930,8 +926,7 @@ async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
     if (it.explanation){ set(10,true,120); doc.text("Erklärung:", left, y); addY(5); wrap(it.explanation).forEach(row=>{ set(11,false); doc.text(row,left,y); addY(5); }); }
     set(11,true, it.correct?20:180); doc.text(`Bewertung: ${it.correct?'RICHTIG':'FALSCH'}`, left, y); addY(7); hr();
   });
-
-  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   doc.save(`pruefungsbericht_${stamp}.pdf`);
 }
 
