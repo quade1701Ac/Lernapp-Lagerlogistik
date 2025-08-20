@@ -84,6 +84,21 @@
     #calc-answer.invalid{ outline:2px solid #ef4444; }
     .notes-box{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:start}
     .notes-area{min-height:100px}
+
+    /* === Simulationen (UI) === */
+    .sim-wrap{display:grid;gap:12px}
+    .sim-header{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
+    .sim-area{display:grid;grid-template-columns:1fr;gap:12px}
+    .sim-pool,.sim-queue{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:10px}
+    .sim-title{font-weight:700;margin-bottom:6px}
+    .step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.03);cursor:pointer}
+    .step[disabled]{opacity:.55;cursor:not-allowed}
+    .step.correct{outline:2px solid var(--ok);background:rgba(34,197,94,.12)}
+    .step.wrong{outline:2px solid var(--low);background:rgba(239,68,68,.12)}
+    .queue-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;margin:4px;background:rgba(255,255,255,.05)}
+    .badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.04)}
+    .score{font-weight:800}
+    .hint{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -102,6 +117,7 @@
       <button data-view="exam" id="nav-exam" hidden>Prüfung</button>
       <button data-view="progress" id="nav-progress" hidden>Fortschritt</button>
       <button data-view="calc" id="nav-calc" hidden>Fachrechnen</button>
+      <button data-view="sim" id="nav-sim" hidden>Simulationen</button>
       <button data-view="admin" id="nav-admin" hidden>Admin</button>
       <button id="btn-settings" hidden>Einstellungen</button>
     </div>
@@ -297,6 +313,42 @@
       </div>
     </section>
 
+    <!-- Simulationen -->
+    <section id="view-sim" class="view">
+      <div class="panel sim-wrap">
+        <div class="sim-header">
+          <div>
+            <h3>Simulationen</h3>
+            <div class="hint">Wähle die <b>richtige Reihenfolge</b> der Arbeitsschritte. Falsche Klicks kosten Leben.</div>
+          </div>
+          <div class="row">
+            <select id="sim-sel"></select>
+            <button id="sim-start" class="btn primary">Start</button>
+            <span class="badge">💙 <span id="sim-lives">3</span> Leben</span>
+            <span class="badge">🏁 <span id="sim-progress">0/0</span></span>
+            <span class="badge">⭐ <span id="sim-score">0</span> Punkte</span>
+          </div>
+        </div>
+
+        <div class="sim-area">
+          <div class="sim-pool">
+            <div class="sim-title">Verfügbare Schritte (gemischt)</div>
+            <div id="sim-steps" class="cards"></div>
+          </div>
+          <div class="sim-queue">
+            <div class="sim-title">Deine Reihenfolge</div>
+            <div id="sim-picked"></div>
+            <div class="row" style="margin-top:8px;justify-content:flex-end">
+              <button id="sim-undo" class="btn">Letzten Schritt zurück</button>
+              <button id="sim-reset" class="btn">Zurücksetzen</button>
+              <button id="sim-check" class="btn primary">Prüfen & Abschließen</button>
+            </div>
+          </div>
+          <div id="sim-result" class="alert" style="display:none"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- Admin -->
     <section id="view-admin" class="view">
       <div class="panel">
@@ -351,7 +403,7 @@ const DEFAULT_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const DEFAULT_LOGO = 'https://ebqfupcivmkbuadbbnwg.supabase.co/storage/v1/object/public/app-assets/logo.png';
 
 /* ====== Utilities / Setup ====== */
-const views=['login','flashcards','train','exam','progress','calc','admin'];
+const views=['login','flashcards','train','exam','progress','calc','sim','admin'];
 document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>{
   if (b.hasAttribute('hidden')) return; // nicht anklickbar wenn versteckt
   views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view));
@@ -414,6 +466,7 @@ function gateNavFor(user){
   document.getElementById('nav-exam').hidden  = !logged;
   document.getElementById('nav-progress').hidden = !logged;
   document.getElementById('nav-calc').hidden = !logged;
+  document.getElementById('nav-sim').hidden = !logged;
 
   const isAdmin = logged && isAdminEmail(user.email);
   document.getElementById('nav-admin').hidden = !isAdmin;
@@ -443,6 +496,9 @@ async function initClient(){
   renderProgress();
   await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await renderAdminList(); await showEmptyHints(); await fillAdminCatSelect(); await fillResetCatSelect();
   await refreshAuthUI();
+
+  // Simulationen initialisieren
+  initSimModule();
 }
 
 /* ====== Auth ====== */
@@ -1219,6 +1275,201 @@ notesClear.onclick = ()=>{
   notesArea.value='';
   notesState.textContent = 'Notizen gelöscht.';
 };
+
+/* ====== Simulationen (Szenario: Warenannahme) ====== */
+const SIM_LS_KEY = 'sim_progress';
+const simSel = document.getElementById('sim-sel');
+const simStepsEl = document.getElementById('sim-steps');
+const simPickedEl = document.getElementById('sim-picked');
+const simLivesEl = document.getElementById('sim-lives');
+const simProgEl  = document.getElementById('sim-progress');
+const simScoreEl = document.getElementById('sim-score');
+const simResult  = document.getElementById('sim-result');
+const btnSimStart= document.getElementById('sim-start');
+const btnSimUndo = document.getElementById('sim-undo');
+const btnSimReset= document.getElementById('sim-reset');
+const btnSimCheck= document.getElementById('sim-check');
+
+const SCENARIOS = [
+  {
+    id: 'warenannahme_std',
+    title: 'Warenannahme – Standardprozess',
+    steps: [
+      'Fracht- / Begleitpapiere annehmen und prüfen',
+      'Äußere Ladungssicherung und Unversehrtheit prüfen',
+      'Entladen freigeben / Rampe zuweisen',
+      'Ware sachgerecht entladen',
+      'Stichproben / Menge / Identität prüfen',
+      'Schäden dokumentieren & Abweichungen vermerken',
+      'Ergebnisse im System buchen',
+      'Einlagerung freigeben / Weiterleiten'
+    ],
+    tips: [
+      'Ohne Papiere keine Freigabe.',
+      'Erst Sicht‑ und Sicherungsprüfung, dann Entladen.',
+      'Dokumentation vor dem Buchen spart Ärger.'
+    ],
+    lives: 3,
+    perCorrect: 10,
+    perWrong: -5
+  }
+  // Weitere Szenarien einfach hier ergänzen …
+];
+
+let simState = {
+  idx: 0,
+  pool: [],
+  target: [],
+  picked: [],
+  lives: 3,
+  score: 0,
+  locked: false
+};
+
+function loadSimProgress(){
+  try{ return JSON.parse(localStorage.getItem(SIM_LS_KEY) || '{"runs":0,"wins":0,"best":0}'); }catch{ return {runs:0,wins:0,best:0}; }
+}
+function saveSimProgress(obj){ localStorage.setItem(SIM_LS_KEY, JSON.stringify(obj)); }
+
+function refreshSimSelectors(){
+  simSel.innerHTML = SCENARIOS.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+}
+
+function simUpdateHUD(){
+  simLivesEl.textContent = simState.lives;
+  simProgEl.textContent  = `${simState.picked.length}/${simState.target.length}`;
+  simScoreEl.textContent = simState.score;
+}
+
+function simRenderPool(){
+  simStepsEl.innerHTML = '';
+  simState.pool.forEach((txt, i) => {
+    const b = document.createElement('button');
+    b.className = 'step';
+    b.innerHTML = `<span class="badge">#${i+1}</span> <span>${txt}</span>`;
+    b.onclick = () => simPick(txt, b);
+    simStepsEl.appendChild(b);
+  });
+}
+
+function simRenderPicked(){
+  simPickedEl.innerHTML = simState.picked
+    .map((t,i)=>`<span class="queue-chip"><b>${i+1}.</b> ${t}</span>`)
+    .join('');
+}
+
+function simInitScenario(id){
+  const sc = SCENARIOS.find(s=>s.id===id) || SCENARIOS[0];
+  simState = {
+    idx: 0,
+    pool: shuffle(sc.steps),
+    target: sc.steps.slice(), // richtige Reihenfolge
+    picked: [],
+    lives: sc.lives,
+    score: 0,
+    locked: false,
+    cfg: sc
+  };
+  simResult.style.display='none';
+  simResult.textContent='';
+  simRenderPool();
+  simRenderPicked();
+  simUpdateHUD();
+}
+
+async function simLogRunToSupabase({scenarioId, score, steps, wrongClicks, success}){
+  if(!supa) return;
+  try{
+    const { data:{user} } = await supa.auth.getUser();
+    if(!user) return;
+    // Tabelle optional: sim_runs (user_id text, scenario_id text, score int4, steps int4, wrong int4, success bool, ts timestamptz default now())
+    await supa.from('sim_runs').insert({
+      user_id: user.id,
+      scenario_id: scenarioId,
+      score,
+      steps,
+      wrong: wrongClicks,
+      success
+    });
+  }catch(e){ /* ignore if table not present */ }
+}
+
+let wrongClicksSession = 0;
+
+function simPick(txt, btn){
+  if(simState.locked || simState.lives<=0) return;
+  const expect = simState.target[simState.picked.length]; // nächster korrekter Schritt
+  if(txt === expect){
+    // korrekt
+    simState.picked.push(txt);
+    btn.classList.add('correct');
+    btn.setAttribute('disabled','true');
+    simState.score += simState.cfg.perCorrect;
+    simRenderPicked();
+    simUpdateHUD();
+
+    if(simState.picked.length === simState.target.length){
+      // Erfolg
+      const stats = loadSimProgress();
+      stats.runs += 1; stats.wins += 1; stats.best = Math.max(stats.best, simState.score);
+      saveSimProgress(stats);
+
+      simResult.style.display='block';
+      simResult.innerHTML = `✅ <b>Erfolgreich abgeschlossen!</b><br/>Punkte: <b>${simState.score}</b> • Versuche: <b>${stats.runs}</b> • Bestleistung: <b>${stats.best}</b>`;
+      simState.locked = true;
+      simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: true});
+    }
+  } else {
+    // falsch
+    wrongClicksSession += 1;
+    simState.lives -= 1;
+    simState.score = Math.max(0, simState.score + simState.cfg.perWrong);
+    btn.classList.add('wrong');
+    setTimeout(()=>btn.classList.remove('wrong'), 450);
+    simUpdateHUD();
+    if(simState.lives<=0){
+      const stats = loadSimProgress(); stats.runs += 1; saveSimProgress(stats);
+      simResult.style.display='block';
+      simResult.innerHTML = `❌ <b>Abgebrochen</b> – keine Leben mehr.<br/>Richtige Reihenfolge wäre:<br/>• ${simState.target.join('<br/>• ')}`;
+      simState.locked = true;
+      simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: false});
+    }
+  }
+}
+
+btnSimStart.onclick = () => { wrongClicksSession = 0; simInitScenario(simSel.value); };
+btnSimReset.onclick = () => { wrongClicksSession = 0; simInitScenario(simSel.value); };
+btnSimUndo.onclick = () => {
+  if(simState.locked || simState.picked.length===0) return;
+  const last = simState.picked.pop();
+  // enable entsprechender Button
+  [...simStepsEl.querySelectorAll('.step')].forEach(b=>{
+    if(b.textContent.includes(last)){ b.classList.remove('correct'); b.removeAttribute('disabled'); }
+  });
+  simRenderPicked(); simUpdateHUD();
+};
+btnSimCheck.onclick = () => {
+  if(simState.locked) return;
+  const ok = simState.picked.length === simState.target.length &&
+             simState.picked.every((t,i)=>t===simState.target[i]);
+  const stats = loadSimProgress(); stats.runs += 1; if(ok){ stats.wins += 1; stats.best = Math.max(stats.best, simState.score); }
+  saveSimProgress(stats);
+  simResult.style.display='block';
+  if(ok){
+    simResult.innerHTML = `✅ <b>Richtig!</b> Punkte: <b>${simState.score}</b> • Best: <b>${stats.best}</b>`;
+    simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: true});
+  }else{
+    simResult.innerHTML = `❌ <b>Nicht ganz.</b><br/>Richtig wäre:<br/>• ${simState.target.join('<br/>• ')}`;
+    simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: false});
+  }
+  simState.locked = true;
+};
+
+function initSimModule(){
+  refreshSimSelectors();
+  // Vorbelegen:
+  simInitScenario(SCENARIOS[0].id);
+}
 
 /* ====== Boot ====== */
 window.addEventListener('DOMContentLoaded', initClient);
