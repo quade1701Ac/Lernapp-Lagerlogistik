@@ -23,7 +23,6 @@
     .brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
     .nav{display:flex;gap:8px;flex-wrap:wrap}
     .nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
-    .nav button.active{outline:2px solid var(--primary)}
     .nav button[hidden]{display:none !important}
     .container{max-width:1000px;margin:0 auto;padding:20px}
     .view{display:none}.view.active{display:block}
@@ -39,10 +38,6 @@
     .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
     .muted{color:var(--muted)}
     .alert{border:1px dashed var(--line);background:rgba(255,255,255,.03);padding:10px;border-radius:10px}
-
-    /* Besser lesbare Selects */
-    select{appearance:auto;background:#111827;color:#F9FAFB;border-color:#4B5563}
-    select option{background:#0B1020;color:#E5E7EB}
 
     /* Modal */
     .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
@@ -65,9 +60,9 @@
     #exam-submit-sticky[disabled]{ opacity:.6; cursor:not-allowed; }
 
     /* Fortschritt-Balken */
-    .progress-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
-    .progress-meta{min-width:200px}
-    .progress-bar{flex:1;height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid var(--line)}
+    .progress-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+    .progress-meta{min-width:170px}
+    .progress-bar{flex:1;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid var(--line)}
     .progress-fill{height:100%;width:0%}
     .progress-fill.ok{background:var(--ok)}
     .progress-fill.mid{background:var(--mid)}
@@ -85,9 +80,13 @@
       </div>
     </div>
     <div class="nav">
-      <button data-view="login" id="nav-login" class="active">Login</button>
+      <button data-view="login" id="nav-login">Login</button>
       <button data-view="flashcards" id="nav-flash" hidden>Lernkarten</button>
       <button data-view="train" id="nav-train" hidden>Adaptiv</button>
+
+      <!-- NEU: Fachrechnen -->
+      <button data-view="math" id="nav-math" hidden>Fachrechnen</button>
+
       <button data-view="exam" id="nav-exam" hidden>Prüfung</button>
       <button data-view="progress" id="nav-progress" hidden>Fortschritt</button>
       <button data-view="admin" id="nav-admin" hidden>Admin</button>
@@ -150,7 +149,7 @@
       </div>
     </section>
 
-    <!-- Lernkarten -->
+    <!-- Lernkarten (klassisch) -->
     <section id="view-flashcards" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -185,6 +184,76 @@
         </div>
         <div id="train-area" class="cards" style="margin-top:10px"></div>
         <div id="train-empty" class="alert" style="display:none;margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- NEU: Fachrechnen -->
+    <section id="view-math" class="view">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;align-items:flex-end">
+          <div>
+            <h3>Fachrechnen</h3>
+            <div class="muted" style="max-width:720px">
+              Übe typische Rechenaufgaben der Lagerlogistik. Mit Lösungsschritten & lokalem Fortschritt.
+            </div>
+          </div>
+          <div class="row">
+            <select id="math-type" style="min-width:320px">
+              <!-- Prozent / Bruch / Dreisatz -->
+              <option value="prozent">Prozent: Rabatt/Aufschlag</option>
+              <option value="prozent_skonto">Prozent: Skonto/Ziel-/Bareinkaufspreis</option>
+              <option value="prozent_bestand">Prozent: Bestandsabweichung/Verlustquote</option>
+              <option value="dreisatz">Dreisatz: proportional</option>
+              <option value="dreisatz_anti">Dreisatz: antiproportional (Mannstunden)</option>
+              <option value="bruch_teilmenge">Bruchrechnen/Umrechnen: Teilmengen/Packgrößen</option>
+              <!-- Kosten -->
+              <option value="kosten_bezugspreis">Kosten: Bezugspreis (Rabatt, Skonto, Bezugskosten)</option>
+              <option value="kosten_lager">Kosten: Lagerkosten (Ø‑Bestand × Satz)</option>
+              <option value="kosten_transport">Kosten: Transport (€/t·km)</option>
+              <!-- Kennzahlen -->
+              <option value="andler">Bestellmenge: Andler‑Formel (EOQ)</option>
+              <option value="meldebestand">Meldebestand (inkl. Sicherheitsbestand)</option>
+              <option value="sicherheitsbestand">Sicherheitsbestand (vereinfachte Formel)</option>
+              <option value="reichweite">Lagerreichweite (Tage)</option>
+              <option value="umschlag">Umschlagshäufigkeit</option>
+              <!-- Kapazität -->
+              <option value="kapaz_regal">Kapazität: Palettenplätze im Regal</option>
+              <option value="palette">Kapazität: Palettenbelegung (Karton/Lage)</option>
+            </select>
+            <button id="math-new" class="btn primary">Neue Aufgabe</button>
+          </div>
+        </div>
+
+        <div id="math-card" class="card" style="display:none">
+          <div class="row" style="justify-content:space-between">
+            <span class="chip" id="math-type-chip">Fachrechnen</span>
+            <span class="muted" id="math-id"></span>
+          </div>
+          <div id="math-question" style="margin-top:6px;font-weight:700"></div>
+
+          <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+            <input id="math-answer" placeholder="Deine Antwort (Komma/.)" style="min-width:220px"/>
+            <span id="math-unit" class="chip"></span>
+            <button id="math-check" class="btn">Prüfen</button>
+            <button id="math-step" class="btn">Lösungsschritte</button>
+            <button id="math-next" class="btn">Nächste</button>
+          </div>
+
+          <div id="math-feedback" class="alert" style="display:none;margin-top:10px"></div>
+          <div id="math-steps" class="card" style="display:none;margin-top:10px"></div>
+        </div>
+
+        <div class="card" style="margin-top:10px">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <b>Fortschritt (nur Fachrechnen, lokal)</b>
+            <button id="math-reset" class="btn">Zurücksetzen</button>
+          </div>
+          <div class="row" style="gap:14px;margin-top:8px;flex-wrap:wrap">
+            <div class="stat"><div>Aufgaben gelöst</div><div class="val" id="math-solved">0</div></div>
+            <div class="stat"><div>Davon richtig</div><div class="val" id="math-correct">0</div></div>
+            <div class="stat"><div>Quote</div><div class="val" id="math-acc">0%</div></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -247,17 +316,13 @@
             <button id="admin-cat-apply" class="btn primary">Anwenden</button>
             <span id="admin-cat-state" class="muted"></span>
           </div>
-          <div class="row" style="margin-top:8px">
-            <button id="admin-canon-all" class="btn">Alle Kategorien automatisch kanonisieren</button>
-            <span class="muted">Versucht, alle Varianten (–, —, :, Leerzeichen) auf die Canon-Bezeichnungen zu setzen.</span>
-          </div>
         </div>
 
         <div class="card">
           <h4>Duplikate scannen</h4>
           <div class="row">
             <button id="admin-scan-dup" class="btn">Scan starten</button>
-            <span class="muted">Scannt gleiche <b>ID</b> oder sehr ähnliche <b>Fragentexte</b>. Direkt-Löschen möglich.</span>
+            <span class="muted">Scannt gleiche <b>ID</b> oder sehr ähnliche <b>Fragentexte</b>.</span>
           </div>
           <div id="admin-dup-list" class="cards" style="margin-top:10px"></div>
         </div>
@@ -286,7 +351,7 @@ const DEFAULT_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const DEFAULT_LOGO = 'https://ebqfupcivmkbuadbbnwg.supabase.co/storage/v1/object/public/app-assets/logo.png';
 
 /* ====== Utilities / Setup ====== */
-const views=['login','flashcards','train','exam','progress','admin'];
+const views=['login','flashcards','train','math','exam','progress','admin'];
 document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>{
   if (b.hasAttribute('hidden')) return; // nicht anklickbar wenn versteckt
   views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view));
@@ -311,32 +376,13 @@ function applyBranding(){
   }
 }
 
-/* ====== Kategorie-Normalizer & Kanonisierung ====== */
+/* Kategorie-Normalizer (defensiv) */
 function normalizeCategory(cat) {
   if (!cat) return '';
   return String(cat)
-    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // exotische Striche -> '-'
-    .replace(/[–—]/g, '-')                                    // Gedankenstriche -> '-'
-    .replace(/\s*-\s*/g, ' - ')                               // Bindestriche spacing
-    .replace(/\s*:\s*/g, ': ')                                // Doppelpunkte spacing
-    .replace(/\s+/g, ' ')
+    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Unicode Striche → '-'
+    .replace(/\s+/g, ' ') // Mehrfach-Spaces
     .trim();
-}
-
-const CATEGORY_CANON = {
-  'LL01/1': 'LL01/1 – Güter annehmen',
-  'LL01/2': 'LL01/2 – Güter kontrollieren',
-  'LL01/3': 'LL01/3 – Sicherheit im Lager',
-  'LL02/1': 'LL02/1 – Güter lagern Teil 1 – Grundlagen',
-  'LL02/2': 'LL02/2 – Lagereinrichtungen',
-  'LL02/3': 'LL02/3 – Umgang mit gefährlichen Stoffen',
-};
-
-function canonicalizeCategory(catRaw) {
-  const cat = normalizeCategory(catRaw);
-  const m = cat.match(/^(LL\d{2}\/\d)/i);
-  if (m && CATEGORY_CANON[m[1].toUpperCase()]) return CATEGORY_CANON[m[1].toUpperCase()];
-  return cat;
 }
 
 /* ====== Einstellungen (nur Admin) ====== */
@@ -362,8 +408,13 @@ function isAdminEmail(email){ return !!email && ADMINS.includes(String(email).to
 
 function gateNavFor(user){
   const logged = !!user;
+  // Sichtbarkeit
   document.getElementById('nav-flash').hidden = !logged;
   document.getElementById('nav-train').hidden = !logged;
+
+  // NEU: Fachrechnen-Tab steuern
+  document.getElementById('nav-math').hidden = !logged;
+
   document.getElementById('nav-exam').hidden  = !logged;
   document.getElementById('nav-progress').hidden = !logged;
 
@@ -371,17 +422,16 @@ function gateNavFor(user){
   document.getElementById('nav-admin').hidden = !isAdmin;
   document.getElementById('btn-settings').hidden = !isAdmin;
 
+  // View setzen
   const current = document.querySelector('.view.active');
   if(!logged){
     views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v==='login'));
-    document.getElementById('nav-login').classList.add('active');
-    document.getElementById('login-empty-info').style.display='block';
-    document.getElementById('login-empty-info').textContent='Bitte zuerst einloggen.';
+    const inf=document.getElementById('login-empty-info');
+    if(inf){ inf.style.display='block'; inf.textContent='Bitte zuerst einloggen.'; }
   }else{
     if(current && current.id==='view-login'){
       views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v==='flashcards'));
       document.getElementById('nav-flash').classList.add('active');
-      document.getElementById('nav-login').classList.remove('active');
     }
   }
 }
@@ -427,12 +477,12 @@ btnLogin.onclick=async()=>{
 };
 btnLogout.onclick=async()=>{ await supa.auth.signOut(); await refreshAuthUI(); };
 
-/* ====== Data helpers (mit Kanonisierung) ====== */
+/* ====== Data helpers ====== */
 async function fetchQuestions(){
   if(!supa) return [];
-  const {data,error}=await supa.from('questions').select('*');
+  const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
   if(error){console.warn(error); return [];}
-  return (data||[]).map(q => ({ ...q, category: canonicalizeCategory(q.category) }));
+  return (data||[]).map(q => ({ ...q, category: normalizeCategory(q.category) }));
 }
 async function fetchCategories(){ const q=await fetchQuestions(); return [...new Set(q.map(x=>x.category))].sort(); }
 
@@ -548,6 +598,365 @@ function renderTrainCard(card){
 }
 trNext.onclick=async()=>{ const card = await pickAdaptiveCard(trCategory.value||null, trWeak.checked, trHideLearned.checked); renderTrainCard(card); };
 
+/* ====== NEU: Fachrechnen ====== */
+const MATH_KEY = 'math_progress_v1';
+function loadMathProg(){ try{return JSON.parse(localStorage.getItem(MATH_KEY)||'{"seen":0,"ok":0}');}catch{return {seen:0,ok:0};} }
+function saveMathProg(p){ localStorage.setItem(MATH_KEY, JSON.stringify(p)); renderMathProg(); }
+function renderMathProg(){ const p=loadMathProg(); const acc=p.seen?Math.round(100*p.ok/p.seen):0;
+  const s=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+  s('math-solved', p.seen); s('math-correct', p.ok); s('math-acc', acc+'%');
+}
+const mathEls = {
+  type: document.getElementById('math-type'),
+  btnNew: document.getElementById('math-new'),
+  card: document.getElementById('math-card'),
+  typeChip: document.getElementById('math-type-chip'),
+  q: document.getElementById('math-question'),
+  id: document.getElementById('math-id'),
+  unit: document.getElementById('math-unit'),
+  ans: document.getElementById('math-answer'),
+  check: document.getElementById('math-check'),
+  step: document.getElementById('math-step'),
+  next: document.getElementById('math-next'),
+  fb: document.getElementById('math-feedback'),
+  steps: document.getElementById('math-steps'),
+  reset: document.getElementById('math-reset'),
+};
+let currentTask=null;
+
+/* Hilfen */
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const round=(v,dec=2)=>Number(Math.round((v + Number.EPSILON) * (10**dec)) / (10**dec));
+
+/* Aufgaben-Generatoren */
+const MATH_TASKS = {
+  // Basis
+  dreisatz(){
+    const a = rnd(4,30), b = rnd(20,300), a2 = rnd(5,40);
+    const res = b/a*a2;
+    return {
+      id:`DR-${a}-${b}-${a2}`,
+      unit:'',
+      q:`Wenn ${a} Einheiten ${b} kosten, was kosten ${a2} Einheiten (direkt proportional)?`,
+      result: res, tol: 0.01,
+      steps: [
+        `Direkte Proportionalität: b/a = x/a₂`,
+        `x = (b / a) × a₂`,
+        `x = (${b} / ${a}) × ${a2} = ${round(res,2)}`
+      ]
+    };
+  },
+  prozent(){
+    const basis = rnd(80,500);
+    const pct = [5,8,10,12,15,19].sort(()=>Math.random()-0.5)[0];
+    const mode = Math.random()<0.5 ? 'rabatt' : 'aufschlag';
+    const res = mode==='rabatt' ? basis*(1-pct/100) : basis*(1+pct/100);
+    return {
+      id:`PR-${basis}-${pct}-${mode}`,
+      unit:'€',
+      q:`${mode==='rabatt'?'Rabatt':'Aufschlag'}: ${pct}% auf ${basis} €. Endpreis?`,
+      result: res, tol: 0.01,
+      steps: [
+        `${mode==='rabatt'?'Endpreis = Basis × (1 - p/100)':'Endpreis = Basis × (1 + p/100)'}`,
+        `= ${basis} × (1 ${mode==='rabatt'?'-':'+'} ${pct}/100)`,
+        `= ${round(res,2)} €`
+      ]
+    };
+  },
+  palette(){
+    const palL=120, palB=80; // cm
+    const boxL = [20,24,30,40][rnd(0,3)];
+    const boxB = [10,12,15,20,24][rnd(0,4)];
+    const lagen = rnd(2,7);
+    const proLage = Math.floor(palL/boxL) * Math.floor(palB/boxB);
+    const res = proLage * lagen;
+    return {
+      id:`PA-${boxL}-${boxB}-${lagen}`,
+      unit:'Stk',
+      q:`Palettenbelegung: Palette ${palL}×${palB} cm, Karton ${boxL}×${boxB} cm, ${lagen} Lagen. Stück pro Palette (ohne Überstand)?`,
+      result: res, tol: 0,
+      steps:[
+        `Karton/Lage = floor(${palL}/${boxL}) × floor(${palB}/${boxB}) = ${Math.floor(palL/boxL)} × ${Math.floor(palB/boxB)} = ${proLage}`,
+        `Gesamt = ${proLage} × ${lagen} = ${res} Stk`
+      ]
+    };
+  },
+
+  /* ===== Neue Generatoren ===== */
+
+  // Prozent: Skonto/Ziel-/Bareinkaufspreis
+  prozent_skonto(){
+    const L = rnd(400, 1800);
+    const r = [5,10,12,15,20][rnd(0,4)];
+    const s = [2,3][rnd(0,1)];
+    const BZ = rnd(10,120);
+    const rab = L * r/100;
+    const ziel = L - rab;
+    const sk = ziel * s/100;
+    const bar = ziel - sk;
+    const bezugspreis = bar + BZ;
+    return {
+      id:`SK-${L}-${r}-${s}-${BZ}`,
+      unit:'€',
+      q:`Listenpreis ${L} €, Rabatt ${r}% , Skonto ${s}% (auf Zieleinkaufspreis), Bezugskosten ${BZ} €. 
+Bezugspreis (netto) in €?`,
+      result: bezugspreis, tol: 0.01,
+      steps:[
+        `Rabatt: ${L} × ${r}% = ${rab.toFixed(2)} → Zieleinkaufspreis: ${L} − ${rab.toFixed(2)} = ${ziel.toFixed(2)} €`,
+        `Skonto: ${ziel.toFixed(2)} × ${s}% = ${sk.toFixed(2)} → Bareinkaufspreis: ${ziel.toFixed(2)} − ${sk.toFixed(2)} = ${bar.toFixed(2)} €`,
+        `Bezugspreis: Bareinkaufspreis + Bezugskosten = ${bar.toFixed(2)} + ${BZ.toFixed(2)} = ${bezugspreis.toFixed(2)} €`
+      ]
+    };
+  },
+
+  // Prozent: Bestandsabweichung / Verlustquote
+  prozent_bestand(){
+    const soll = rnd(200, 2000);
+    const ist = Math.max(0, soll + rnd(-150, 150));
+    const diff = ist - soll;
+    const quote = soll ? Math.abs(diff)/soll*100 : 0;
+    return {
+      id:`BA-${soll}-${ist}`,
+      unit:'%',
+      q:`Sollbestand: ${soll} Stk, Istbestand: ${ist} Stk. 
+Prozentuale Abweichung (Verlust-/Überbestand) in %?`,
+      result: quote, tol: 0.05,
+      steps:[
+        `Abweichung = Ist − Soll = ${ist} − ${soll} = ${diff}`,
+        `Quote = |Abweichung| / Soll × 100 = ${Math.abs(diff)} / ${soll} × 100 = ${round(quote,2)} %`
+      ]
+    };
+  },
+
+  // Dreisatz: antiproportional (Mannstunden)
+  dreisatz_anti(){
+    const m1 = rnd(2,10), t1 = rnd(2,8), m2 = rnd(3,15);
+    const t2 = m1 * t1 / m2;
+    return {
+      id:`DA-${m1}-${t1}-${m2}`,
+      unit:'h',
+      q:`${m1} MA benötigen ${t1} h. Wie lange brauchen ${m2} MA (antiproportional)?`,
+      result: t2, tol: 0.01,
+      steps:[
+        `Antiproportional: m₁·t₁ = m₂·t₂  ⇒  t₂ = (m₁·t₁) / m₂`,
+        `t₂ = (${m1}×${t1}) / ${m2} = ${round(t2,2)} h`
+      ]
+    };
+  },
+
+  // Bruchrechnen / Packgrößen
+  bruch_teilmenge(){
+    const p = [6,8,10,12,20,24,50][rnd(0,6)];
+    const x = rnd(p+1, p*20);
+    const packs = x / p;
+    return {
+      id:`BR-${p}-${x}`,
+      unit:'Pack',
+      q:`Packungsgröße ${p} Stk pro Pack. Benötigt: ${x} Stk. 
+Wie viele Packungen (als Dezimalzahl)?`,
+      result: packs, tol: 0.0001,
+      steps:[
+        `Packungen = Menge / Packgröße = ${x} / ${p} = ${round(packs,3)} Pack`
+      ]
+    };
+  },
+
+  // Lagerkosten (einfach)
+  kosten_lager(){
+    const avg = rnd(100, 2000);
+    const c = rnd(10, 120);
+    const satz = [15,18,20,22,25][rnd(0,4)];
+    const kosten = avg * c * (satz/100);
+    return {
+      id:`KL-${avg}-${c}-${satz}`,
+      unit:'€ / Jahr',
+      q:`Ø‑Bestand ${avg} Stk, Einstandspreis ${c} €/Stk, Lagerkostensatz ${satz}% p.a.
+Jährliche Lagerkosten in €?`,
+      result: kosten, tol: 0.01,
+      steps:[
+        `Lagerkosten = Ø‑Bestand × Einstandspreis × Satz`,
+        `= ${avg} × ${c} × ${satz}% = ${round(kosten,2)} €`
+      ]
+    };
+  },
+
+  // Transportkosten
+  kosten_transport(){
+    const tarif = rnd(30, 120)/10; // €/t·km
+    const masse = rnd(2, 25);      // t
+    const dist = rnd(40, 600);     // km
+    const kosten = tarif * masse * dist;
+    return {
+      id:`KT-${tarif}-${masse}-${dist}`,
+      unit:'€',
+      q:`Transport: Tarif ${tarif.toFixed(1)} €/t·km, Masse ${masse} t, Distanz ${dist} km.
+Kosten in €?`,
+      result: kosten, tol: 0.01,
+      steps:[
+        `K = T × m × s = ${tarif.toFixed(1)} × ${masse} × ${dist} = ${round(kosten,2)} €`
+      ]
+    };
+  },
+
+  // Bezugspreis – Kurzverweis auf Skonto-Generator
+  kosten_bezugspreis(){ return MATH_TASKS.prozent_skonto(); },
+
+  // Andler‑Formel (EOQ)
+  andler(){
+    const D = rnd(2000, 30000);
+    const Kb = rnd(30, 200);
+    const c = rnd(5, 120);
+    const i = [0.12,0.18,0.2,0.22][rnd(0,3)];
+    const Q = Math.sqrt((2*D*Kb)/(c*i));
+    return {
+      id:`EOQ-${D}-${Kb}-${c}-${i}`,
+      unit:'Stk',
+      q:`Andler‑Formel: D=${D} Stk/Jahr, Bestellkosten ${Kb} €, Preis ${c} €/Stk, Lagerhaltungssatz ${(i*100).toFixed(0)}%.
+Optimale Bestellmenge Q?`,
+      result: Q, tol: 0.01,
+      steps:[
+        `Q* = √((2·D·K_b)/(c·i))`,
+        `= √((2·${D}·${Kb})/(${c}·${i})) = ${round(Q,2)} Stk`
+      ]
+    };
+  },
+
+  // Meldebestand
+  meldebestand(){
+    const v = rnd(5, 120);  // Stk/Tag
+    const lz = rnd(2, 14);  // Tage
+    const sb = rnd(0, 200); // Stk
+    const mb = v*lz + sb;
+    return {
+      id:`MB-${v}-${lz}-${sb}`,
+      unit:'Stk',
+      q:`Verbrauch ${v} Stk/Tag, Lieferzeit ${lz} Tage, Sicherheitsbestand ${sb} Stk.
+Meldebestand?`,
+      result: mb, tol: 0,
+      steps:[
+        `MB = Verbrauch/Tag × LZ + SB = ${v} × ${lz} + ${sb} = ${mb} Stk`
+      ]
+    };
+  },
+
+  // Sicherheitsbestand (vereinfachte Praxisformel)
+  sicherheitsbestand(){
+    const vmax = rnd(40, 160);
+    const lzmax = rnd(5, 20);
+    const vavg = rnd(20, vmax-5);
+    const lzavg = rnd(2, Math.max(3, lzmax-2));
+    const sb = vmax*lzmax - vavg*lzavg;
+    return {
+      id:`SB-${vmax}-${lzmax}-${vavg}-${lzavg}`,
+      unit:'Stk',
+      q:`Maxverbrauch ${vmax}/Tag, max. LZ ${lzmax} Tage,
+Ø‑Verbrauch ${vavg}/Tag, Ø‑LZ ${lzavg} Tage. Sicherheitsbestand?`,
+      result: sb, tol: 0,
+      steps:[
+        `SB = (V_max × LZ_max) − (V_Ø × LZ_Ø)`,
+        `= (${vmax}×${lzmax}) − (${vavg}×${lzavg}) = ${sb} Stk`
+      ]
+    };
+  },
+
+  // Lagerreichweite
+  reichweite(){
+    const bestand = rnd(200, 8000);
+    const v = rnd(10, 200);
+    const rw = bestand / v;
+    return {
+      id:`RW-${bestand}-${v}`,
+      unit:'Tage',
+      q:`Bestand ${bestand} Stk, Ø‑Verbrauch ${v} Stk/Tag. Lagerreichweite in Tagen?`,
+      result: rw, tol: 0.01,
+      steps:[
+        `Reichweite = Bestand / Verbrauch/Tag = ${bestand} / ${v} = ${round(rw,2)} Tage`
+      ]
+    };
+  },
+
+  // Umschlagshäufigkeit
+  umschlag(){
+    const verb = rnd(2000, 60000);
+    const avg = rnd(200, 5000);
+    const uh = verb / avg;
+    return {
+      id:`UH-${verb}-${avg}`,
+      unit:'mal/Jahr',
+      q:`Jahresverbrauch (Abgänge) ${verb} Stk, Ø‑Lagerbestand ${avg} Stk.
+Umschlagshäufigkeit?`,
+      result: uh, tol: 0.001,
+      steps:[
+        `UH = Verbrauch / Ø‑Bestand = ${verb} / ${avg} = ${round(uh,3)} mal/Jahr`
+      ]
+    };
+  },
+
+  // Kapazität: Palettenplätze im Regal
+  kapaz_regal(){
+    const felder = rnd(4, 40);
+    const ebenen = rnd(2, 7);
+    const plaetze = rnd(1, 4);
+    const kap = felder * ebenen * plaetze;
+    return {
+      id:`KR-${felder}-${ebenen}-${plaetze}`,
+      unit:'Plätze',
+      q:`Regal: ${felder} Felder, ${ebenen} Ebenen je Feld, ${plaetze} Plätze je Ebene.
+Wie viele Palettenplätze gesamt?`,
+      result: kap, tol: 0,
+      steps:[
+        `Kapazität = Felder × Ebenen × Plätze/Ebene = ${felder} × ${ebenen} × ${plaetze} = ${kap} Plätze`
+      ]
+    };
+  }
+};
+
+/* UI-Logik Fachrechnen */
+function renderTask(t){
+  currentTask=t;
+  if(!mathEls.card) return;
+  mathEls.card.style.display='block';
+  const label = document.querySelector('#math-type option:checked')?.textContent || 'Fachrechnen';
+  mathEls.typeChip.textContent = label;
+  mathEls.q.textContent = t.q;
+  mathEls.id.textContent = t.id;
+  mathEls.unit.textContent = t.unit || '';
+  mathEls.ans.value='';
+  mathEls.fb.style.display='none';
+  mathEls.steps.style.display='none';
+  mathEls.steps.innerHTML='';
+}
+function newMathTask(){
+  if(!mathEls.type) return;
+  const key = mathEls.type.value || 'dreisatz';
+  const gen = MATH_TASKS[key] || MATH_TASKS.dreisatz;
+  renderTask(gen());
+}
+function checkMath(){
+  if(!currentTask) return;
+  const raw = String(mathEls.ans.value||'').replace(',','.');
+  const val = Number(raw);
+  if(Number.isNaN(val)){ mathEls.fb.style.display='block'; mathEls.fb.textContent='Bitte eine Zahl eingeben.'; return; }
+  const ok = Math.abs(val - currentTask.result) <= (currentTask.tol ?? 0.01);
+  mathEls.fb.style.display='block';
+  mathEls.fb.textContent = ok ? `✅ Richtig! Erwartet: ${round(currentTask.result,3)} ${currentTask.unit||''}` :
+    `❌ Falsch. Erwartet: ${round(currentTask.result,3)} ${currentTask.unit||''}`;
+  const p=loadMathProg(); p.seen++; if(ok) p.ok++; saveMathProg(p);
+}
+function showSteps(){
+  if(!currentTask) return;
+  mathEls.steps.style.display='block';
+  mathEls.steps.innerHTML = (currentTask.steps||[]).map(s=>`<div>${s}</div>`).join('');
+}
+/* Events */
+if(mathEls.btnNew){ mathEls.btnNew.onclick = newMathTask; }
+if(mathEls.next){ mathEls.next.onclick = newMathTask; }
+if(mathEls.check){ mathEls.check.onclick = checkMath; }
+if(mathEls.step){ mathEls.step.onclick = showSteps; }
+if(mathEls.reset){ mathEls.reset.onclick = ()=>{ localStorage.setItem(MATH_KEY, '{"seen":0,"ok":0}'); renderMathProg(); }; }
+/* Beim Start Zahlen zeigen */
+renderMathProg();
+
 /* ====== IHK-Prüfungsmodus ====== */
 const examCategories=document.getElementById('exam-categories'), examCount=document.getElementById('exam-count'), examMinutes=document.getElementById('exam-minutes');
 const examStart=document.getElementById('exam-start'), examSubmit=document.getElementById('exam-submit'), examReset=document.getElementById('exam-reset');
@@ -647,6 +1056,7 @@ function bumpProgress(seenDelta, correctDelta){
   renderProgress();
 }
 
+// Helfer
 function pct(n,d){ return d? Math.round((n/d)*100):0; }
 function barClass(p){ if(p>=80) return 'ok'; if(p>=50) return 'mid'; return 'low'; }
 
@@ -656,33 +1066,26 @@ async function computeCategoryStats(){
   try { const r=await supa.auth.getUser(); user=r?.data?.user||null; } catch{}
   if(!user) return { user:null, rows:[] };
 
-  // Fragen (kanonisiert)
   const qs = await fetchQuestions();
-
-  // totalQuestions je kanonischer Kategorie
   const byCat = {};
   qs.forEach(q=>{
-    const c=q.category;
+    const c=q.category||'–';
     (byCat[c] ||= { cat:c, totalQuestions:0, seen:0, correct:0 });
     byCat[c].totalQuestions++;
   });
 
-  // Reviews des Users (letztes Ergebnis pro Frage)
-  const { data:revs } = await supa.from('reviews').select('question_id, correct, ts').eq('user_id', user.id).order('ts',{ascending:true});
-  const lastByQ = new Map();
-  (revs||[]).forEach(r=>{ lastByQ.set(r.question_id, r.correct); });
-
+  const { data:revs } = await supa.from('reviews').select('question_id, correct').eq('user_id', user.id);
   const qById = Object.fromEntries(qs.map(q=>[q.id,q]));
-  lastByQ.forEach((lastCorrect, qid)=>{
-    const q = qById[qid];
+  (revs||[]).forEach(r=>{
+    const q = qById[r.question_id];
     if(!q) return;
-    const cat = q.category;
-    const row = byCat[cat] ||= { cat:cat, totalQuestions:0, seen:0, correct:0 };
+    const c = q.category||'–';
+    const row = byCat[c] ||= { cat:c, totalQuestions:0, seen:0, correct:0 };
     row.seen++;
-    if(lastCorrect) row.correct++;
+    if(r.correct) row.correct++;
   });
 
-  const rows = Object.values(byCat).sort((a,b)=> a.cat.localeCompare(b.cat));
+  const rows = Object.values(byCat).sort((a,b)=> (b.seen||0) - (a.seen||0));
   return { user, rows };
 }
 
@@ -706,10 +1109,7 @@ async function renderProgress(){
     return `
       <div class="progress-row">
         <div class="progress-meta">
-          <div style="display:flex;align-items:center;gap:8px">
-            <b>${r.cat}</b>
-            <button class="btn" data-reset-cat="${r.cat}" title="Alle Antworten dieser Kategorie aus deinem Account-Fortschritt löschen">Zurücksetzen</button>
-          </div>
+          <div><b>${r.cat}</b></div>
           <div class="muted" style="font-size:12px">
             Gesehen: ${r.seen}/${r.totalQuestions} • Quote: ${a}% • Abdeckung: ${cov}%
           </div>
@@ -720,22 +1120,6 @@ async function renderProgress(){
         <div class="progress-pill">${a}%</div>
       </div>`;
   }).join('');
-
-  // Reset-Buttons (pro Kategorie)
-  document.querySelectorAll('button[data-reset-cat]').forEach(btn=>{
-    btn.onclick = async () => {
-      const cat = btn.getAttribute('data-reset-cat');
-      if(!confirm(`Alle gespeicherten Antworten in "${cat}" für deinen Account löschen?`)) return;
-      const qs = await fetchQuestions();
-      const ids = qs.filter(q=>q.category===cat).map(q=>q.id);
-      if(!ids.length) return;
-      const { data:{user} } = await supa.auth.getUser();
-      if(!user) return;
-      // reviews löschen
-      await supa.from('reviews').delete().eq('user_id', user.id).in('question_id', ids);
-      renderProgress();
-    };
-  });
 }
 document.getElementById('reset-progress').onclick=()=>{localStorage.removeItem('progress_local'); renderProgress();};
 
@@ -743,15 +1127,9 @@ document.getElementById('reset-progress').onclick=()=>{localStorage.removeItem('
 const adminList=document.getElementById('admin-list');
 async function renderAdminList(){
   const q=await fetchQuestions();
-  adminList.innerHTML=q.map(x=>`<div class="card">
-    <div class="row" style="justify-content:space-between">
-      <div><span class="chip">${x.category}</span></div>
-      <div class="row">
-        <button data-del="${x.id}" class="btn">Löschen</button>
-      </div>
-    </div>
-    <div><b>${x.question}</b></div>
-  </div>`).join('');
+  adminList.innerHTML=q.map(x=>`<div class="card"><div class="row" style="justify-content:space-between">
+  <div><span class="chip">${x.category}</span></div><button data-del="${x.id}" class="btn">Löschen</button></div>
+  <div><b>${x.question}</b></div></div>`).join('');
   adminList.querySelectorAll('button[data-del]').forEach(btn=>btn.onclick=async()=>{
     const id=btn.getAttribute('data-del'); const {error}=await supa.from('questions').delete().eq('id',id);
     if(error) alert(error.message); else renderAdminList();
@@ -779,7 +1157,7 @@ document.getElementById('admin-import').onchange=async(e)=>{
   const cleaned = allItems
     .map(x=>{
       const { deck, correctIndex, ...rest } = x || {};
-      const cat = canonicalizeCategory(rest.category || rest.category_name || '');
+      const cat = normalizeCategory(rest.category || rest.category_name || '');
       return { ...rest, category: cat, correct_index: rest.correct_index ?? correctIndex };
     })
     .filter(x=>x && x.id && Array.isArray(x.options) && Number.isInteger(x.correct_index));
@@ -799,27 +1177,10 @@ async function fillAdminCatSelect(){
 }
 document.getElementById('admin-cat-apply').onclick=async()=>{
   const oldVal=document.getElementById('admin-cat-old').value;
-  const newVal=canonicalizeCategory((document.getElementById('admin-cat-new').value||'').trim());
+  const newVal=normalizeCategory((document.getElementById('admin-cat-new').value||'').trim());
   if(!oldVal || !newVal) return alert('Bitte alte Kategorie wählen und neue Kategorie eintragen.');
   const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
   document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
-  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
-};
-
-document.getElementById('admin-canon-all').onclick=async()=>{
-  if(!confirm('Alle Kategorien automatisch kanonisieren?')) return;
-  const qs = await fetchQuestions(); // bereits kanonisiert
-  // hole alle Originale direkt aus DB (ohne Map), damit wir auch Varianten erwischen
-  const { data:raw } = await supa.from('questions').select('id, category');
-  let changed = 0;
-  for(const r of (raw||[])){
-    const canon = canonicalizeCategory(r.category);
-    if(canon !== r.category){
-      await supa.from('questions').update({category:canon}).eq('id', r.id);
-      changed++;
-    }
-  }
-  alert(`Kanonisierung fertig. Geändert: ${changed}`);
   await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
 };
 
@@ -834,33 +1195,16 @@ document.getElementById('admin-scan-dup').onclick=async()=>{
   const groups=Object.values(byText).filter(arr=>arr.length>1);
   if(!groups.length){ list.innerHTML='<div class="card">Keine Duplikate per Fragentext gefunden.</div>'; return; }
   list.innerHTML = groups.map(arr=>{
-    const head=arr[0].question.slice(0,160);
-    const rows=arr.map(x=>`
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <div><span class="chip">${x.category}</span> <span class="muted">${x.id}</span></div>
-        <button class="btn" data-delid="${x.id}">Löschen</button>
-      </div>`).join('');
-    return `<div class="card">
-      <div style="font-weight:700;margin-bottom:6px">${head}</div>
-      ${rows}
-    </div>`;
+    const head=arr[0].question.slice(0,120);
+    const rows=arr.map(x=>`<div class="row" style="justify-content:space-between"><div><span class="chip">${x.category}</span></div><div class="muted">${x.id}</div></div>`).join('');
+    return `<div class="card"><div><b>${head}</b></div>${rows}</div>`;
   }).join('');
-
-  // Direkt löschen
-  list.querySelectorAll('button[data-delid]').forEach(btn=>{
-    btn.onclick = async () => {
-      const id = btn.getAttribute('data-delid');
-      if(!confirm(`Frage ${id} wirklich löschen?`)) return;
-      await supa.from('questions').delete().eq('id', id);
-      document.getElementById('admin-scan-dup').click(); // neu scannen/anzeigen
-    };
-  });
 };
 
 document.getElementById('admin-save').onclick=async()=>{
   const id='q_'+Math.random().toString(36).slice(2,10);
   const categoryRaw=document.getElementById('ad-category').value.trim();
-  const category=canonicalizeCategory(categoryRaw);
+  const category=normalizeCategory(categoryRaw);
   const question=document.getElementById('ad-question').value.trim();
   const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
