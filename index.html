@@ -89,9 +89,13 @@
     .sim-wrap{display:grid;gap:12px}
     .sim-header{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
     .sim-area{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width: 900px){
+      .sim-area{grid-template-columns:1.15fr .85fr}
+    }
     .sim-pool,.sim-queue{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:10px}
     .sim-title{font-weight:700;margin-bottom:6px}
-    .step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.03);cursor:pointer}
+    .step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03);cursor:pointer;transition:transform .06s ease, box-shadow .06s ease, background .2s ease}
+    .step:hover{box-shadow:0 4px 16px rgba(0,0,0,.25);background:rgba(255,255,255,.06)}
     .step[disabled]{opacity:.55;cursor:not-allowed}
     .step.correct{outline:2px solid var(--ok);background:rgba(34,197,94,.12)}
     .step.wrong{outline:2px solid var(--low);background:rgba(239,68,68,.12)}
@@ -99,6 +103,12 @@
     .badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.04)}
     .score{font-weight:800}
     .hint{font-size:12px;color:var(--muted)}
+
+    /* Lesbarkeit+-Zoom */
+    body.sim-zoom{font-size:18px}
+    body.sim-zoom .step{padding:14px}
+    body.sim-zoom .queue-chip{padding:8px 12px}
+    body.sim-zoom .badge{font-size:13px}
   </style>
 </head>
 <body>
@@ -324,6 +334,7 @@
           <div class="row">
             <select id="sim-sel"></select>
             <button id="sim-start" class="btn primary">Start</button>
+            <button id="sim-zoom" class="btn">Lesbarkeit +</button>
             <span class="badge">💙 <span id="sim-lives">3</span> Leben</span>
             <span class="badge">🏁 <span id="sim-progress">0/0</span></span>
             <span class="badge">⭐ <span id="sim-score">0</span> Punkte</span>
@@ -1134,7 +1145,6 @@ function genPercent(){
   return { q:text, a:Math.round(answer*100)/100, steps };
 }
 function genRule3(){
-  // proportional: 5 MA brauchen 2 h -> 10 MA brauchen ? h
   const ma = rnd(3,9);
   const h  = rnd(1,4);
   const ma2= rnd(2,12);
@@ -1148,7 +1158,6 @@ function genRule3(){
   return { q:text, a:Math.round(a*100)/100, steps };
 }
 function genRule3Anti(){
-  // anti-proportional: 3 Stapler brauchen 6 h -> 2 Stapler brauchen ? h
   const st = rnd(2,6);
   const h  = rnd(3,7);
   const st2= rnd(1,5);
@@ -1162,7 +1171,6 @@ function genRule3Anti(){
   return { q:text, a:Math.round(a*100)/100, steps };
 }
 function genFraction(){
-  // Palettenhälften / Kartons → Umrechnung
   const karton = rnd(8,24);
   const br = [[1,2],[3,4],[2,3]][rnd(0,2)];
   const text = `Von ${karton} Kartons werden ${br[0]}/${br[1]} entnommen. Wieviele Kartons bleiben übrig?`;
@@ -1175,10 +1183,9 @@ function genFraction(){
   return { q:text, a:Math.round(a*100)/100, steps };
 }
 function genAndler(){
-  // C_opt = sqrt((2*B*Kb)/(Kp)) (vereinfacht ohne Zins)
-  const B = rnd(500,5000); // Jahresbedarf
-  const Kb= rnd(15,120);   // Bestellkosten
-  const Kp= rnd(1,20);     // Lagerkosten je Stück/Jahr
+  const B = rnd(500,5000);
+  const Kb= rnd(15,120);
+  const Kp= rnd(1,20);
   const a = Math.sqrt((2*B*Kb)/Kp);
   const text = `Andler-Formel: Jahresbedarf B=${B} Stück, Bestellkosten Kb=${Kb} €, Lagerkosten je Stück/Jahr Kp=${Kp} €. Optimale Bestellmenge?`;
   const steps = [
@@ -1202,7 +1209,7 @@ function genTurnover(){
 function genCoverage(){
   const stock = rnd(500,5000);
   const daily = rnd(10,150);
-  const a = stock / daily; // Tage
+  const a = stock / daily;
   const text = `Lagerreichweite: Bestand ${stock} Stück, täglicher Verbrauch ${daily} Stück. Reichweite in Tagen?`;
   const steps = [
     `Reichweite (Tage) = Bestand / Tagesverbrauch`,
@@ -1234,12 +1241,10 @@ function showTask(t){
   calcAns.classList.remove('valid','invalid');
   calcAns.focus();
 
-  // Enter → prüfen
   calcAns.onkeydown = (e)=>{
     if(e.key==='Enter'){ e.preventDefault(); evaluateAnswer(); }
   };
 
-  // Notizen laden (pro Aufgaben-Hash)
   const key = 'notes_'+hashTask(t.q);
   notesArea.value = localStorage.getItem(key) || '';
   notesState.textContent = notesArea.value ? 'Notizen geladen.' : '';
@@ -1289,6 +1294,7 @@ const btnSimStart= document.getElementById('sim-start');
 const btnSimUndo = document.getElementById('sim-undo');
 const btnSimReset= document.getElementById('sim-reset');
 const btnSimCheck= document.getElementById('sim-check');
+const btnSimZoom = document.getElementById('sim-zoom');
 
 const SCENARIOS = [
   {
@@ -1313,7 +1319,6 @@ const SCENARIOS = [
     perCorrect: 10,
     perWrong: -5
   }
-  // Weitere Szenarien einfach hier ergänzen …
 ];
 
 let simState = {
@@ -1363,7 +1368,7 @@ function simInitScenario(id){
   simState = {
     idx: 0,
     pool: shuffle(sc.steps),
-    target: sc.steps.slice(), // richtige Reihenfolge
+    target: sc.steps.slice(),
     picked: [],
     lives: sc.lives,
     score: 0,
@@ -1382,7 +1387,6 @@ async function simLogRunToSupabase({scenarioId, score, steps, wrongClicks, succe
   try{
     const { data:{user} } = await supa.auth.getUser();
     if(!user) return;
-    // Tabelle optional: sim_runs (user_id text, scenario_id text, score int4, steps int4, wrong int4, success bool, ts timestamptz default now())
     await supa.from('sim_runs').insert({
       user_id: user.id,
       scenario_id: scenarioId,
@@ -1391,16 +1395,15 @@ async function simLogRunToSupabase({scenarioId, score, steps, wrongClicks, succe
       wrong: wrongClicks,
       success
     });
-  }catch(e){ /* ignore if table not present */ }
+  }catch(e){ /* Tabelle evtl. nicht vorhanden – ignorieren */ }
 }
 
 let wrongClicksSession = 0;
 
 function simPick(txt, btn){
   if(simState.locked || simState.lives<=0) return;
-  const expect = simState.target[simState.picked.length]; // nächster korrekter Schritt
+  const expect = simState.target[simState.picked.length];
   if(txt === expect){
-    // korrekt
     simState.picked.push(txt);
     btn.classList.add('correct');
     btn.setAttribute('disabled','true');
@@ -1409,7 +1412,6 @@ function simPick(txt, btn){
     simUpdateHUD();
 
     if(simState.picked.length === simState.target.length){
-      // Erfolg
       const stats = loadSimProgress();
       stats.runs += 1; stats.wins += 1; stats.best = Math.max(stats.best, simState.score);
       saveSimProgress(stats);
@@ -1420,7 +1422,6 @@ function simPick(txt, btn){
       simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: true});
     }
   } else {
-    // falsch
     wrongClicksSession += 1;
     simState.lives -= 1;
     simState.score = Math.max(0, simState.score + simState.cfg.perWrong);
@@ -1442,7 +1443,6 @@ btnSimReset.onclick = () => { wrongClicksSession = 0; simInitScenario(simSel.val
 btnSimUndo.onclick = () => {
   if(simState.locked || simState.picked.length===0) return;
   const last = simState.picked.pop();
-  // enable entsprechender Button
   [...simStepsEl.querySelectorAll('.step')].forEach(b=>{
     if(b.textContent.includes(last)){ b.classList.remove('correct'); b.removeAttribute('disabled'); }
   });
@@ -1465,9 +1465,14 @@ btnSimCheck.onclick = () => {
   simState.locked = true;
 };
 
+/* Lesbarkeit+-Toggle */
+btnSimZoom.onclick = ()=>{
+  document.body.classList.toggle('sim-zoom');
+  btnSimZoom.textContent = document.body.classList.contains('sim-zoom') ? 'Lesbarkeit –' : 'Lesbarkeit +';
+};
+
 function initSimModule(){
   refreshSimSelectors();
-  // Vorbelegen:
   simInitScenario(SCENARIOS[0].id);
 }
 
