@@ -15,29 +15,29 @@
       --line:rgba(255,255,255,.12);
       --text:#E5E7EB; --muted:#A7B0C3; --primary:#60A5FA; --panel:rgba(255,255,255,.06);
       --bg:#0b1020; --bg-2:#0f1427; --ok:#22c55e; --mid:#eab308; --low:#ef4444;
-      --input-bg:#ffffff; --input-fg:#0b1020; /* bessere Sichtbarkeit */
-      --chip-bg:rgba(255,255,255,.06);
+      --panel-strong:#111735; --panel-contrast:#0e1430;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-    a{color:var(--primary);text-decoration:none}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),var(--panel-contrast) 60%, var(--bg));color:var(--text)}
     .topbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(10,14,28,.85);backdrop-filter:blur(8px);z-index:5}
     .brand{display:flex;gap:10px;align-items:center}
     .brand .logo{height:36px;width:36px;border-radius:8px;background:conic-gradient(from 0deg,#60A5FA,#F59E0B,#60A5FA)}
     .nav{display:flex;gap:8px;flex-wrap:wrap}
     .nav button{background:transparent;color:var(--text);border:1px solid var(--line);padding:6px 10px;border-radius:10px;cursor:pointer}
+    .nav button.active{outline:2px solid var(--primary)}
     .nav button[hidden]{display:none !important}
-    .container{max-width:1000px;margin:0 auto;padding:20px}
+    .container{max-width:1100px;margin:0 auto;padding:20px}
     .view{display:none}.view.active{display:block}
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+    .panel{background:linear-gradient(180deg, var(--panel), var(--panel-strong));border:1px solid var(--line);border-radius:12px;padding:14px}
     .cards{display:grid;gap:14px}
     .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.04)}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    input,select,textarea{background:var(--input-bg);color:var(--input-fg);border:1px solid #d0d5dd;border-radius:10px;padding:8px 10px}
-    select{min-height:36px}
+    input,select,textarea{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+    input::placeholder, textarea::placeholder{color:#98a2b3}
     .btn{border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--text)}
     .btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
-    .chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--chip-bg)}
+    .btn.ghost{background:rgba(255,255,255,.04)}
+    .chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
     .option{display:grid;grid-template-columns:18px 1fr;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);cursor:pointer}
     .option.selected{outline:2px solid var(--primary);background:rgba(96,165,250,.10)}
     .muted{color:var(--muted)}
@@ -73,17 +73,17 @@
     .progress-fill.low{background:var(--low)}
     .progress-pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.04)}
 
-    /* Fachrechnen – Kontrast in Karte erhöhen */
-    .calc-card{
-      background:rgba(255,255,255,.06);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:12px;
-    }
-    .calc-header{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .calc-actions{display:flex;gap:8px;align-items:center}
-    .note-actions{display:flex;gap:8px;align-items:center;margin-top:6px}
-    .note-area{width:100%;min-height:120px}
+    /* Selects besser lesbar */
+    select{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.18)}
+    option{background:#0f1427;color:#E5E7EB}
+
+    /* Fachrechnen – Eingabeprüfung & Notes */
+    .calc-ok{ color:#22c55e; font-weight:700; }
+    .calc-bad{ color:#ef4444; font-weight:700; }
+    #calc-answer.valid{ outline:2px solid #22c55e; }
+    #calc-answer.invalid{ outline:2px solid #ef4444; }
+    .notes-box{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:start}
+    .notes-area{min-height:100px}
   </style>
 </head>
 <body>
@@ -96,12 +96,12 @@
       </div>
     </div>
     <div class="nav">
-      <button data-view="login" id="nav-login">Login</button>
+      <button data-view="login" id="nav-login" class="active">Login</button>
       <button data-view="flashcards" id="nav-flash" hidden>Lernkarten</button>
       <button data-view="train" id="nav-train" hidden>Adaptiv</button>
       <button data-view="exam" id="nav-exam" hidden>Prüfung</button>
-      <button data-view="calc" id="nav-calc" hidden>Fachrechnen</button>
       <button data-view="progress" id="nav-progress" hidden>Fortschritt</button>
+      <button data-view="calc" id="nav-calc" hidden>Fachrechnen</button>
       <button data-view="admin" id="nav-admin" hidden>Admin</button>
       <button id="btn-settings" hidden>Einstellungen</button>
     </div>
@@ -185,22 +185,22 @@
           <div>
             <h3>Adaptiv trainieren</h3>
             <div class="muted" style="max-width:720px">
-              Wiederholt Fragen mit niedriger Quote häufiger. Ab 3× korrekt in Folge → „gelernt“ (mit Cooldown).
+              Wiederholt Fragen mit niedriger Quote häufiger. Ab 3× korrekt in Folge → „gelernt“ und ausgeblendet (mit Cooldown).
             </div>
           </div>
-            <div class="row">
-              <select id="train-category"><option value="">Alle Kategorien</option></select>
-              <label class="row"><input type="checkbox" id="train-weak"/> <span>Nur Schwächen</span></label>
-              <label class="row"><input type="checkbox" id="train-hide-learned" checked/> <span>Gelernt ausblenden</span></label>
-              <button id="train-next" class="btn primary">Nächste Karte</button>
-            </div>
+          <div class="row">
+            <select id="train-category"><option value="">Alle Kategorien</option></select>
+            <label class="row"><input type="checkbox" id="train-weak"/> <span>Nur Schwächen</span></label>
+            <label class="row"><input type="checkbox" id="train-hide-learned" checked/> <span>Gelernt ausblenden</span></label>
+            <button id="train-next" class="btn primary">Nächste Karte</button>
+          </div>
         </div>
         <div id="train-area" class="cards" style="margin-top:10px"></div>
         <div id="train-empty" class="alert" style="display:none;margin-top:10px"></div>
       </div>
     </section>
 
-    <!-- Prüfung -->
+    <!-- Prüfung (IHK 2.0) -->
     <section id="view-exam" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
@@ -219,76 +219,20 @@
       </div>
     </section>
 
-    <!-- Fachrechnen -->
-    <section id="view-calc" class="view">
-      <div class="panel">
-        <div class="calc-header">
-          <h3>Fachrechnen</h3>
-          <div class="row">
-            <select id="calc-type">
-              <option value="p_sconto">Prozent: Skonto/Ziel-/Bareinkaufspreis</option>
-              <option value="p_rabatt">Prozent: Rabatt/Aufschlag</option>
-              <option value="p_abweich">Prozent: Bestandsabweichung/Verlustquote</option>
-              <option value="d_pro">Dreisatz: proportional</option>
-              <option value="d_anti">Dreisatz: antiproportional (Mannstunden)</option>
-              <option value="b_umrech">Bruchrechnen/Umrechnen: Teilmengen/Packgrößen</option>
-              <option value="k_bezug">Kosten: Bezugspreis (Rabatt, Skonto, Bezugskosten)</option>
-              <option value="k_lager">Kosten: Lagerkosten (Ø‑Bestand × Satz)</option>
-              <option value="k_trans">Kosten: Transport (€/km)</option>
-              <option value="a_andler">Bestellmenge: Andler‑Formel (EOQ)</option>
-              <option value="a_melde">Meldebestand (inkl. Sicherheitsbestand)</option>
-              <option value="a_sicher">Sicherheitsbestand (vereinfachte Formel)</option>
-              <option value="a_reichw">Lagerreichweite (Tage)</option>
-              <option value="a_umsch">Umschlagshäufigkeit</option>
-              <option value="cap_regal">Kapazität: Palettenplätze im Regal</option>
-              <option value="cap_karton">Kapazität: Palettenbelegung (Karton/Lage)</option>
-            </select>
-            <button id="calc-new" class="btn primary">Neue Aufgabe</button>
-          </div>
-        </div>
-
-        <div id="calc-card" class="calc-card" style="margin-top:10px;display:none">
-          <div class="row" style="justify-content:space-between">
-            <div class="chip" id="calc-id">–</div>
-            <div class="muted" id="calc-hint">–</div>
-          </div>
-          <div id="calc-question" style="margin-top:8px;font-weight:700"></div>
-          <div class="row calc-actions" style="margin-top:8px">
-            <input id="calc-answer" placeholder="Deine Lösung" />
-            <button id="calc-solution" class="btn">Lösungsschritte</button>
-            <button id="calc-next" class="btn">Nächste</button>
-            <button id="calc-reset" class="btn">Zurücksetzen</button>
-          </div>
-
-          <!-- Notizen -->
-          <div class="card" style="margin-top:10px">
-            <div class="row" style="justify-content:space-between;align-items:center">
-              <b>Deine Notizen</b>
-              <div class="note-actions">
-                <button id="note-save" class="btn">Speichern</button>
-                <button id="note-clear" class="btn">Notizen löschen</button>
-              </div>
-            </div>
-            <textarea id="note-area" class="note-area" placeholder="Hier kannst du deinen Rechenweg / Notizen festhalten…"></textarea>
-            <div class="muted" id="note-state" style="margin-top:6px"></div>
-          </div>
-
-          <div id="calc-solution-wrap" class="alert" style="display:none;margin-top:10px"></div>
-        </div>
-
-        <div id="calc-empty" class="alert" style="margin-top:10px">Wähle links einen Aufgabentyp und klicke auf „Neue Aufgabe“.</div>
-      </div>
-    </section>
-
     <!-- Fortschritt -->
     <section id="view-progress" class="view">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
           <h3>Dein Fortschritt</h3>
-          <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
+          <div class="row">
+            <button id="reset-progress" class="btn">Lokalen Fortschritt zurücksetzen</button>
+            <select id="reset-cat-select" style="min-width:260px"></select>
+            <button id="reset-cat" class="btn ghost" title="Server‑Fortschritt für diese Kategorie löschen (nur deine Antworten)">Kategorie-Fortschritt löschen</button>
+          </div>
         </div>
         <!-- Gesamt lokal -->
         <div id="progress-summary" class="cards" style="margin-bottom:10px"></div>
+
         <!-- Pro Kategorie -->
         <div class="card">
           <div class="row" style="justify-content:space-between;align-items:center">
@@ -296,6 +240,59 @@
             <span id="progress-user-label" class="muted">Nicht eingeloggt</span>
           </div>
           <div id="progress-cats" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Fachrechnen -->
+    <section id="view-calc" class="view">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between; align-items:flex-end">
+          <div>
+            <h3>Fachrechnen</h3>
+            <div class="muted" style="max-width:720px">
+              Bruch‑, Prozent‑, Dreisatz, Lagerkennzahlen, Andler u.a. Mit Lösungswegen & Notizen.
+            </div>
+          </div>
+          <div class="row">
+            <select id="calc-type">
+              <option value="percent">Prozentrechnen (Rabatt/Skonto/Bestand)</option>
+              <option value="rule3">Dreisatz (proportional)</option>
+              <option value="rule3anti">Dreisatz (antiproportional)</option>
+              <option value="fraction">Bruch/Umrechnen</option>
+              <option value="andler">Optimale Bestellmenge (Andler)</option>
+              <option value="turnover">Umschlagshäufigkeit</option>
+              <option value="coverage">Lagerreichweite</option>
+            </select>
+            <button id="calc-new" class="btn primary">Aufgabe erzeugen</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="calc-question" style="font-weight:700; margin-bottom:8px">—</div>
+
+          <div class="row calc-actions" style="margin-top:8px">
+            <input id="calc-answer" placeholder="Deine Lösung (z. B. 1.234,56 / 3/4 / 12 %)" />
+            <button id="calc-check" class="btn primary">Prüfen</button>
+            <span id="calc-feedback" class="muted"> </span>
+            <button id="calc-solution" class="btn">Lösungsschritte</button>
+            <button id="calc-next" class="btn">Nächste</button>
+            <button id="calc-reset" class="btn">Zurücksetzen</button>
+          </div>
+
+          <div id="calc-solution-box" class="alert" style="display:none; margin-top:10px"></div>
+
+          <div class="card" style="margin-top:10px">
+            <b>Notizen / Lösungsweg</b>
+            <div class="notes-box" style="margin-top:6px">
+              <textarea id="calc-notes" class="notes-area" placeholder="Rechenschritte, Skizzen, Merksätze …"></textarea>
+              <div class="row" style="flex-direction:column; gap:8px">
+                <button id="calc-notes-save" class="btn">Notizen speichern</button>
+                <button id="calc-notes-clear" class="btn ghost">Notizen löschen</button>
+              </div>
+            </div>
+            <div id="calc-notes-state" class="muted" style="margin-top:6px"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -354,9 +351,9 @@ const DEFAULT_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const DEFAULT_LOGO = 'https://ebqfupcivmkbuadbbnwg.supabase.co/storage/v1/object/public/app-assets/logo.png';
 
 /* ====== Utilities / Setup ====== */
-const views=['login','flashcards','train','exam','calc','progress','admin'];
+const views=['login','flashcards','train','exam','progress','calc','admin'];
 document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>{
-  if (b.hasAttribute('hidden')) return;
+  if (b.hasAttribute('hidden')) return; // nicht anklickbar wenn versteckt
   views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v===b.dataset.view));
   document.querySelectorAll('.nav button[data-view]').forEach(btn=>btn.classList.toggle('active', btn===b));
   if (b.dataset.view==='progress') renderProgress();
@@ -366,7 +363,7 @@ const shuffle=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.f
 const KEY_URL='supabase_url', KEY_ANON='supabase_anon', KEY_LOGO='app_logo_url';
 let supa=null;
 
-/* Branding */
+/* Logo */
 function applyBranding(){
   const logo = localStorage.getItem(KEY_LOGO) || DEFAULT_LOGO;
   const el = document.getElementById('brand-logo');
@@ -383,12 +380,12 @@ function applyBranding(){
 function normalizeCategory(cat) {
   if (!cat) return '';
   return String(cat)
-    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')  // Unicode Striche → '-'
-    .replace(/\s+/g, ' ')                                    // Mehrfach-Spaces
+    .replace(/[\u2012-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-') // Unicode Striche → '-'
+    .replace(/\s+/g, ' ') // Mehrfach-Spaces
     .trim();
 }
 
-/* ====== Einstellungen ====== */
+/* ====== Einstellungen (nur Admin) ====== */
 document.getElementById('btn-settings').onclick=()=>{
   document.getElementById('settings-modal').classList.add('show');
   document.getElementById('cfg-url').value=localStorage.getItem(KEY_URL)||DEFAULT_URL;
@@ -411,19 +408,22 @@ function isAdminEmail(email){ return !!email && ADMINS.includes(String(email).to
 
 function gateNavFor(user){
   const logged = !!user;
+  // Sichtbarkeit
   document.getElementById('nav-flash').hidden = !logged;
   document.getElementById('nav-train').hidden = !logged;
   document.getElementById('nav-exam').hidden  = !logged;
-  document.getElementById('nav-calc').hidden  = !logged;
   document.getElementById('nav-progress').hidden = !logged;
+  document.getElementById('nav-calc').hidden = !logged;
 
   const isAdmin = logged && isAdminEmail(user.email);
   document.getElementById('nav-admin').hidden = !isAdmin;
   document.getElementById('btn-settings').hidden = !isAdmin;
 
+  // View setzen
   const current = document.querySelector('.view.active');
   if(!logged){
     views.forEach(v=>document.getElementById('view-'+v).classList.toggle('active',v==='login'));
+    document.getElementById('nav-login').classList.add('active');
     document.getElementById('login-empty-info').style.display='block';
     document.getElementById('login-empty-info').textContent='Bitte zuerst einloggen.';
   }else{
@@ -441,7 +441,7 @@ async function initClient(){
   applyBranding();
 
   renderProgress();
-  await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await renderAdminList(); await showEmptyHints(); await fillAdminCatSelect();
+  await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await renderAdminList(); await showEmptyHints(); await fillAdminCatSelect(); await fillResetCatSelect();
   await refreshAuthUI();
 }
 
@@ -480,12 +480,13 @@ async function fetchQuestions(){
   if(!supa) return [];
   const {data,error}=await supa.from('questions').select('*').order('category',{ascending:true});
   if(error){console.warn(error); return [];}
+  // Normalize & dedupe (falls Server Altlasten hat)
   return (data||[]).map(q => ({ ...q, category: normalizeCategory(q.category) }));
 }
 async function fetchCategories(){
   const q=await fetchQuestions();
-  // Eindeutige, normalisierte Kategorien
-  return [...new Set(q.map(x=>normalizeCategory(x.category)))].sort((a,b)=>a.localeCompare(b,'de'));
+  const set = new Set(q.map(x=>normalizeCategory(x.category)));
+  return [...set].filter(Boolean).sort((a,b)=>a.localeCompare(b,'de',{numeric:true}));
 }
 
 /* ====== Lernkarten ====== */
@@ -572,7 +573,7 @@ async function pickAdaptiveCard(categoryFilter, onlyWeak, hideLearned){
 }
 function renderTrainCard(card){
   trArea.innerHTML='';
-  if(!card){ trEmpty.style.display='block'; trEmpty.textContent='Keine geeignete Karte gefunden. Passe Filter an.'; return; }
+  if(!card){ trEmpty.style.display='block'; trEmpty.textContent='Keine geeignete Karte gefunden. Passe Filter an (z. B. „Gelernt ausblenden“ deaktivieren).'; return; }
   trEmpty.style.display='none';
   const opts=card.options.map((t,i)=>({text:t,correct:i===card.correct_index}));
   const wrap=document.createElement('div'); wrap.className='card';
@@ -691,13 +692,15 @@ function showResult(session){
   modal.classList.add('show');
 }
 
-/* ====== Fortschritt (lokal + pro Kategorie, inkl. Zurücksetzen pro Kategorie) ====== */
+/* ====== Fortschritt (lokal + pro Kategorie) ====== */
 function bumpProgress(seenDelta, correctDelta){
   const p = JSON.parse(localStorage.getItem('progress_local') || '{"seen":0,"correct":0}');
   p.seen += seenDelta; p.correct += correctDelta;
   localStorage.setItem('progress_local', JSON.stringify(p));
   renderProgress();
 }
+
+// Helfer
 function pct(n,d){ return d? Math.round((n/d)*100):0; }
 function barClass(p){ if(p>=80) return 'ok'; if(p>=50) return 'mid'; return 'low'; }
 
@@ -726,7 +729,7 @@ async function computeCategoryStats(){
     if(r.correct) row.correct++;
   });
 
-  const rows = Object.values(byCat).sort((a,b)=> a.cat.localeCompare(b.cat,'de'));
+  const rows = Object.values(byCat).sort((a,b)=> a.cat.localeCompare(b.cat,'de',{numeric:true}));
   return { user, rows };
 }
 
@@ -747,11 +750,10 @@ async function renderProgress(){
     const a = pct(r.correct, r.seen);
     const cov = pct(r.seen, r.totalQuestions);
     const cls = barClass(a);
-    const safeCat = r.cat.replace(/"/g,'&quot;');
     return `
       <div class="progress-row">
         <div class="progress-meta">
-          <div><b>${safeCat}</b> <button class="btn" data-reset-cat="${safeCat}" style="margin-left:8px;padding:2px 8px">Zurücksetzen</button></div>
+          <div><b>${r.cat}</b></div>
           <div class="muted" style="font-size:12px">
             Gesehen: ${r.seen}/${r.totalQuestions} • Quote: ${a}% • Abdeckung: ${cov}%
           </div>
@@ -762,30 +764,31 @@ async function renderProgress(){
         <div class="progress-pill">${a}%</div>
       </div>`;
   }).join('');
-
-  // Zurücksetzen je Kategorie
-  list.querySelectorAll('button[data-reset-cat]').forEach(btn=>{
-    btn.onclick = async ()=>{
-      const cat = btn.getAttribute('data-reset-cat');
-      const { data:{user} } = await supa.auth.getUser();
-      if(!user) return;
-      // Alle review-Einträge zu dieser Kategorie löschen
-      try{
-        const qs = await fetchQuestions();
-        const ids = qs.filter(q=>q.category===cat).map(q=>q.id);
-        if(!ids.length) return;
-        // Löschen batched (in kleinen Gruppen)
-        const chunkSize = 1000; // Sicherheit
-        for(let i=0;i<ids.length;i+=chunkSize){
-          const chunk = ids.slice(i,i+chunkSize);
-          await supa.from('reviews').delete().eq('user_id',user.id).in('question_id',chunk);
-        }
-      }catch(e){ console.warn(e); }
-      renderProgress();
-    };
-  });
 }
 document.getElementById('reset-progress').onclick=()=>{localStorage.removeItem('progress_local'); renderProgress();};
+
+/* Server-Fortschritt (User) je Kategorie löschen */
+async function fillResetCatSelect(){
+  const cats=await fetchCategories();
+  const sel=document.getElementById('reset-cat-select');
+  sel.innerHTML = '<option value="">Kategorie wählen…</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+}
+document.getElementById('reset-cat').onclick=async ()=>{
+  const sel=document.getElementById('reset-cat-select');
+  const cat=sel.value;
+  if(!cat) return alert('Bitte eine Kategorie wählen.');
+  const { data:{user} } = await supa.auth.getUser();
+  if(!user) return alert('Bitte einloggen.');
+  // hole alle Fragen der Kategorie
+  const qs = await supa.from('questions').select('id,category').eq('category', cat);
+  const ids = (qs.data||[]).map(q=>q.id);
+  if(!ids.length) return alert('Keine Fragen in dieser Kategorie.');
+  if(!confirm(`Deine gespeicherten Antworten in "${cat}" wirklich löschen?`)) return;
+  const { error } = await supa.from('reviews').delete().eq('user_id', user.id).in('question_id', ids);
+  if(error){ alert('Fehler beim Löschen: '+error.message); return; }
+  alert('Kategorie-Fortschritt gelöscht.');
+  renderProgress();
+};
 
 /* ====== Admin ====== */
 const adminList=document.getElementById('admin-list');
@@ -832,7 +835,7 @@ document.getElementById('admin-import').onchange=async(e)=>{
     if(error){ errCount++; console.warn('Fehler',item.id,error.message); } else okCount++;
   }
   alert(`Import fertig. Erfolgreich: ${okCount} • Fehler: ${errCount}`);
-  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await showEmptyHints(); await fillAdminCatSelect();
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await showEmptyHints(); await fillAdminCatSelect(); await fillResetCatSelect();
 };
 
 async function fillAdminCatSelect(){
@@ -845,44 +848,59 @@ document.getElementById('admin-cat-apply').onclick=async()=>{
   if(!oldVal || !newVal) return alert('Bitte alte Kategorie wählen und neue Kategorie eintragen.');
   const { error, count } = await supa.from('questions').update({category:newVal}).eq('category',oldVal).select('id',{count:'exact'});
   document.getElementById('admin-cat-state').textContent = error? ('Fehler: '+error.message) : (`Geändert: ${count||0}`);
-  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect();
+  await renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); await fillAdminCatSelect(); await fillResetCatSelect();
 };
 
 document.getElementById('admin-scan-dup').onclick=async()=>{
   const list=document.getElementById('admin-dup-list'); list.innerHTML='Suche…';
   const q=await fetchQuestions(); if(!q.length){ list.innerHTML='<div class="card muted">Keine Fragen.</div>'; return; }
-  const byText={};
+  const byText={}, byId={};
   for(const it of q){
     const key=(it.question||'').trim().toLowerCase();
     (byText[key] ||= []).push(it);
+    (byId[it.id] ||= []).push(it);
   }
-  const groups=Object.values(byText).filter(arr=>arr.length>1);
-  if(!groups.length){ list.innerHTML='<div class="card">Keine Duplikate per Fragentext gefunden.</div>'; return; }
-  list.innerHTML = groups.map(arr=>{
-    const head=arr[0].question.slice(0,120);
-    const rows=arr.map(x=>`<div class="row" style="justify-content:space-between;align-items:center"><div><span class="chip">${x.category}</span></div><div class="muted">${x.id}</div><button class="btn" data-del-q="${x.id}">Löschen</button></div>`).join('');
-    return `<div class="card"><div><b>${head}</b></div>${rows}</div>`;
-  }).join('');
-  // Delete-Buttons im Duplikat-Block
-  list.querySelectorAll('[data-del-q]').forEach(btn=>{
-    btn.onclick=async()=>{ const id=btn.getAttribute('data-del-q'); await supa.from('questions').delete().eq('id',id); document.getElementById('admin-scan-dup').click(); };
-  });
-};
+  const groupsTxt=Object.values(byText).filter(arr=>arr.length>1);
+  const groupsId =Object.values(byId).filter(arr=>arr.length>1);
+  if(!groupsTxt.length && !groupsId.length){ list.innerHTML='<div class="card">Keine Duplikate gefunden.</div>'; return; }
 
-document.getElementById('admin-save').onclick=async()=>{
-  const id='q_'+Math.random().toString(36).slice(2,10);
-  const categoryRaw=document.getElementById('ad-category').value.trim();
-  const category=normalizeCategory(categoryRaw);
-  const question=document.getElementById('ad-question').value.trim();
-  const lines=document.getElementById('ad-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  if(!category || !question || lines.length<2) return alert('Bitte Kategorie, Frage und mind. 2 Antworten angeben. Markiere die richtige mit *** am Anfang.');
-  const options=[], correctIndexRaw=lines.findIndex(l=>l.startsWith('***'));
-  lines.forEach(l=>options.push(l.replace(/^\*{3}\s?/,'')));
-  const correct_index = correctIndexRaw>=0 ? correctIndexRaw : 0;
-  const explanation=document.getElementById('ad-expl').value.trim();
-  const obj={id,category,question,options,correct_index,explanation};
-  const {error}=await supa.from('questions').upsert(obj,{onConflict:'id'});
-  if(error) alert(error.message); else { alert('Gespeichert.'); renderAdminList(); await refreshSelectors(); await refreshTrainSelectors(); await refreshExamCategories(); }
+  // Rendern mit Direkt-Löschen
+  const renderGroup = (title, groups) => `
+    <div class="card">
+      <b>${title}</b>
+      ${groups.map(arr=>{
+        const head=(arr[0].question||'').slice(0,120);
+        const rows=arr.map(x=>`<div class="row" style="justify-content:space-between;align-items:center">
+          <div><span class="chip">${x.category}</span> <span class="muted">${x.id}</span></div>
+          <button class="btn ghost btn-del-one" data-id="${x.id}">Löschen</button>
+        </div>`).join('');
+        return `<div class="card" style="margin-top:8px"><div><b>${head}</b></div>${rows}
+          <div class="row" style="justify-content:flex-end; margin-top:8px">
+            <button class="btn primary btn-del-all" data-ids="${arr.map(x=>x.id).join(',')}">Alle in dieser Gruppe löschen</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  list.innerHTML = (groupsId.length?renderGroup('Duplikate per ID',groupsId):'') + (groupsTxt.length?renderGroup('Duplikate per Fragentext',groupsTxt):'');
+
+  list.querySelectorAll('.btn-del-one').forEach(btn=>{
+    btn.onclick=async()=>{
+      const id=btn.getAttribute('data-id');
+      if(!confirm(`Frage ${id} wirklich löschen?`)) return;
+      const {error}=await supa.from('questions').delete().eq('id',id);
+      if(error) alert(error.message); else document.getElementById('admin-scan-dup').click();
+    };
+  });
+  list.querySelectorAll('.btn-del-all').forEach(btn=>{
+    btn.onclick=async()=>{
+      const ids=(btn.getAttribute('data-ids')||'').split(',').filter(Boolean);
+      if(!ids.length) return;
+      if(!confirm(`Alle ${ids.length} Fragen dieser Gruppe löschen?`)) return;
+      const {error}=await supa.from('questions').delete().in('id',ids);
+      if(error) alert(error.message); else document.getElementById('admin-scan-dup').click();
+    };
+  });
 };
 
 /* ====== Empty DB Hinweis ====== */
@@ -892,220 +910,7 @@ async function showEmptyHints(){
   if(!all.length){ hint.style.display='block'; hint.innerHTML='Noch keine Fragen in der Datenbank. Admin → Import nutzen.'; } else hint.style.display='none';
 }
 
-/* ====== Fachrechnen: Generator ====== */
-const calcType = document.getElementById('calc-type');
-const calcNew  = document.getElementById('calc-new');
-const calcCard = document.getElementById('calc-card');
-const calcEmpty= document.getElementById('calc-empty');
-const calcId   = document.getElementById('calc-id');
-const calcHint = document.getElementById('calc-hint');
-const calcQuestion=document.getElementById('calc-question');
-const calcAns  = document.getElementById('calc-answer');
-const btnSol   = document.getElementById('calc-solution');
-const btnNext  = document.getElementById('calc-next');
-const btnReset = document.getElementById('calc-reset');
-const solWrap  = document.getElementById('calc-solution-wrap');
-
-/* Notizen-UI */
-const noteArea  = document.getElementById('note-area');
-const noteSave  = document.getElementById('note-save');
-const noteClear = document.getElementById('note-clear');
-const noteState = document.getElementById('note-state');
-
-let currentTask = null;
-
-function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-function idStamp(prefix){ const d = new Date(); return `${prefix}-${d.getFullYear().toString().slice(-2)}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${rnd(10,99)}-${rnd(10,99)}`;}
-
-function genTask(type){
-  switch(type){
-    case 'p_sconto':{
-      const listenpreis = rnd(200,1200);
-      const skonto = [2,3][rnd(0,1)];
-      const ziel   = [10,14,30][rnd(0,2)];
-      const bezug  = rnd(50,150);
-      const nettopreis = listenpreis - bezug;
-      const bareinkauf = +(nettopreis*(1-skonto/100)).toFixed(2);
-      return {
-        id:idStamp('SK'),
-        hint:`SK-${String(listenpreis).slice(0,2)}${skonto}-${ziel}-${rnd(1,9)}`,
-        q:`Kalkuliere den Bareinkaufspreis: Listenpreis ${listenpreis} €, Skonto ${skonto} % (Ziel ${ziel} Tage), Bezugskosten ${bezug} €.`,
-        a: bareinkauf,
-        steps:[
-          `Nettopreis = Listenpreis − Bezugskosten = ${listenpreis} − ${bezug} = ${nettopreis} €`,
-          `Bareinkaufspreis = Nettopreis × (1 − Skonto) = ${nettopreis} × (1 − ${skonto}/100) = ${bareinkauf} €`
-        ]
-      };
-    }
-    case 'p_rabatt':{
-      const ziel   = rnd(60,150);
-      const zusch  = rnd(5,25);
-      const bezug  = rnd(10,80);
-      const einkauf= ziel+bezug;
-      const liste  = +(einkauf*(1+zusch/100)).toFixed(2);
-      return {
-        id:idStamp('RB'),
-        hint:`RB-${ziel}-${zusch}-${bezug}`,
-        q:`Gesucht: Listenpreis bei Zielpreis ${ziel} €, Zuschlag ${zusch} %, Bezugskosten ${bezug} €. (netto)`,
-        a: liste,
-        steps:[`Bareinkaufspreis = Ziel + Bezug = ${ziel} + ${bezug} = ${einkauf} €`,
-               `Listenpreis = Bareinkaufspreis × (1 + ${zusch}/100) = ${einkauf} × ${1+zusch/100} = ${liste} €`]
-      };
-    }
-    case 'p_abweich':{
-      const soll=rnd(800,1500), ist=rnd(600,1700);
-      const diff=ist-soll, quote = +Math.abs(diff/soll*100).toFixed(2);
-      return { id:idStamp('AB'), hint:`AB-${soll}-${ist}`,
-        q:`Bestandsabweichung: Soll ${soll} Stk, Ist ${ist} Stk. Wie groß ist die prozentuale Abweichung?`,
-        a: quote,
-        steps:[`Differenz = Ist − Soll = ${ist} − ${soll} = ${diff}`,
-               `Quote = |Differenz|/Soll × 100 = ${Math.abs(diff)}/${soll} × 100 ≈ ${quote} %`]
-      };
-    }
-    case 'd_pro':{
-      const m=rnd(3,9), z=rnd(30,90), m2=m*rnd(2,4);
-      const t = Math.round(z*m/m2);
-      return { id:idStamp('DP'), hint:`DP-${m}-${z}-${m2}`,
-        q:`Proportionaler Dreisatz: ${m} MA brauchen ${z} Std. Wie lange brauchen ${m2} MA (gleiche Arbeit)?`,
-        a: t,
-        steps:[`Proportional: mehr MA → weniger Zeit.`,
-               `Gesamtstunden = ${m}×${z} = ${m*z}`,
-               `Zeit_neu = Gesamtstunden / ${m2} = ${(m*z)}/${m2} = ${t} Std.`] };
-    }
-    case 'd_anti':{
-      const m=rnd(4,8), h=rnd(8,20), m2=rnd(6,14);
-      const t = Math.round(m*h/m2);
-      return { id:idStamp('DA'), hint:`DA-${m}-${h}-${m2}`,
-        q:`Antiproportional: ${m} MA benötigen ${h} Std. Wie lange dauern gleiche Arbeiten bei ${m2} MA?`,
-        a: t,
-        steps:[`Antiproportional: mehr MA → weniger Zeit.`,
-               `Leistung = ${m}×${h} Mannstunden`,
-               `Zeit = Leistung / ${m2} = ${(m*h)}/${m2} ≈ ${t} Std.`] };
-    }
-    case 'b_umrech':{
-      const kartons=rnd(8,24), jeKarton=rnd(6,20), teil=rnd(2,5);
-      const ges = kartons*jeKarton, proTeil=Math.floor(ges/teil);
-      return { id:idStamp('BR'), hint:`BR-${kartons}-${jeKarton}-${teil}`,
-        q:`Es sind ${kartons} Kartons à ${jeKarton} Stück vorhanden. Wie viele Stück erhält jede ${teil}‑Teilung?`,
-        a: proTeil,
-        steps:[`Gesamt = ${kartons}×${jeKarton} = ${ges} St.`,
-               `Pro Teil = Gesamt / ${teil} = ${ges}/${teil} = ${proTeil} St.`] };
-    }
-    case 'k_bezug':{
-      const list=rnd(500,1500), rabatt=rnd(5,20), skonto=[2,3][rnd(0,1)], bezug=rnd(20,90);
-      const ziel= +(list*(1-rabatt/100)).toFixed(2);
-      const bare= +(ziel*(1-skonto/100)).toFixed(2);
-      const bezugspreis= +(bare+bezug).toFixed(2);
-      return { id:idStamp('BZ'), hint:`BZ-${list}-${rabatt}-${skonto}-${bezug}`,
-        q:`Bezugspreis aus Listenpreis ${list} €, Rabatt ${rabatt} %, Skonto ${skonto} %, Bezugskosten ${bezug} €`,
-        a: bezugspreis,
-        steps:[`Zielpreis = ${list}×(1−${rabatt}/100) = ${ziel} €`,
-               `Bareinkaufspreis = ${ziel}×(1−${skonto}/100) = ${bare} €`,
-               `Bezugspreis = Bareinkaufspreis + Bezugskosten = ${bare} + ${bezug} = ${bezugspreis} €`] };
-    }
-    case 'k_lager':{
-      const start=rnd(200,800), ende=rnd(200,800), zug=rnd(100,400), ab=rnd(80,420), satz=rnd(8,18)/100;
-      const dB= +( (start+ende)/2 ).toFixed(2); const oB= +((start+ende+zug-ab)/2).toFixed(2);
-      const kosten = +(oB*satz*12).toFixed(2);
-      return { id:idStamp('LG'), hint:`LG-${start}-${ende}-${zug}-${ab}-${Math.round(satz*100)}%`,
-        q:`Ø‑Bestand bei Start ${start}, Ende ${ende}, Zugänge ${zug}, Abgänge ${ab}. Satz ${Math.round(satz*100)} % p.a. – jährliche Lagerkosten?`,
-        a: kosten,
-        steps:[`Durchschnittsbestand (vereinfacht) ≈ (Start+Ende+Zugänge−Abgänge)/2 = (${start}+${ende}+${zug}−${ab})/2 = ${oB}`,
-               `Kosten = Ø‑Bestand × Satz × 12 = ${oB} × ${satz} × 12 = ${kosten} €`] };
-    }
-    case 'k_trans':{
-      const dist=rnd(40,380), preis=rnd(60,120)/10;
-      const kosten= +(dist*preis).toFixed(2);
-      return { id:idStamp('TR'), hint:`TR-${dist}-${preis}`,
-        q:`Transportkosten: Distanz ${dist} km, Preis ${preis} €/km. Gesamtkosten?`,
-        a: kosten,
-        steps:[`Kosten = Distanz × Preis = ${dist} × ${preis} = ${kosten} €`] };
-    }
-    case 'a_andler':{
-      const kBest=rnd(50,200), bedarf=rnd(3000,12000), kLager=rnd(8,16)/100;
-      const q = Math.round(Math.sqrt((2*bedarf*kBest)/(kLager)));
-      return { id:idStamp('EOQ'), hint:`EOQ-${kBest}-${bedarf}-${Math.round(kLager*100)}%`,
-        q:`Andler‑Formel: Bestellkosten ${kBest} €/Bestellung, Jahresbedarf ${bedarf}, Lagerkostensatz ${Math.round(kLager*100)} %. Optimale Bestellmenge?`,
-        a: q,
-        steps:[`Q* = √(2×B×K_b / k_l) = √(2×${bedarf}×${kBest} / ${kLager}) ≈ ${q}`] };
-    }
-    case 'a_melde':{
-      const verb=rnd(20,60), zeit=rnd(3,10), sicher=rnd(50,200);
-      const meld = verb*zeit + sicher;
-      return { id:idStamp('MB'), hint:`MB-${verb}-${zeit}-${sicher}`,
-        q:`Meldebestand bei Verbrauch ${verb}/Tag, Wiederbeschaffungszeit ${zeit} Tage, Sicherheitsbestand ${sicher}.`,
-        a: meld,
-        steps:[`MB = Verbrauch×Zeit + Sicherheitsbestand = ${verb}×${zeit} + ${sicher} = ${meld}`] };
-    }
-    case 'a_sicher':{
-      const max=rnd(60,120), mitt=rnd(20,60);
-      const ss = (max-mitt)*2; // simple
-      return { id:idStamp('SB'), hint:`SB-${max}-${mitt}`,
-        q:`Vereinfachter Sicherheitsbestand: Max. Tagesverbrauch ${max}, mittlerer ${mitt}.`,
-        a: ss,
-        steps:[`Sicherheitsbestand (vereinfachte Näherung) = (Max − Mittel) × 2 = (${max}−${mitt})×2 = ${ss}`] };
-    }
-    case 'a_reichw':{
-      const bestand=rnd(300,1200), verb=rnd(20,60);
-      const t = Math.floor(bestand/verb);
-      return { id:idStamp('RW'), hint:`RW-${bestand}-${verb}`,
-        q:`Lagerreichweite bei Bestand ${bestand} Stück und Verbrauch ${verb} Stück/Tag?`,
-        a: t,
-        steps:[`Reichweite = Bestand / Verbrauch = ${bestand}/${verb} = ${t} Tage`] };
-    }
-    case 'a_umsch':{
-      const ab=rnd(3000,8000), dB=rnd(400,1600);
-      const u = +(ab/dB).toFixed(2);
-      return { id:idStamp('US'), hint:`US-${ab}-${dB}`,
-        q:`Umschlagshäufigkeit bei Jahresabgang ${ab} und Ø‑Bestand ${dB}?`,
-        a: u,
-        steps:[`UH = Abgang / Ø‑Bestand = ${ab}/${dB} = ${u}`] };
-    }
-    case 'cap_regal':{
-      const felder=rnd(10,30), ebenen=rnd(2,6), pltz=rnd(1,3);
-      const sum = felder*ebenen*pltz;
-      return { id:idStamp('RG'), hint:`RG-${felder}-${ebenen}-${pltz}`,
-        q:`Regal mit ${felder} Feldern, ${ebenen} Ebenen, je ${pltz} Palettenplätze. Wie viele Plätze gesamt?`,
-        a: sum,
-        steps:[`Gesamt = Felder×Ebenen×Pl./Feld = ${felder}×${ebenen}×${pltz} = ${sum}`] };
-    }
-    case 'cap_karton':{
-      const lagen=rnd(3,8), jeLage=rnd(6,20);
-      const pro = lagen*jeLage;
-      return { id:idStamp('PK'), hint:`PK-${lagen}-${jeLage}`,
-        q:`Palettenbelegung: ${lagen} Lagen mit je ${jeLage} Kartons. Anzahl Kartons/Palette?`,
-        a: pro,
-        steps:[`Pro Palette = Lagen × je Lage = ${lagen}×${jeLage} = ${pro}`] };
-    }
-    default: return null;
-  }
-}
-
-function showTask(t){
-  currentTask = t;
-  calcId.textContent = t.id;
-  calcHint.textContent = t.hint;
-  calcQuestion.textContent = t.q;
-  calcAns.value = '';
-  solWrap.style.display='none'; solWrap.innerHTML = '';
-  calcEmpty.style.display='none';
-  calcCard.style.display='block';
-
-  // Notizen laden (per Aufgabenkürzel)
-  const key = 'note_'+t.id;
-  const note = localStorage.getItem(key) || '';
-  noteArea.value = note;
-  noteState.textContent = note ? 'Notizen geladen.' : 'Keine Notizen gespeichert.';
-  noteSave.onclick = ()=>{ localStorage.setItem(key, noteArea.value); noteState.textContent='Notizen gespeichert.'; };
-  noteClear.onclick = ()=>{ localStorage.removeItem(key); noteArea.value=''; noteState.textContent='Notizen gelöscht.'; };
-}
-
-calcNew.onclick=()=>{ const t = genTask(calcType.value); if(t) showTask(t); };
-btnSol.onclick=()=>{ if(!currentTask) return; solWrap.innerHTML = currentTask.steps.map(s=>`<div>• ${s}</div>`).join(''); solWrap.style.display='block'; };
-btnNext.onclick=()=>{ calcNew.click(); };
-btnReset.onclick=()=>{ calcCard.style.display='none'; calcEmpty.style.display='block'; currentTask=null; };
-
-/* ====== PDF ====== */
+/* ====== PDF (ausführlich, mit Logo auf Seite 1) ====== */
 async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -1161,6 +966,259 @@ async function generateExamPDF({ session, userEmail, logoUrlOrDataUri=null }) {
   const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   doc.save(`pruefungsbericht_${stamp}.pdf`);
 }
+
+/* ====== Fachrechnen – Generatoren & Prüfung ====== */
+const calcType = document.getElementById('calc-type');
+const calcQ   = document.getElementById('calc-question');
+const calcAns = document.getElementById('calc-answer');
+const btnNew  = document.getElementById('calc-new');
+const btnSol  = document.getElementById('calc-solution');
+const btnNext = document.getElementById('calc-next');
+const btnReset= document.getElementById('calc-reset');
+const btnCheck= document.getElementById('calc-check');
+const calcSolBox = document.getElementById('calc-solution-box');
+const calcFeedback = document.getElementById('calc-feedback');
+
+// Notes
+const notesArea = document.getElementById('calc-notes');
+const notesSave = document.getElementById('calc-notes-save');
+const notesClear= document.getElementById('calc-notes-clear');
+const notesState= document.getElementById('calc-notes-state');
+
+let currentTask=null;
+
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function rndFloat(min,max,dec=2){ const v = Math.random()*(max-min)+min; return Math.round(v*10**dec)/10**dec; }
+
+function fmt(v){
+  if (!isFinite(v)) return '—';
+  if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+  return (Math.round(v * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/** Parser & Prüfer */
+function parseNumber(raw){
+  if(!raw) return NaN;
+  let s = String(raw).trim();
+
+  // Prozent
+  const isPct = /%$/.test(s.replace(/\s+/g,''));
+  s = s.replace(/\s+/g,'').replace(/%$/,'');
+
+  // Einheiten am Ende entfernen (€, Stk, kg, m, h, usw.)
+  s = s.replace(/[€A-Za-zÄÖÜäöüß\.]*$/,'');
+
+  // Bruch?
+  if (/^\s*-?\d+\s*\/\s*\d+\s*$/.test(s)){
+    const [a,b] = s.split('/').map(x=>Number(x.replace(',', '.')));
+    if(b===0) return NaN;
+    return a/b * (isPct?0.01:1);
+  }
+
+  // deutsch 1.234,56 → 1234.56
+  if (/^\d{1,3}(\.\d{3})*,\d+$/.test(s) || /^\d+,\d+$/.test(s)) {
+    s = s.replace(/\./g,'').replace(',', '.');
+  } else {
+    // international 1,234.56 → 1234.56
+    if (/^\d{1,3}(,\d{3})+\.\d+$/.test(s)) s = s.replace(/,/g,'');
+    // reine Ganzzahlen mit Trennern
+    if (/^\d{1,3}([.,]\d{3})+$/.test(s)) s = s.replace(/[.,]/g,'');
+  }
+
+  let val = Number(s);
+  if (Number.isNaN(val)) return NaN;
+  if (isPct) val = val * 0.01;
+  return val;
+}
+function nearlyEqual(userVal, targetVal){
+  if (!isFinite(userVal) || !isFinite(targetVal)) return false;
+  const absTol = 0.01;
+  const relTol = 0.01 * Math.max(1, Math.abs(targetVal)); // 1% oder min 1
+  const tol = Math.max(absTol, relTol);
+  return Math.abs(userVal - targetVal) <= tol;
+}
+function evaluateAnswer(){
+  if(!currentTask) return;
+  const userRaw = calcAns.value;
+  const userVal = parseNumber(userRaw);
+  const target  = Number(currentTask.a);
+  if(Number.isNaN(userVal)){
+    calcFeedback.textContent = 'Bitte eine Zahl eingeben (z. B. 1.234,56, 3/4 oder 12 %).';
+    calcFeedback.className = 'calc-bad';
+    calcAns.classList.remove('valid'); calcAns.classList.add('invalid');
+    return;
+  }
+  const ok = nearlyEqual(userVal, target);
+  if(ok){
+    calcFeedback.innerHTML = `✅ Richtig! Erwartet: <b>${fmt(target)}</b>`;
+    calcFeedback.className = 'calc-ok';
+    calcAns.classList.remove('invalid'); calcAns.classList.add('valid');
+  }else{
+    calcFeedback.innerHTML = `❌ Falsch. Erwartet ca.: <b>${fmt(target)}</b>`;
+    calcFeedback.className = 'calc-bad';
+    calcAns.classList.remove('valid'); calcAns.classList.add('invalid');
+  }
+}
+
+/* Aufgabengeneratoren */
+function genPercent(){
+  const price = rnd(50,400);
+  const pct = [2,3,5,10,12,15,20][rnd(0,6)];
+  const type = ['Rabatt','Skonto','Bestandsabweichung'][rnd(0,2)];
+  const delta = Math.round(price * pct)/100;
+  const answer = price * (1 - pct/100);
+  const text = (type==='Bestandsabweichung')
+    ? `Inventur: Soll-Bestand ${price} Stück, Abweichung ${pct}% nach unten. Wie hoch ist der Ist‑Bestand?`
+    : `${type} von ${pct}% auf ${price} € Einkaufswert. Neuer Preis?`;
+  const steps = [
+    `Ausgangswert: ${fmt(price)}${type==='Bestandsabweichung'?' Stk':' €'}`,
+    `${pct}% von ${fmt(price)} = ${fmt(price*pct/100)}${type==='Bestandsabweichung'?' Stk':' €'}`,
+    `Neuer Wert = ${fmt(price)} − ${fmt(price*pct/100)} = ${fmt(answer)}${type==='Bestandsabweichung'?' Stk':' €'}`
+  ];
+  return { q:text, a:Math.round(answer*100)/100, steps };
+}
+function genRule3(){
+  // proportional: 5 MA brauchen 2 h -> 10 MA brauchen ? h
+  const ma = rnd(3,9);
+  const h  = rnd(1,4);
+  const ma2= rnd(2,12);
+  const text = `${ma} Mitarbeiter brauchen ${h} Stunden für einen Auftrag. Wie lange brauchen ${ma2} Mitarbeiter (proportional)?`;
+  const a = h * ma / ma2;
+  const steps = [
+    `Leistung ∝ Mitarbeiterzahl`,
+    `Zeit ~ 1/Mitarbeiter: t2 = t1 × (MA1 / MA2)`,
+    `t2 = ${h} × (${ma} / ${ma2}) = ${fmt(a)} Stunden`
+  ];
+  return { q:text, a:Math.round(a*100)/100, steps };
+}
+function genRule3Anti(){
+  // anti-proportional: 3 Stapler brauchen 6 h -> 2 Stapler brauchen ? h
+  const st = rnd(2,6);
+  const h  = rnd(3,7);
+  const st2= rnd(1,5);
+  const text = `${st} Stapler benötigen ${h} Stunden. Wie lange benötigen ${st2} Stapler (antiproportional)?`;
+  const a = h * st / st2;
+  const steps = [
+    `Antiproportional: weniger Stapler ⇒ mehr Zeit`,
+    `t2 = t1 × (St1 / St2)`,
+    `t2 = ${h} × (${st} / ${st2}) = ${fmt(a)} Stunden`
+  ];
+  return { q:text, a:Math.round(a*100)/100, steps };
+}
+function genFraction(){
+  // Palettenhälften / Kartons → Umrechnung
+  const karton = rnd(8,24);
+  const br = [[1,2],[3,4],[2,3]][rnd(0,2)];
+  const text = `Von ${karton} Kartons werden ${br[0]}/${br[1]} entnommen. Wieviele Kartons bleiben übrig?`;
+  const taken = karton*br[0]/br[1];
+  const a = karton - taken;
+  const steps = [
+    `Entnommen: ${br[0]}/${br[1]} von ${karton} = ${fmt(taken)}`,
+    `Rest: ${karton} − ${fmt(taken)} = ${fmt(a)} Kartons`
+  ];
+  return { q:text, a:Math.round(a*100)/100, steps };
+}
+function genAndler(){
+  // C_opt = sqrt((2*B*Kb)/(Kp)) (vereinfacht ohne Zins)
+  const B = rnd(500,5000); // Jahresbedarf
+  const Kb= rnd(15,120);   // Bestellkosten
+  const Kp= rnd(1,20);     // Lagerkosten je Stück/Jahr
+  const a = Math.sqrt((2*B*Kb)/Kp);
+  const text = `Andler-Formel: Jahresbedarf B=${B} Stück, Bestellkosten Kb=${Kb} €, Lagerkosten je Stück/Jahr Kp=${Kp} €. Optimale Bestellmenge?`;
+  const steps = [
+    `Formel: C* = √(2·B·Kb / Kp)`,
+    `= √(2·${B}·${Kb} / ${Kp})`,
+    `= √(${2*B*Kb} / ${Kp}) = ${fmt(a)} Stück`
+  ];
+  return { q:text, a:Math.round(a*100)/100, steps };
+}
+function genTurnover(){
+  const avgStock = rnd(10000,80000);
+  const cons = rnd(20000,120000);
+  const a = cons / avgStock;
+  const text = `Umschlagshäufigkeit: Jahresverbrauch = ${cons} €, durchschnittlicher Lagerbestand = ${avgStock} €. Wie hoch ist die Umschlagshäufigkeit?`;
+  const steps = [
+    `UH = Verbrauch / durchschnittlicher Lagerbestand`,
+    `= ${cons} / ${avgStock} = ${fmt(a)}`
+  ];
+  return { q:text, a:Math.round(a*100)/100, steps };
+}
+function genCoverage(){
+  const stock = rnd(500,5000);
+  const daily = rnd(10,150);
+  const a = stock / daily; // Tage
+  const text = `Lagerreichweite: Bestand ${stock} Stück, täglicher Verbrauch ${daily} Stück. Reichweite in Tagen?`;
+  const steps = [
+    `Reichweite (Tage) = Bestand / Tagesverbrauch`,
+    `= ${stock} / ${daily} = ${fmt(a)} Tage`
+  ];
+  return { q:text, a:Math.round(a*100)/100, steps };
+}
+
+function newTask(){
+  const t = calcType.value;
+  let obj;
+  if(t==='percent') obj = genPercent();
+  else if(t==='rule3') obj = genRule3();
+  else if(t==='rule3anti') obj = genRule3Anti();
+  else if(t==='fraction') obj = genFraction();
+  else if(t==='andler') obj = genAndler();
+  else if(t==='turnover') obj = genTurnover();
+  else obj = genCoverage();
+  currentTask = obj;
+  showTask(obj);
+}
+function showTask(t){
+  calcQ.textContent = t.q;
+  calcAns.value = '';
+  calcSolBox.style.display='none';
+  calcSolBox.innerHTML='';
+  calcFeedback.textContent=' ';
+  calcFeedback.className='muted';
+  calcAns.classList.remove('valid','invalid');
+  calcAns.focus();
+
+  // Enter → prüfen
+  calcAns.onkeydown = (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); evaluateAnswer(); }
+  };
+
+  // Notizen laden (pro Aufgaben-Hash)
+  const key = 'notes_'+hashTask(t.q);
+  notesArea.value = localStorage.getItem(key) || '';
+  notesState.textContent = notesArea.value ? 'Notizen geladen.' : '';
+}
+function hashTask(s){
+  let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return 't'+Math.abs(h);
+}
+
+btnNew.onclick = newTask;
+btnNext.onclick = newTask;
+btnReset.onclick= ()=>{
+  calcAns.value=''; calcSolBox.style.display='none'; calcSolBox.innerHTML=''; calcFeedback.textContent=' ';
+  calcFeedback.className='muted'; calcAns.classList.remove('valid','invalid'); calcAns.focus();
+};
+btnSol.onclick = ()=>{
+  if(!currentTask) return;
+  calcSolBox.innerHTML = currentTask.steps.map(s=>`<div>• ${s}</div>`).join('');
+  calcSolBox.style.display='block';
+};
+btnCheck.onclick = evaluateAnswer;
+
+/* Notes speichern/löschen */
+notesSave.onclick = ()=>{
+  if(!currentTask) return;
+  const key = 'notes_'+hashTask(currentTask.q);
+  localStorage.setItem(key, notesArea.value||'');
+  notesState.textContent = 'Notizen gespeichert.';
+};
+notesClear.onclick = ()=>{
+  if(!currentTask) return;
+  const key = 'notes_'+hashTask(currentTask.q);
+  localStorage.removeItem(key);
+  notesArea.value='';
+  notesState.textContent = 'Notizen gelöscht.';
+};
 
 /* ====== Boot ====== */
 window.addEventListener('DOMContentLoaded', initClient);
