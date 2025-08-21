@@ -89,13 +89,9 @@
     .sim-wrap{display:grid;gap:12px}
     .sim-header{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
     .sim-area{display:grid;grid-template-columns:1fr;gap:12px}
-    @media (min-width: 900px){
-      .sim-area{grid-template-columns:1.15fr .85fr}
-    }
     .sim-pool,.sim-queue{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:10px}
     .sim-title{font-weight:700;margin-bottom:6px}
-    .step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.03);cursor:pointer;transition:transform .06s ease, box-shadow .06s ease, background .2s ease}
-    .step:hover{box-shadow:0 4px 16px rgba(0,0,0,.25);background:rgba(255,255,255,.06)}
+    .step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.03);cursor:pointer}
     .step[disabled]{opacity:.55;cursor:not-allowed}
     .step.correct{outline:2px solid var(--ok);background:rgba(34,197,94,.12)}
     .step.wrong{outline:2px solid var(--low);background:rgba(239,68,68,.12)}
@@ -103,12 +99,6 @@
     .badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.04)}
     .score{font-weight:800}
     .hint{font-size:12px;color:var(--muted)}
-
-    /* Lesbarkeit+-Zoom */
-    body.sim-zoom{font-size:18px}
-    body.sim-zoom .step{padding:14px}
-    body.sim-zoom .queue-chip{padding:8px 12px}
-    body.sim-zoom .badge{font-size:13px}
   </style>
 </head>
 <body>
@@ -285,7 +275,7 @@
               <option value="percent">Prozentrechnen (Rabatt/Skonto/Bestand)</option>
               <option value="rule3">Dreisatz (proportional)</option>
               <option value="rule3anti">Dreisatz (antiproportional)</option>
-              <option value="fraction">Bruch/Umrechnen</option>
+              <option value="fraction">Bruchrechnen (vollständig)</option>
               <option value="andler">Optimale Bestellmenge (Andler)</option>
               <option value="turnover">Umschlagshäufigkeit</option>
               <option value="coverage">Lagerreichweite</option>
@@ -298,7 +288,7 @@
           <div id="calc-question" style="font-weight:700; margin-bottom:8px">—</div>
 
           <div class="row calc-actions" style="margin-top:8px">
-            <input id="calc-answer" placeholder="Deine Lösung (z. B. 1.234,56 / 3/4 / 12 %)" />
+            <input id="calc-answer" placeholder="Deine Lösung (z. B. 1.234,56 / 3/4 / 1 3/4 / 12 %)" />
             <button id="calc-check" class="btn primary">Prüfen</button>
             <span id="calc-feedback" class="muted"> </span>
             <button id="calc-solution" class="btn">Lösungsschritte</button>
@@ -334,7 +324,6 @@
           <div class="row">
             <select id="sim-sel"></select>
             <button id="sim-start" class="btn primary">Start</button>
-            <button id="sim-zoom" class="btn">Lesbarkeit +</button>
             <span class="badge">💙 <span id="sim-lives">3</span> Leben</span>
             <span class="badge">🏁 <span id="sim-progress">0/0</span></span>
             <span class="badge">⭐ <span id="sim-score">0</span> Punkte</span>
@@ -594,7 +583,7 @@ async function loadFlashcards(){
 
 /* ====== Adaptives Training ====== */
 const trCategory=document.getElementById('train-category'), trWeak=document.getElementById('train-weak'), trHideLearned=document.getElementById('train-hide-learned');
-const trNext=document.getElementById('train-next'), trArea=document.getElementById('train-area'), trEmpty=document.getElementById('train-empty');
+const trNext=document.getElementById('train-next'), trArea=document.getElementById('train-area'), trEmpty=document.getElementById('train-empty']);
 
 async function refreshTrainSelectors(){ const cats=await fetchCategories(); trCategory.innerHTML='<option value="">Alle Kategorien</option>'+cats.map(c=>`<option>${c}</option>`).join(''); }
 async function getUser(){ try{ const {data:{user}}=await supa.auth.getUser(); return user||null; }catch{return null;} }
@@ -1063,24 +1052,43 @@ function fmt(v){
   return (Math.round(v * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-/** Parser & Prüfer */
+/** Parser & Prüfer (erweitert: gemischte Zahlen & %) */
 function parseNumber(raw){
   if(!raw) return NaN;
   let s = String(raw).trim();
 
-  // Prozent
+  // Prozent?
   const isPct = /%$/.test(s.replace(/\s+/g,''));
-  s = s.replace(/\s+/g,'').replace(/%$/,'');
+  s = s.replace(/\s+/g,' ').trim();
 
-  // Einheiten am Ende entfernen (€, Stk, kg, m, h, usw.)
-  s = s.replace(/[€A-Za-zÄÖÜäöüß\.]*$/,'');
+  // Einheiten am Ende (€, Stk, kg, m, h, …) entfernen
+  s = s.replace(/\s*[€A-Za-zÄÖÜäöüß\.]+$/,'');
 
-  // Bruch?
-  if (/^\s*-?\d+\s*\/\s*\d+\s*$/.test(s)){
-    const [a,b] = s.split('/').map(x=>Number(x.replace(',', '.')));
-    if(b===0) return NaN;
-    return a/b * (isPct?0.01:1);
+  // gemischte Zahl? "a b/c" oder "-a b/c"
+  const mixed = s.match(/^\s*([+-]?\d+)\s+(\d+)\s*\/\s*(\d+)\s*$/);
+  if(mixed){
+    const sign = Math.sign(parseInt(mixed[1],10));
+    const A = parseInt(mixed[1],10);
+    const b = parseInt(mixed[2],10);
+    const c = parseInt(mixed[3],10);
+    if(c===0) return NaN;
+    let val = Math.abs(A) + b/c;
+    val = sign<0 ? -val : val;
+    return isPct ? val*0.01 : val;
   }
+
+  // reiner Bruch? "a/b" oder "-a/b"
+  const frac = s.match(/^\s*([+-]?\d+)\s*\/\s*(\d+)\s*$/);
+  if(frac){
+    const a = parseInt(frac[1],10);
+    const b = parseInt(frac[2],10);
+    if(b===0) return NaN;
+    const val = a/b;
+    return isPct ? val*0.01 : val;
+  }
+
+  // Prozentzeichen entfernen
+  s = s.replace(/%$/,'').replace(/\s+/g,'');
 
   // deutsch 1.234,56 → 1234.56
   if (/^\d{1,3}(\.\d{3})*,\d+$/.test(s) || /^\d+,\d+$/.test(s)) {
@@ -1110,7 +1118,7 @@ function evaluateAnswer(){
   const userVal = parseNumber(userRaw);
   const target  = Number(currentTask.a);
   if(Number.isNaN(userVal)){
-    calcFeedback.textContent = 'Bitte eine Zahl eingeben (z. B. 1.234,56, 3/4 oder 12 %).';
+    calcFeedback.textContent = 'Bitte eine Zahl angeben (z. B. 1.234,56, 3/4, 1 3/4 oder 12 %).';
     calcFeedback.className = 'calc-bad';
     calcAns.classList.remove('valid'); calcAns.classList.add('invalid');
     return;
@@ -1127,13 +1135,12 @@ function evaluateAnswer(){
   }
 }
 
-/* Aufgabengeneratoren */
+/* ===== Aufgabengeneratoren ===== */
 function genPercent(){
   const price = rnd(50,400);
   const pct = [2,3,5,10,12,15,20][rnd(0,6)];
   const type = ['Rabatt','Skonto','Bestandsabweichung'][rnd(0,2)];
-  const delta = Math.round(price * pct)/100;
-  const answer = price * (1 - pct/100);
+  const answer = (type==='Bestandsabweichung') ? price * (1 - pct/100) : price * (1 - pct/100);
   const text = (type==='Bestandsabweichung')
     ? `Inventur: Soll-Bestand ${price} Stück, Abweichung ${pct}% nach unten. Wie hoch ist der Ist‑Bestand?`
     : `${type} von ${pct}% auf ${price} € Einkaufswert. Neuer Preis?`;
@@ -1152,8 +1159,8 @@ function genRule3(){
   const a = h * ma / ma2;
   const steps = [
     `Leistung ∝ Mitarbeiterzahl`,
-    `Zeit ~ 1/Mitarbeiter: t2 = t1 × (MA1 / MA2)`,
-    `t2 = ${h} × (${ma} / ${ma2}) = ${fmt(a)} Stunden`
+    `Zeit ~ 1/Mitarbeiter: t₂ = t₁ × (MA₁ / MA₂)`,
+    `t₂ = ${h} × (${ma} / ${ma2}) = ${fmt(a)} Stunden`
   ];
   return { q:text, a:Math.round(a*100)/100, steps };
 }
@@ -1165,27 +1172,131 @@ function genRule3Anti(){
   const a = h * st / st2;
   const steps = [
     `Antiproportional: weniger Stapler ⇒ mehr Zeit`,
-    `t2 = t1 × (St1 / St2)`,
-    `t2 = ${h} × (${st} / ${st2}) = ${fmt(a)} Stunden`
+    `t₂ = t₁ × (St₁ / St₂)`,
+    `t₂ = ${h} × (${st} / ${st2}) = ${fmt(a)} Stunden`
   ];
   return { q:text, a:Math.round(a*100)/100, steps };
 }
+
+/* === Bruch-Utils === */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
+function lcm(a,b){ return Math.abs(a*b)/gcd(a,b); }
+function simplify(n,d){ const g=gcd(n,d); return [n/g, d/g]; }
+function toFrac(x, tol=1e-10){
+  // Dezimal → Bruch (einfach): bis 3 Nachkommastellen
+  const s = Math.round(x*1000);
+  const n = s; const d = 1000;
+  return simplify(n,d);
+}
+
+/* Bruchgeneratoren – komplett */
 function genFraction(){
-  const karton = rnd(8,24);
-  const br = [[1,2],[3,4],[2,3]][rnd(0,2)];
-  const text = `Von ${karton} Kartons werden ${br[0]}/${br[1]} entnommen. Wieviele Kartons bleiben übrig?`;
-  const taken = karton*br[0]/br[1];
-  const a = karton - taken;
-  const steps = [
-    `Entnommen: ${br[0]}/${br[1]} von ${karton} = ${fmt(taken)}`,
-    `Rest: ${karton} − ${fmt(taken)} = ${fmt(a)} Kartons`
-  ];
-  return { q:text, a:Math.round(a*100)/100, steps };
+  const mode = ['simplify','toDecimal','toPercent','fromMixed','add','sub','mul','div'][rnd(0,7)];
+  switch(mode){
+    case 'simplify': {
+      // Bruch kürzen
+      const d= rnd(2,20), n=rnd(1,d-1)*rnd(2,5);
+      const g=gcd(n,d);
+      const [ns,ds]=simplify(n,d);
+      const text = `Kürze den Bruch vollständig: ${n}/${d}`;
+      const steps = [
+        `ggT(${n}, ${d}) = ${g}`,
+        `Zähler und Nenner durch ${g} teilen: ${n}:${g} = ${ns}, ${d}:${g} = ${ds}`,
+        `Ergebnis: ${ns}/${ds} (= ${fmt(ns/ds)})`
+      ];
+      return { q:text, a:ns/ds, steps };
+    }
+    case 'toDecimal': {
+      const den = rnd(3,20), num = rnd(1,den-1);
+      const [ns,ds]=simplify(num,den);
+      const text = `Wandle ${ns}/${ds} in eine Dezimalzahl um.`;
+      const steps = [
+        `Division: ${ns} ÷ ${ds}`,
+        `≈ ${fmt(ns/ds)}`
+      ];
+      return { q:text, a:ns/ds, steps };
+    }
+    case 'toPercent': {
+      const den = rnd(3,20), num = rnd(1,den-1);
+      const [ns,ds]=simplify(num,den);
+      const perc = (ns/ds)*100;
+      const text = `Wandle ${ns}/${ds} in Prozent um. (Ergebnis in % eingeben)`;
+      const steps = [
+        `${ns}/${ds} × 100 = ${fmt(perc)} %`
+      ];
+      // Zielwert als Dezimal (weil Eingabe "12 %" zu 0.12 geparst wird)
+      return { q:text, a:(perc/100), steps };
+    }
+    case 'fromMixed': {
+      const A=rnd(1,3), num=rnd(1,3), den=rnd(2,8);
+      const [ns,ds]=simplify(num,den);
+      const val = A + ns/ds;
+      const text = `Wandle die gemischte Zahl ${A} ${ns}/${ds} in eine Dezimalzahl um.`;
+      const steps = [
+        `${A} ${ns}/${ds} = ${A} + ${ns}/${ds}`,
+        `= ${fmt(A + ns/ds)}`
+      ];
+      return { q:text, a:val, steps };
+    }
+    case 'add': {
+      const a=rnd(1,7), b=rnd(2,9), c=rnd(1,7), d=rnd(2,9);
+      const L = lcm(b,d);
+      const s = a*(L/b) + c*(L/d);
+      const [ns,ds]=simplify(s,L);
+      const text = `Addiere die Brüche: ${a}/${b} + ${c}/${d}`;
+      const steps = [
+        `kgV(${b},${d}) = ${L}`,
+        `Erweitern: ${a}/${b} = ${a*(L/b)}/${L}, ${c}/${d} = ${c*(L/d)}/${L}`,
+        `Zähler addieren: ${(a*(L/b))} + ${(c*(L/d))} = ${s} → ${s}/${L}`,
+        `Kürzen: ${s}/${L} = ${ns}/${ds} (= ${fmt(ns/ds)})`
+      ];
+      return { q:text, a:ns/ds, steps };
+    }
+    case 'sub': {
+      const a=rnd(2,9), b=rnd(3,10), c=rnd(1,7), d=rnd(2,9);
+      const L = lcm(b,d);
+      const s = a*(L/b) - c*(L/d);
+      const [ns,ds]=simplify(s,L);
+      const text = `Subtrahiere die Brüche: ${a}/${b} − ${c}/${d}`;
+      const steps = [
+        `kgV(${b},${d}) = ${L}`,
+        `Erweitern: ${a}/${b} = ${a*(L/b)}/${L}, ${c}/${d} = ${c*(L/d)}/${L}`,
+        `Zähler subtrahieren: ${(a*(L/b))} − ${(c*(L/d))} = ${s} → ${s}/${L}`,
+        `Kürzen: ${s}/${L} = ${ns}/${ds} (= ${fmt(ns/ds)})`
+      ];
+      return { q:text, a:ns/ds, steps };
+    }
+    case 'mul': {
+      const a=rnd(1,7), b=rnd(2,9), c=rnd(1,7), d=rnd(2,9);
+      const n=a*c, den=b*d;
+      const [ns,ds]=simplify(n,den);
+      const text = `Multipliziere die Brüche: ${a}/${b} · ${c}/${d}`;
+      const steps = [
+        `Zähler·Zähler: ${a}·${c} = ${n}`,
+        `Nenner·Nenner: ${b}·${d} = ${den}`,
+        `Kürzen: ${n}/${den} = ${ns}/${ds} (= ${fmt(ns/ds)})`
+      ];
+      return { q:text, a:ns/ds, steps };
+    }
+    default: { // 'div'
+      const a=rnd(1,7), b=rnd(2,9), c=rnd(1,7), d=rnd(2,9);
+      const n=a*d, den=b*c;
+      const [ns,ds]=simplify(n,den);
+      const text = `Dividiere die Brüche: ${a}/${b} : ${c}/${d}`;
+      const steps = [
+        `Durch einen Bruch teilen = mit Kehrwert multiplizieren`,
+        `${a}/${b} · ${d}/${c} = ${a*d}/${b*c}`,
+        `Kürzen: ${a*d}/${b*c} = ${ns}/${ds} (= ${fmt(ns/ds)})`
+      ];
+      return { q:text, a:ns/ds, steps };
+    }
+  }
 }
 function genAndler(){
-  const B = rnd(500,5000);
-  const Kb= rnd(15,120);
-  const Kp= rnd(1,20);
+  // C* (vereinfachte Andler)
+  const B = rnd(500,5000); // Jahresbedarf
+  const Kb= rnd(15,120);   // Bestellkosten
+  const Kp= rnd(1,20);     // Lagerkosten je Stück/Jahr
   const a = Math.sqrt((2*B*Kb)/Kp);
   const text = `Andler-Formel: Jahresbedarf B=${B} Stück, Bestellkosten Kb=${Kb} €, Lagerkosten je Stück/Jahr Kp=${Kp} €. Optimale Bestellmenge?`;
   const steps = [
@@ -1209,7 +1320,7 @@ function genTurnover(){
 function genCoverage(){
   const stock = rnd(500,5000);
   const daily = rnd(10,150);
-  const a = stock / daily;
+  const a = stock / daily; // Tage
   const text = `Lagerreichweite: Bestand ${stock} Stück, täglicher Verbrauch ${daily} Stück. Reichweite in Tagen?`;
   const steps = [
     `Reichweite (Tage) = Bestand / Tagesverbrauch`,
@@ -1241,10 +1352,12 @@ function showTask(t){
   calcAns.classList.remove('valid','invalid');
   calcAns.focus();
 
+  // Enter → prüfen
   calcAns.onkeydown = (e)=>{
     if(e.key==='Enter'){ e.preventDefault(); evaluateAnswer(); }
   };
 
+  // Notizen laden (pro Aufgaben-Hash)
   const key = 'notes_'+hashTask(t.q);
   notesArea.value = localStorage.getItem(key) || '';
   notesState.textContent = notesArea.value ? 'Notizen geladen.' : '';
@@ -1294,7 +1407,6 @@ const btnSimStart= document.getElementById('sim-start');
 const btnSimUndo = document.getElementById('sim-undo');
 const btnSimReset= document.getElementById('sim-reset');
 const btnSimCheck= document.getElementById('sim-check');
-const btnSimZoom = document.getElementById('sim-zoom');
 
 const SCENARIOS = [
   {
@@ -1387,6 +1499,7 @@ async function simLogRunToSupabase({scenarioId, score, steps, wrongClicks, succe
   try{
     const { data:{user} } = await supa.auth.getUser();
     if(!user) return;
+    // Tabelle optional: sim_runs (user_id text, scenario_id text, score int4, steps int4, wrong int4, success bool, ts timestamptz default now())
     await supa.from('sim_runs').insert({
       user_id: user.id,
       scenario_id: scenarioId,
@@ -1395,7 +1508,7 @@ async function simLogRunToSupabase({scenarioId, score, steps, wrongClicks, succe
       wrong: wrongClicks,
       success
     });
-  }catch(e){ /* Tabelle evtl. nicht vorhanden – ignorieren */ }
+  }catch(e){ /* ignore if table not present */ }
 }
 
 let wrongClicksSession = 0;
@@ -1463,12 +1576,6 @@ btnSimCheck.onclick = () => {
     simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: false});
   }
   simState.locked = true;
-};
-
-/* Lesbarkeit+-Toggle */
-btnSimZoom.onclick = ()=>{
-  document.body.classList.toggle('sim-zoom');
-  btnSimZoom.textContent = document.body.classList.contains('sim-zoom') ? 'Lesbarkeit –' : 'Lesbarkeit +';
 };
 
 function initSimModule(){
