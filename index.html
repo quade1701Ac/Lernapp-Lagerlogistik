@@ -16,17 +16,6 @@
       --text:#E5E7EB; --muted:#A7B0C3; --primary:#60A5FA; --panel:rgba(255,255,255,.06);
       --bg:#0b1020; --bg-2:#0f1427; --ok:#22c55e; --mid:#eab308; --low:#ef4444;
       --panel-strong:#111735; --panel-contrast:#0e1430;
-
-      /* Simulation – High‑Contrast */
-      --sim-ink:#F8FAFC;                /* Haupthilfe: sehr helles Textweiß */
-      --sim-ink-muted:#E2E8F0;          /* leichte Akzente */
-      --sim-shadow:rgba(0,0,0,.7);      /* kräftiger Textschatten */
-      --sim-chip-bg:rgba(255,255,255,.08);
-      --sim-step-bg:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
-      --sim-step-border:rgba(255,255,255,.28);
-      --sim-step-hover:rgba(255,255,255,.10);
-      --sim-correct-bg:rgba(34,197,94,.15);
-      --sim-wrong-bg:rgba(239,68,68,.18);
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),var(--panel-contrast) 60%, var(--bg));color:var(--text)}
@@ -100,66 +89,16 @@
     .sim-wrap{display:grid;gap:12px}
     .sim-header{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
     .sim-area{display:grid;grid-template-columns:1fr;gap:12px}
-
-    /* High‑contrast Behälter */
-    .sim-pool,.sim-queue{
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:rgba(255,255,255,.04);
-      padding:10px;
-      color:var(--sim-ink);
-      text-shadow:0 1px 2px var(--sim-shadow);
-    }
-    .sim-title{
-      font-weight:700;margin-bottom:6px;
-      color:var(--sim-ink);
-      text-shadow:0 1px 2px var(--sim-shadow);
-    }
-
-    /* High‑contrast Schritte */
-    .step{
-      display:flex;align-items:center;gap:8px;
-      border:1px solid var(--sim-step-border);
-      border-radius:10px;
-      padding:10px 12px;
-      background:var(--sim-step-bg);
-      cursor:pointer;
-      color:var(--sim-ink);
-      text-shadow:0 1px 2px var(--sim-shadow);
-      transition:transform .04s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
-    }
-    .step:hover{ background:var(--sim-step-hover); transform:translateY(-1px); }
-    .step:focus-visible{ outline:2px solid #93C5FD; outline-offset:2px; }
-    .step[disabled]{opacity:.8;cursor:not-allowed}
-    .step.correct{
-      outline:2px solid var(--ok);
-      background:var(--sim-correct-bg);
-      box-shadow:0 0 0 3px rgba(34,197,94,.15) inset;
-    }
-    .step.wrong{
-      outline:2px solid var(--low);
-      background:var(--sim-wrong-bg);
-      box-shadow:0 0 0 3px rgba(239,68,68,.15) inset;
-    }
-
-    .queue-chip{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid var(--sim-step-border);
-      border-radius:999px;
-      padding:6px 10px;margin:4px;
-      background:var(--sim-chip-bg);
-      color:var(--sim-ink);
-      text-shadow:0 1px 2px var(--sim-shadow);
-    }
-    .badge{
-      font-size:12px;border:1px solid var(--sim-step-border);
-      border-radius:999px;padding:2px 8px;
-      background:var(--sim-chip-bg);
-      color:var(--sim-ink-muted);
-      text-shadow:0 1px 2px var(--sim-shadow);
-    }
+    .sim-pool,.sim-queue{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:10px}
+    .sim-title{font-weight:700;margin-bottom:6px}
+    .step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.03);cursor:pointer}
+    .step[disabled]{opacity:.55;cursor:not-allowed}
+    .step.correct{outline:2px solid var(--ok);background:rgba(34,197,94,.12)}
+    .step.wrong{outline:2px solid var(--low);background:rgba(239,68,68,.12)}
+    .queue-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;margin:4px;background:rgba(255,255,255,.05)}
+    .badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:rgba(255,255,255,.04)}
     .score{font-weight:800}
-    .hint{font-size:12px;color:var(--sim-ink-muted);text-shadow:0 1px 2px var(--sim-shadow)}
+    .hint{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -1329,7 +1268,7 @@ notesClear.onclick = ()=>{
   notesState.textContent = 'Notizen gelöscht.';
 };
 
-/* ====== Simulationen (Szenario: Warenannahme) ====== */
+/* ====== Simulationen (mehrere Szenarien) ====== */
 const SIM_LS_KEY = 'sim_progress';
 const simSel = document.getElementById('sim-sel');
 const simStepsEl = document.getElementById('sim-steps');
@@ -1361,6 +1300,50 @@ const SCENARIOS = [
       'Ohne Papiere keine Freigabe.',
       'Erst Sicht‑ und Sicherungsprüfung, dann Entladen.',
       'Dokumentation vor dem Buchen spart Ärger.'
+    ],
+    lives: 3,
+    perCorrect: 10,
+    perWrong: -5
+  },
+  {
+    id: 'warenausgang_std',
+    title: 'Warenausgang – Standardprozess',
+    steps: [
+      'Kommissionierauftrag annehmen',
+      'Ware aus dem Lager entnehmen',
+      'Ware auf Vollständigkeit und Identität prüfen',
+      'Ware verpacken und kennzeichnen',
+      'Begleitpapiere erstellen (Lieferschein, Versandlabel)',
+      'Ladungssicherung prüfen',
+      'Sendung verladen',
+      'Versand freigeben / Übergabe an Spediteur dokumentieren'
+    ],
+    tips: [
+      'Prüfung vor dem Verpacken vermeiden Doppelarbeit.',
+      'Kennzeichnung IMMER vor dem Verladen anbringen.',
+      'Ladungssicherung = Arbeitsschutz + Haftung!'
+    ],
+    lives: 3,
+    perCorrect: 10,
+    perWrong: -5
+  },
+  {
+    id: 'kommissionierung_std',
+    title: 'Kommissionierung – Kundenauftrag',
+    steps: [
+      'Auftrag prüfen (Positionen, Mengen, Priorität)',
+      'Passende Kommissionierstrategie wählen (z. B. Pick-by-Order)',
+      'Hilfsmittel vorbereiten (Scanner, Behälter, Wagen)',
+      'Artikel am Lagerplatz entnehmen',
+      'Positionsweise Mengen prüfen & buchen',
+      'Artikel an Sammelplatz/Packplatz bringen',
+      'Differenzen dokumentieren und melden',
+      'Auftrag an Packen/Versand übergeben'
+    ],
+    tips: [
+      'Vorbereitung spart Wegezeit.',
+      'Jede Buchung sofort – keine Zettelwirtschaft.',
+      'Abweichungen sofort melden, nicht „später“.'
     ],
     lives: 3,
     perCorrect: 10,
@@ -1434,6 +1417,7 @@ async function simLogRunToSupabase({scenarioId, score, steps, wrongClicks, succe
   try{
     const { data:{user} } = await supa.auth.getUser();
     if(!user) return;
+    // Tabelle optional: sim_runs (user_id text, scenario_id text, score int4, steps int4, wrong int4, success bool, ts timestamptz default now())
     await supa.from('sim_runs').insert({
       user_id: user.id,
       scenario_id: scenarioId,
@@ -1464,7 +1448,7 @@ function simPick(txt, btn){
       saveSimProgress(stats);
 
       simResult.style.display='block';
-      simResult.innerHTML = `✅ <b>Erfolgreich abgeschlossen!</b><br/>Punkte: <b>${simState.score}</b> • Versuche: <b>${stats.runs}</b> • Bestleistung: <b>${stats.best}</b>`;
+      simResult.innerHTML = `✅ <b>Erfolgreich abgeschlossen!</b><br/>Punkte: <b>${simState.score}</b><br/>Tipps: ${simState.cfg.tips ? simState.cfg.tips.map(t=>'• '+t).join('<br/>') : '—'}`;
       simState.locked = true;
       simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: true});
     }
@@ -1478,7 +1462,7 @@ function simPick(txt, btn){
     if(simState.lives<=0){
       const stats = loadSimProgress(); stats.runs += 1; saveSimProgress(stats);
       simResult.style.display='block';
-      simResult.innerHTML = `❌ <b>Abgebrochen</b> – keine Leben mehr.<br/>Richtige Reihenfolge wäre:<br/>• ${simState.target.join('<br/>• ')}`;
+      simResult.innerHTML = `❌ <b>Abgebrochen</b> – keine Leben mehr.<br/>Richtige Reihenfolge wäre:<br/>• ${simState.target.join('<br/>• ')}<br/><br/>Tipps:<br/>${simState.cfg.tips ? simState.cfg.tips.map(t=>'• '+t).join('<br/>') : '—'}`;
       simState.locked = true;
       simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: false});
     }
@@ -1490,6 +1474,7 @@ btnSimReset.onclick = () => { wrongClicksSession = 0; simInitScenario(simSel.val
 btnSimUndo.onclick = () => {
   if(simState.locked || simState.picked.length===0) return;
   const last = simState.picked.pop();
+  // enable entsprechender Button
   [...simStepsEl.querySelectorAll('.step')].forEach(b=>{
     if(b.textContent.includes(last)){ b.classList.remove('correct'); b.removeAttribute('disabled'); }
   });
@@ -1503,10 +1488,10 @@ btnSimCheck.onclick = () => {
   saveSimProgress(stats);
   simResult.style.display='block';
   if(ok){
-    simResult.innerHTML = `✅ <b>Richtig!</b> Punkte: <b>${simState.score}</b> • Best: <b>${stats.best}</b>`;
+    simResult.innerHTML = `✅ <b>Richtig!</b> Punkte: <b>${simState.score}</b><br/>Tipps:<br/>${simState.cfg.tips ? simState.cfg.tips.map(t=>'• '+t).join('<br/>') : '—'}`;
     simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: true});
   }else{
-    simResult.innerHTML = `❌ <b>Nicht ganz.</b><br/>Richtig wäre:<br/>• ${simState.target.join('<br/>• ')}`;
+    simResult.innerHTML = `❌ <b>Nicht ganz.</b><br/>Richtig wäre:<br/>• ${simState.target.join('<br/>• ')}<br/><br/>Tipps:<br/>${simState.cfg.tips ? simState.cfg.tips.map(t=>'• '+t).join('<br/>') : '—'}`;
     simLogRunToSupabase({scenarioId: simState.cfg.id, score: simState.score, steps: simState.target.length, wrongClicks: wrongClicksSession, success: false});
   }
   simState.locked = true;
@@ -1514,6 +1499,7 @@ btnSimCheck.onclick = () => {
 
 function initSimModule(){
   refreshSimSelectors();
+  // Vorbelegen:
   simInitScenario(SCENARIOS[0].id);
 }
 
