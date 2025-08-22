@@ -92,6 +92,8 @@
     .sim-pool,.sim-queue{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);padding:10px}
     .sim-title{font-weight:700;margin-bottom:6px}
     .step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.03);cursor:pointer}
+    .step:hover{background:rgba(255,255,255,.08);border-color:#60A5FA;box-shadow:0 0 0 2px rgba(96,165,250,.25) inset}
+    .sim-title, .step span{color:#f3f4f6}
     .step[disabled]{opacity:.55;cursor:not-allowed}
     .step.correct{outline:2px solid var(--ok);background:rgba(34,197,94,.12)}
     .step.wrong{outline:2px solid var(--low);background:rgba(239,68,68,.12)}
@@ -272,14 +274,21 @@
           </div>
           <div class="row">
             <select id="calc-type">
-              <option value="percent">Prozentrechnen (Rabatt/Skonto/Bestand)</option>
-              <option value="rule3">Dreisatz (proportional)</option>
-              <option value="rule3anti">Dreisatz (antiproportional)</option>
-              <option value="fraction">Bruch/Umrechnen</option>
-              <option value="andler">Optimale Bestellmenge (Andler)</option>
-              <option value="turnover">Umschlagshäufigkeit</option>
-              <option value="coverage">Lagerreichweite</option>
-            </select>
+  <option value="percent">Prozentrechnen (Rabatt/Skonto/Bestand)</option>
+  <option value="rule3">Dreisatz (proportional)</option>
+  <option value="rule3anti">Dreisatz (antiproportional)</option>
+  <option value="fraction_all">Bruchrechnen (Zufall)</option>
+  <option value="frac_add">Brüche addieren</option>
+  <option value="frac_sub">Brüche subtrahieren</option>
+  <option value="frac_mul">Brüche multiplizieren</option>
+  <option value="frac_div">Brüche dividieren</option>
+  <option value="frac_ext">Bruch erweitern</option>
+  <option value="frac_red">Bruch kürzen</option>
+  <option value="storage_compare">Eigen- vs. Fremdlagerung (Kostenvergleich)</option>
+  <option value="andler">Optimale Bestellmenge (Andler)</option>
+  <option value="turnover">Umschlagshäufigkeit</option>
+  <option value="coverage">Lagerreichweite</option>
+</select>
             <button id="calc-new" class="btn primary">Aufgabe erzeugen</button>
           </div>
         </div>
@@ -291,12 +300,14 @@
             <input id="calc-answer" placeholder="Deine Lösung (z. B. 1.234,56 / 3/4 / 12 %)" />
             <button id="calc-check" class="btn primary">Prüfen</button>
             <span id="calc-feedback" class="muted"> </span>
-            <button id="calc-solution" class="btn">Lösungsschritte</button>
+            <button id="calc-solution" class="btn">Lösungsschritte</button> <button id="calc-formula" class="btn ghost">Formel</button>
             <button id="calc-next" class="btn">Nächste</button>
             <button id="calc-reset" class="btn">Zurücksetzen</button>
           </div>
 
           <div id="calc-solution-box" class="alert" style="display:none; margin-top:10px"></div>
+
+          <div id="calc-formula-box" class="alert" style="display:none; margin-top:10px"></div>
 
           <div class="card" style="margin-top:10px">
             <b>Notizen / Lösungsweg</b>
@@ -1038,6 +1049,26 @@ const btnNext = document.getElementById('calc-next');
 const btnReset= document.getElementById('calc-reset');
 const btnCheck= document.getElementById('calc-check');
 const calcSolBox = document.getElementById('calc-solution-box');
+const calcFormulaBox = document.getElementById('calc-formula-box');
+const btnFormula = document.getElementById('calc-formula');
+
+const FORMULAS = {
+  percent: 'Neuer Wert = Ausgangswert × (1 ± p/100)',
+  rule3: 'Proportional: y2 = y1 × (x2 / x1)',
+  rule3anti: 'Antiproportional: t2 = t1 × (x1 / x2)',
+  fraction_all: 'Je nach Aufgabe: \nAdd.: a/b + c/d = (ad+bc)/bd \nSubtr.: a/b − c/d = (ad−bc)/bd \nMul.: (a/b)×(c/d) = ac/bd \nDiv.: (a/b):(c/d) = ad/bc',
+  frac_add: 'a/b + c/d = (ad + bc) / bd',
+  frac_sub: 'a/b − c/d = (ad − bc) / bd',
+  frac_mul: '(a/b) × (c/d) = ac / bd',
+  frac_div: '(a/b) ÷ (c/d) = ad / bc',
+  frac_ext: 'Erweitern: a/b × (k/k) = (ak)/(bk)',
+  frac_red: 'Kürzen: a/b ÷ (g/g) = (a/g)/(b/g) mit g=ggT(a,b)',
+  storage_compare: 'Kostenvergleich (monatlich): \nEigen = Fix + v_intern × Bestand \nFremd = Satz_extern × Bestand \nΔ = Eigen − Fremd (<0 ⇒ Fremd günstiger)',
+  andler: 'C* = √(2·B·K_b / K_p)',
+  turnover: 'UH = Jahresverbrauch / durchschnittlicher Lagerbestand',
+  coverage: 'Reichweite (Tage) = Bestand / Tagesverbrauch'
+};
+
 const calcFeedback = document.getElementById('calc-feedback');
 
 // Notes
@@ -1129,7 +1160,7 @@ function genPercent(){
     `${pct}% von ${fmt(price)} = ${fmt(price*pct/100)}${type==='Bestandsabweichung'?' Stk':' €'}`,
     `Neuer Wert = ${fmt(price)} − ${fmt(price*pct/100)} = ${fmt(answer)}${type==='Bestandsabweichung'?' Stk':' €'}`
   ];
-  return { q:text, a:Math.round(answer*100)/100, steps };
+  return { type:'percent', q:text, a:Math.round(answer*100)/100, steps };
 }
 function genRule3(){
   const ma = rnd(3,9);
@@ -1142,7 +1173,7 @@ function genRule3(){
     `Zeit ~ 1/Mitarbeiter: t2 = t1 × (MA1 / MA2)`,
     `t2 = ${h} × (${ma} / ${ma2}) = ${fmt(a)} Stunden`
   ];
-  return { q:text, a:Math.round(a*100)/100, steps };
+  return { type:(t==='rule3'? 'rule3' : (t==='rule3anti' ? 'rule3anti' : 'fraction')), q:text, a:Math.round(a*100)/100, steps };
 }
 function genRule3Anti(){
   const st = rnd(2,6);
@@ -1155,7 +1186,7 @@ function genRule3Anti(){
     `t2 = t1 × (St1 / St2)`,
     `t2 = ${h} × (${st} / ${st2}) = ${fmt(a)} Stunden`
   ];
-  return { q:text, a:Math.round(a*100)/100, steps };
+  return { type:(t==='rule3'? 'rule3' : (t==='rule3anti' ? 'rule3anti' : 'fraction')), q:text, a:Math.round(a*100)/100, steps };
 }
 function genFraction(){
   const karton = rnd(8,24);
@@ -1167,7 +1198,7 @@ function genFraction(){
     `Entnommen: ${br[0]}/${br[1]} von ${karton} = ${fmt(taken)}`,
     `Rest: ${karton} − ${fmt(taken)} = ${fmt(a)} Kartons`
   ];
-  return { q:text, a:Math.round(a*100)/100, steps };
+  return { type:(t==='rule3'? 'rule3' : (t==='rule3anti' ? 'rule3anti' : 'fraction')), q:text, a:Math.round(a*100)/100, steps };
 }
 function genAndler(){
   const B = rnd(500,5000);
@@ -1180,7 +1211,7 @@ function genAndler(){
     `= √(2·${B}·${Kb} / ${Kp})`,
     `= √(${2*B*Kb} / ${Kp}) = ${fmt(a)} Stück`
   ];
-  return { q:text, a:Math.round(a*100)/100, steps };
+  return { type:(t==='rule3'? 'rule3' : (t==='rule3anti' ? 'rule3anti' : 'fraction')), q:text, a:Math.round(a*100)/100, steps };
 }
 function genTurnover(){
   const avgStock = rnd(10000,80000);
@@ -1191,7 +1222,7 @@ function genTurnover(){
     `UH = Verbrauch / durchschnittlicher Lagerbestand`,
     `= ${cons} / ${avgStock} = ${fmt(a)}`
   ];
-  return { q:text, a:Math.round(a*100)/100, steps };
+  return { type:(t==='rule3'? 'rule3' : (t==='rule3anti' ? 'rule3anti' : 'fraction')), q:text, a:Math.round(a*100)/100, steps };
 }
 function genCoverage(){
   const stock = rnd(500,5000);
@@ -1202,8 +1233,81 @@ function genCoverage(){
     `Reichweite (Tage) = Bestand / Tagesverbrauch`,
     `= ${stock} / ${daily} = ${fmt(a)} Tage`
   ];
-  return { q:text, a:Math.round(a*100)/100, steps };
+  return { type:(t==='rule3'? 'rule3' : (t==='rule3anti' ? 'rule3anti' : 'fraction')), q:text, a:Math.round(a*100)/100, steps };
 }
+
+
+function ggT(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=b; b=a%b; a=t; } return a||1; }
+function makeFrac(){ // create a random proper fraction
+  let a = rnd(1,9), b = rnd(2,10);
+  if(a>=b): a = Math.max(1, b-1);
+  return [a,b];
+}
+
+function genFracAdd(){
+  const [a,b]=makeFrac(), [c,d]=makeFrac();
+  const num = a*d + b*c, den = b*d;
+  const val = num/den;
+  const steps = [
+    `kgV von ${b} und ${d} = ${b*d}`,
+    `${a}/${b} + ${c}/${d} = (${a}×${d} + ${c}×${b}) / (${b}×${d}) = ${num}/${den} = ${fmt(val)}`
+  ];
+  return { type:'frac_add', q:`Brüche addieren: ${a}/${b} + ${c}/${d} = ?`, a: Math.round(val*100)/100, steps };
+}
+function genFracSub(){
+  const [a,b]=makeFrac(), [c,d]=makeFrac();
+  const num = a*d - b*c, den = b*d;
+  const val = num/den;
+  const steps = [
+    `${a}/${b} − ${c}/${d} = (${a}×${d} − ${c}×${b}) / (${b}×${d}) = ${num}/${den} = ${fmt(val)}`
+  ];
+  return { type:'frac_sub', q:`Brüche subtrahieren: ${a}/${b} − ${c}/${d} = ?`, a: Math.round(val*100)/100, steps };
+}
+function genFracMul(){
+  const [a,b]=makeFrac(), [c,d]=makeFrac();
+  const num = a*c, den = b*d, val = num/den;
+  const steps = [
+    `(${a}/${b}) × (${c}/${d}) = (${a}×${c})/(${b}×${d}) = ${num}/${den} = ${fmt(val)}`
+  ];
+  return { type:'frac_mul', q:`Brüche multiplizieren: ${a}/${b} × ${c}/${d} = ?`, a: Math.round(val*100)/100, steps };
+}
+function genFracDiv(){
+  const [a,b]=makeFrac(), [c,d]=makeFrac();
+  const num = a*d, den = b*c, val = num/den;
+  const steps = [
+    `(${a}/${b}) ÷ (${c}/${d}) = (${a}/${b}) × (${d}/${c}) = ${num}/${den} = ${fmt(val)}`
+  ];
+  return { type:'frac_div', q:`Brüche dividieren: ${a}/${b} ÷ ${c}/${d} = ?`, a: Math.round(val*100)/100, steps };
+}
+function genFracExt(){
+  const [a,b]=makeFrac(); const k=rnd(2,9);
+  const num=a*k, den=b*k, val=num/den;
+  const steps=[`Erweitern mit k=${k}: ${a}/${b} × (${k}/${k}) = ${num}/${den} = ${fmt(val)}`];
+  return { type:'frac_ext', q:`Bruch erweitern: ${a}/${b} um Faktor ${k} ⇒ ? (als Zahl)`, a: Math.round(val*100)/100, steps };
+}
+function genFracRed(){
+  let a=rnd(2,18), b=rnd(3,20); const g=ggT(a,b); const na=a/g, nb=b/g; const val=na/nb;
+  const steps=[`ggT(${a},${b}) = ${g}`, `Kürzen: ${a}/${b} ÷ (${g}/${g}) = ${na}/${nb} = ${fmt(val)}`];
+  return { type:'frac_red', q:`Bruch kürzen: ${a}/${b} ⇒ gekürzter Wert als Zahl?`, a: Math.round(val*100)/100, steps };
+}
+function genStorageCompare(){
+  const stock = rnd(80,400); // durchschnittliche Paletten
+  const fix = rnd(1200,4500); // €/Monat
+  const v_intern = rnd(4,14); // €/Palette/Monat
+  const s_extern = rnd(7,22); // €/Palette/Monat
+  const eigen = fix + v_intern*stock;
+  const fremd = s_extern*stock;
+  const delta = eigen - fremd; // <0 Fremd günstiger
+  const steps = [
+    `Eigenlager: Fixkosten = ${fmt(fix)} €, variable Kosten = ${fmt(v_intern)} €/Pal × ${stock} Pal = ${fmt(v_intern*stock)} €`,
+    `Summe Eigen = ${fmt(fix)} + ${fmt(v_intern*stock)} = ${fmt(eigen)} € / Monat`,
+    `Fremdlager: Satz = ${fmt(s_extern)} €/Pal × ${stock} Pal = ${fmt(fremd)} € / Monat`,
+    `Δ = Eigen − Fremd = ${fmt(eigen)} − ${fmt(fremd)} = ${fmt(delta)} € (negativ ⇒ Fremd günstiger)`
+  ];
+  return { type:'storage_compare', q:`Kostenvergleich (Monat): Bestand ${stock} Paletten, Eigen: Fix ${fmt(fix)} € + ${fmt(v_intern)} €/Pal. Fremd: ${fmt(s_extern)} €/Pal.
+Gib Δ = Eigen − Fremd in € an (negativ ⇒ Fremd günstiger).`, a: Math.round(delta*100)/100, steps };
+}
+
 
 function newTask(){
   const t = calcType.value;
@@ -1212,12 +1316,30 @@ function newTask(){
   else if(t==='rule3') obj = genRule3();
   else if(t==='rule3anti') obj = genRule3Anti();
   else if(t==='fraction') obj = genFraction();
+  else if(t==='fraction_all'){
+    const pool=['frac_add','frac_sub','frac_mul','frac_div','frac_ext','frac_red'];
+    const pick = pool[Math.floor(Math.random()*pool.length)];
+    if(pick==='frac_add') obj = genFracAdd();
+    else if(pick==='frac_sub') obj = genFracSub();
+    else if(pick==='frac_mul') obj = genFracMul();
+    else if(pick==='frac_div') obj = genFracDiv();
+    else if(pick==='frac_ext') obj = genFracExt();
+    else obj = genFracRed();
+  }
+  else if(t==='frac_add') obj = genFracAdd();
+  else if(t==='frac_sub') obj = genFracSub();
+  else if(t==='frac_mul') obj = genFracMul();
+  else if(t==='frac_div') obj = genFracDiv();
+  else if(t==='frac_ext') obj = genFracExt();
+  else if(t==='frac_red') obj = genFracRed();
+  else if(t==='storage_compare') obj = genStorageCompare();
   else if(t==='andler') obj = genAndler();
   else if(t==='turnover') obj = genTurnover();
   else obj = genCoverage();
   currentTask = obj;
   showTask(obj);
 }
+
 function showTask(t){
   calcQ.textContent = t.q;
   calcAns.value = '';
@@ -1246,6 +1368,15 @@ btnReset.onclick= ()=>{
   calcAns.value=''; calcSolBox.style.display='none'; calcSolBox.innerHTML=''; calcFeedback.textContent=' ';
   calcFeedback.className='muted'; calcAns.classList.remove('valid','invalid'); calcAns.focus();
 };
+
+btnFormula.onclick = () => {
+  if(!currentTask){ return; }
+  const t = currentTask.type || calcType.value;
+  const txt = FORMULAS[t] || 'Keine Formel hinterlegt.';
+  calcFormulaBox.textContent = txt;
+  calcFormulaBox.style.display = 'block';
+};
+
 btnSol.onclick = ()=>{
   if(!currentTask) return;
   calcSolBox.innerHTML = currentTask.steps.map(s=>`<div>• ${s}</div>`).join('');
@@ -1306,22 +1437,22 @@ const SCENARIOS = [
     perWrong: -5
   },
   {
-    id: 'warenausgang_std',
-    title: 'Warenausgang – Standardprozess',
+    id: 'lagerkontrolle_std',
+    title: 'Lagerkontrolle – Bestands- & Zustandsprüfung',
     steps: [
-      'Kommissionierauftrag annehmen',
-      'Ware aus dem Lager entnehmen',
-      'Ware auf Vollständigkeit und Identität prüfen',
-      'Ware verpacken und kennzeichnen',
-      'Begleitpapiere erstellen (Lieferschein, Versandlabel)',
-      'Ladungssicherung prüfen',
-      'Sendung verladen',
-      'Versand freigeben / Übergabe an Spediteur dokumentieren'
+      'Kontrollauftrag/Regelprüfung abrufen',
+      'Sicherheitsrelevante Hinweise beachten (z. B. Gefahrstoffe)',
+      'Ziel-Lagerplätze anfahren',
+      'Mengenkontrolle am Platz durchführen',
+      'Zustand/Verfallsdaten prüfen',
+      'Abweichungen und Schäden dokumentieren',
+      'Bestand im System berichtigen (Buchen)',
+      'Erforderliche Maßnahmen einleiten (Sperren/Umplatzieren/Melden)'
     ],
     tips: [
-      'Prüfung vor dem Verpacken vermeiden Doppelarbeit.',
-      'Kennzeichnung IMMER vor dem Verladen anbringen.',
-      'Ladungssicherung = Arbeitsschutz + Haftung!'
+      'Immer zuerst Sicherheit und Zugänglichkeit bewerten.',
+      'Abweichungen sofort buchen, nicht sammeln.',
+      'Fotos helfen bei späterer Klärung.'
     ],
     lives: 3,
     perCorrect: 10,
@@ -1344,6 +1475,28 @@ const SCENARIOS = [
       'Vorbereitung spart Wegezeit.',
       'Jede Buchung sofort – keine Zettelwirtschaft.',
       'Abweichungen sofort melden, nicht „später“.'
+    ],
+    lives: 3,
+    perCorrect: 10,
+    perWrong: -5
+  },
+  {
+    id: 'inventur_stichtag',
+    title: 'Inventur – Stichtagsinventur',
+    steps: [
+      'Inventurart & Stichtag prüfen (Anweisung lesen)',
+      'Zählbereiche/Teams und Hilfsmittel einteilen',
+      'Zählvorgaben (gesperrte Bereiche, USt/Chargen) beachten',
+      'Systembuchbestand abrufen (ohne zu beeinflussen)',
+      'Physische Zählung durchführen (Vier-Augen-Prinzip)',
+      'Zählergebnisse erfassen und plausibilisieren',
+      'Differenzen klären und dokumentieren',
+      'Inventurergebnis buchen und freigeben'
+    ],
+    tips: [
+      'Nie während der Zählung umbuchen.',
+      'Plausibilisierung spart Nachzählungen.',
+      'Dokumentation ist revisionssicher zu führen.'
     ],
     lives: 3,
     perCorrect: 10,
