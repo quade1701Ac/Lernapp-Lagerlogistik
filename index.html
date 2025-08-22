@@ -1240,7 +1240,7 @@ function genCoverage(){
 function ggT(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=b; b=a%b; a=t; } return a||1; }
 function makeFrac(){ // create a random proper fraction
   let a = rnd(1,9), b = rnd(2,10);
-  if(a>=b): a = Math.max(1, b-1);
+  if(a>=b){ a = Math.max(1, b-1); } a = Math.max(1, b-1);
   return [a,b];
 }
 
